@@ -1,0 +1,75 @@
+{
+  "fixture_schema_version": {
+    "diagnostic": "2026-05-28",
+    "exact": "2026-05-28"
+  },
+  "passed": true,
+  "results": [
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "qubo_two_var_offset_conversion",
+      "passed": true,
+      "status": "passed"
+    },
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "two_spin_ferromagnetic_boltzmann_beta1",
+      "passed": true,
+      "status": "passed"
+    },
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "single_site_conditional_sign",
+      "passed": true,
+      "status": "passed"
+    },
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "maxcut_triangle_unweighted",
+      "passed": true,
+      "status": "passed"
+    },
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "maxcut_cycle4_unweighted",
+      "passed": true,
+      "status": "passed"
+    },
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "mode_collapse_counts_n4_reads128",
+      "passed": true,
+      "status": "passed"
+    },
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "constant_energy_trace",
+      "passed": true,
+      "status": "passed"
+    },
+    {
+      "difference_count": 0,
+      "differences": [],
+      "id": "chain_disagreement_zero_within_variance",
+      "passed": true,
+      "status": "passed"
+    }
+  ],
+  "schema_version": "2026-05-28",
+  "summary": {
+    "failed": 0,
+    "missing": 0,
+    "passed": 8,
+    "tolerance": 1e-09,
+    "total_fixtures": 8,
+    "unknown": 0
+  },
+  "unknown_fixture_ids": []
+}

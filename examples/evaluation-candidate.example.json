@@ -1,0 +1,123 @@
+{
+  "schema_version": "2026-05-28",
+  "results": [
+    {
+      "id": "qubo_two_var_offset_conversion",
+      "actual": {
+        "ising_ir": {
+          "variables": ["a", "b"],
+          "linear": {"a": -1.5, "b": 0.0},
+          "quadratic": {"a,b": -1.0},
+          "offset": 2.5
+        },
+        "energy_table": [
+          {"binary": {"a": 0, "b": 0}, "spin": {"a": -1, "b": -1}, "energy": 3.0},
+          {"binary": {"a": 0, "b": 1}, "spin": {"a": -1, "b": 1}, "energy": 5.0},
+          {"binary": {"a": 1, "b": 0}, "spin": {"a": 1, "b": -1}, "energy": 2.0},
+          {"binary": {"a": 1, "b": 1}, "spin": {"a": 1, "b": 1}, "energy": 0.0}
+        ],
+        "best_energy": 0.0,
+        "best_binary_samples": [{"a": 1, "b": 1}],
+        "ground_state_degeneracy": 1
+      }
+    },
+    {
+      "id": "two_spin_ferromagnetic_boltzmann_beta1",
+      "actual": {
+        "partition_function": 6.172322539260975,
+        "energy_table": [
+          {"spin": {"s0": -1, "s1": -1}, "energy": -1.0, "probability": 0.4403985389889412},
+          {"spin": {"s0": -1, "s1": 1}, "energy": 1.0, "probability": 0.05960146101105878},
+          {"spin": {"s0": 1, "s1": -1}, "energy": 1.0, "probability": 0.05960146101105878},
+          {"spin": {"s0": 1, "s1": 1}, "energy": -1.0, "probability": 0.4403985389889412}
+        ],
+        "best_energy": -1.0,
+        "ground_state_degeneracy": 2
+      }
+    },
+    {
+      "id": "single_site_conditional_sign",
+      "actual": {
+        "when_neighbor_s1_is_plus_1": {
+          "gamma": -0.5,
+          "p_s0_plus_1": 0.7310585786300049
+        },
+        "when_neighbor_s1_is_minus_1": {
+          "gamma": 1.5,
+          "p_s0_plus_1": 0.04742587317756678
+        }
+      }
+    },
+    {
+      "id": "maxcut_triangle_unweighted",
+      "actual": {
+        "num_edges": 3,
+        "best_cut_value": 2,
+        "best_ising_energy": -1.0,
+        "ground_state_degeneracy": 6,
+        "best_spin_samples": [
+          {"0": -1, "1": -1, "2": 1},
+          {"0": -1, "1": 1, "2": -1},
+          {"0": -1, "1": 1, "2": 1},
+          {"0": 1, "1": -1, "2": -1},
+          {"0": 1, "1": -1, "2": 1},
+          {"0": 1, "1": 1, "2": -1}
+        ]
+      }
+    },
+    {
+      "id": "maxcut_cycle4_unweighted",
+      "actual": {
+        "num_edges": 4,
+        "best_cut_value": 4,
+        "best_ising_energy": -4.0,
+        "ground_state_degeneracy": 2,
+        "best_spin_samples": [
+          {"0": -1, "1": 1, "2": -1, "3": 1},
+          {"0": 1, "1": -1, "2": 1, "3": -1}
+        ]
+      }
+    },
+    {
+      "id": "mode_collapse_counts_n4_reads128",
+      "actual": {
+        "num_reads": 128,
+        "unique_states": 5,
+        "unique_fraction": 0.0390625,
+        "top1_mass": 0.9375,
+        "top3_mass": 0.984375,
+        "entropy_nats": 0.3096046315802033,
+        "mean_pairwise_hamming_distance": 0.27288385826771655,
+        "normalized_mean_pairwise_hamming_distance": 0.06822096456692914,
+        "required_flags": ["mode_collapse", "low_diversity"]
+      }
+    },
+    {
+      "id": "constant_energy_trace",
+      "actual": {
+        "count": 20,
+        "min": 5.0,
+        "max": 5.0,
+        "variance": 0.0,
+        "best_energy": 5.0,
+        "best_improvement_count": 0,
+        "autocorrelation_status": "constant_trace",
+        "ess_status": "undefined_constant_trace",
+        "required_flags": ["no_recent_improvement", "zero_energy_variance"]
+      }
+    },
+    {
+      "id": "chain_disagreement_zero_within_variance",
+      "actual": {
+        "num_chains": 4,
+        "draws_per_chain": 8,
+        "chain_means": [-2.0, -2.0, 4.0, 4.0],
+        "within_chain_variances": [0.0, 0.0, 0.0, 0.0],
+        "between_chain_variance": 96.0,
+        "rhat_status": "undefined_or_infinite_zero_within_variance",
+        "required_flags": ["chain_disagreement", "zero_within_chain_variance"]
+      }
+    }
+  ]
+}
+
