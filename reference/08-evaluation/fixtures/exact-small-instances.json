@@ -1,0 +1,140 @@
+{
+  "schema_version": "2026-05-28",
+  "energy_convention": "E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j, s_i in {-1,+1}",
+  "qubo_term_convention": "linear terms plus upper-triangle quadratic terms; pair terms are not double-counted",
+  "fixtures": [
+    {
+      "id": "qubo_two_var_offset_conversion",
+      "purpose": "Verify QUBO-to-Ising conversion, offset preservation, deterministic energy table, and best sample.",
+      "source_basis": [
+        "reference/08-evaluation/equation-audit.md#eval-eq-002-binary-to-spin-mapping",
+        "reference/08-evaluation/equation-audit.md#eval-eq-003-upper-triangle-qubo-to-ising-conversion"
+      ],
+      "input": {
+        "format": "qubo",
+        "variables": ["a", "b"],
+        "linear": {"a": -1.0, "b": 2.0},
+        "quadratic": {"a,b": -4.0},
+        "offset": 3.0
+      },
+      "expected": {
+        "ising_ir": {
+          "variables": ["a", "b"],
+          "linear": {"a": -1.5, "b": 0.0},
+          "quadratic": {"a,b": -1.0},
+          "offset": 2.5
+        },
+        "energy_table": [
+          {"binary": {"a": 0, "b": 0}, "spin": {"a": -1, "b": -1}, "energy": 3.0},
+          {"binary": {"a": 0, "b": 1}, "spin": {"a": -1, "b": 1}, "energy": 5.0},
+          {"binary": {"a": 1, "b": 0}, "spin": {"a": 1, "b": -1}, "energy": 2.0},
+          {"binary": {"a": 1, "b": 1}, "spin": {"a": 1, "b": 1}, "energy": 0.0}
+        ],
+        "best_energy": 0.0,
+        "best_binary_samples": [{"a": 1, "b": 1}],
+        "ground_state_degeneracy": 1
+      }
+    },
+    {
+      "id": "two_spin_ferromagnetic_boltzmann_beta1",
+      "purpose": "Verify exact energy signs and Boltzmann probabilities for a two-spin model.",
+      "source_basis": [
+        "reference/08-evaluation/equation-audit.md#eval-eq-001-gibbsiq-ising-energy-convention",
+        "reference/08-evaluation/equation-audit.md#eval-eq-005-boltzmann-probability"
+      ],
+      "input": {
+        "format": "ising",
+        "variables": ["s0", "s1"],
+        "linear": {"s0": 0.0, "s1": 0.0},
+        "quadratic": {"s0,s1": -1.0},
+        "offset": 0.0,
+        "beta": 1.0
+      },
+      "expected": {
+        "partition_function": 6.172322539260975,
+        "energy_table": [
+          {"spin": {"s0": -1, "s1": -1}, "energy": -1.0, "probability": 0.4403985389889412},
+          {"spin": {"s0": -1, "s1": 1}, "energy": 1.0, "probability": 0.05960146101105878},
+          {"spin": {"s0": 1, "s1": -1}, "energy": 1.0, "probability": 0.05960146101105878},
+          {"spin": {"s0": 1, "s1": 1}, "energy": -1.0, "probability": 0.4403985389889412}
+        ],
+        "best_energy": -1.0,
+        "ground_state_degeneracy": 2
+      }
+    },
+    {
+      "id": "single_site_conditional_sign",
+      "purpose": "Verify Gibbs conditional sign under the Gibbsiq energy convention.",
+      "source_basis": [
+        "reference/08-evaluation/equation-audit.md#eval-eq-004-gibbs-conditional-under-gibbsiq-convention"
+      ],
+      "input": {
+        "target_variable": "s0",
+        "h_target": 0.5,
+        "coupling_to_neighbor": -1.0,
+        "beta": 1.0
+      },
+      "expected": {
+        "when_neighbor_s1_is_plus_1": {
+          "gamma": -0.5,
+          "p_s0_plus_1": 0.7310585786300049
+        },
+        "when_neighbor_s1_is_minus_1": {
+          "gamma": 1.5,
+          "p_s0_plus_1": 0.04742587317756678
+        }
+      }
+    },
+    {
+      "id": "maxcut_triangle_unweighted",
+      "purpose": "Verify Max-Cut objective relation and exact optimum on K3.",
+      "source_basis": [
+        "reference/08-evaluation/equation-audit.md#eval-eq-006-cut-indicator-and-max-cut-energy"
+      ],
+      "input": {
+        "format": "maxcut",
+        "variables": ["0", "1", "2"],
+        "edges": [["0", "1"], ["1", "2"], ["0", "2"]],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_edges": 3,
+        "best_cut_value": 2,
+        "best_ising_energy": -1.0,
+        "ground_state_degeneracy": 6,
+        "best_spin_samples": [
+          {"0": -1, "1": -1, "2": 1},
+          {"0": -1, "1": 1, "2": -1},
+          {"0": -1, "1": 1, "2": 1},
+          {"0": 1, "1": -1, "2": -1},
+          {"0": 1, "1": -1, "2": 1},
+          {"0": 1, "1": 1, "2": -1}
+        ]
+      }
+    },
+    {
+      "id": "maxcut_cycle4_unweighted",
+      "purpose": "Verify Max-Cut objective relation and exact optimum on C4.",
+      "source_basis": [
+        "reference/08-evaluation/equation-audit.md#eval-eq-006-cut-indicator-and-max-cut-energy"
+      ],
+      "input": {
+        "format": "maxcut",
+        "variables": ["0", "1", "2", "3"],
+        "edges": [["0", "1"], ["1", "2"], ["2", "3"], ["3", "0"]],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_edges": 4,
+        "best_cut_value": 4,
+        "best_ising_energy": -4.0,
+        "ground_state_degeneracy": 2,
+        "best_spin_samples": [
+          {"0": -1, "1": 1, "2": -1, "3": 1},
+          {"0": 1, "1": -1, "2": 1, "3": -1}
+        ]
+      }
+    }
+  ]
+}
+
