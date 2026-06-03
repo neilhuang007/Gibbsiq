@@ -47,8 +47,7 @@ This file lists the most useful references from the first Tavily research pass. 
 
 - Vehtari et al. paper portal: https://research.aalto.fi/en/publications/rank-normalization-folding-and-localization-an-improved-r-hat-for/
 - Vehtari et al. PDF: https://acris.aalto.fi/ws/portalfiles/portal/53922181/Vehtari_Rank_Normalization.euclid.ba.1593828229.pdf
-- Downloaded local PDF: `reference/04-diagnostics/papers/vehtari-etal-2021-rhat-ess.pdf`
-- Raw local transcript: `reference/04-diagnostics/papers/vehtari-etal-2021-rhat-ess.transcript.md`
+- Downloaded local PDF: `reference/04-diagnostics/papers/vehtari-2021-rhat-ess.pdf`
 - Online appendix: https://avehtari.github.io/rhat_ess/rhat_ess.html
 - Reference repo: https://github.com/avehtari/rhat_ess
 - ArviZ repository: https://github.com/arviz-devs/arviz
@@ -94,10 +93,8 @@ This file lists the most useful references from the first Tavily research pass. 
 - NeuroBench system benchmarks license checked 2026-05-28: Apache-2.0.
 - Lucas, Ising formulations of many NP problems: https://www.frontiersin.org/articles/10.3389/fphy.2014.00005/full
 - Downloaded local PDF: `reference/05-theory/papers/lucas-2014-ising-formulations.pdf`
-- Raw local transcript: `reference/05-theory/papers/lucas-2014-ising-formulations.transcript.md`
 - Benchmarking stochastic quantum heuristics and Ising machines: https://arxiv.org/abs/2402.10255
 - Downloaded local PDF: `reference/06-benchmarks/papers/bernal-neira-2024-quantum-heuristics-ising-machines.pdf`
-- Raw local transcript: `reference/06-benchmarks/papers/bernal-neira-2024-quantum-heuristics-ising-machines.transcript.md`
 - Stochastic-Benchmark repository: https://github.com/usra-riacs/stochastic-benchmark
 - Stochastic-Benchmark repository license/currentness checked 2026-05-28: Apache-2.0, pushed 2026-05-27.
 - Comprehensive Max-Cut Ising-machine benchmark: https://arxiv.org/abs/2507.22117
@@ -110,7 +107,3 @@ This file lists the most useful references from the first Tavily research pass. 
 - Diagnostic fixtures: `reference/08-evaluation/fixtures/diagnostic-fixtures.json`
 - Implementation source candidates: `reference/08-evaluation/source-implementation-candidates.md`
 
-## Local Paper Pack
-
-- Downloaded paper manifest: [downloaded-papers.md](downloaded-papers.md)
-- Critical impact audit: [impact-audit-2026-05-28.md](impact-audit-2026-05-28.md)

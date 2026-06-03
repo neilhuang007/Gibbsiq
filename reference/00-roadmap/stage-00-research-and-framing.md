@@ -1,5 +1,8 @@
 # Stage 0 - Research and Framing
 
+**Status: Complete.** Project docs, reference pack, roadmap, research-gap list, JSON
+evaluator, strict benchmark oracle, and ground-truth corpus are in place.
+
 ## Goal
 
 Produce implementation-ready project docs and reference material.

@@ -4,9 +4,6 @@ Research snapshot: 2026-05-17.
 
 ## Start Here
 
-- [Why this project matters](why-this-project-matters.md)
-- [Impact audit](impact-audit-2026-05-28.md)
-- [Downloaded paper pack](downloaded-papers.md)
 - [Source map](source-map.md)
 - [Research gaps](research-gaps.md)
 - [Roadmap](00-roadmap/README.md)
@@ -22,6 +19,23 @@ Research snapshot: 2026-05-17.
 - [Benchmark plan](06-benchmarks/benchmark-plan.md)
 - [Inspector design](07-inspector/inspector-design.md)
 - [Evaluation framework](08-evaluation/README.md)
+
+## Citations and Paper Notes
+
+- [`references.bib`](references.bib) is the single canonical citation source: one
+  verified entry per paper, each resolved through Crossref (DOI) or DataCite
+  (arXiv) by [`tools/build_references.py`](../tools/build_references.py). Cite by
+  BibTeX key; do not hand-type bibliographies. Regenerate, don't hand-edit.
+- Each paper under `<section>/papers/` carries up to three files:
+  - `<slug>.md` — the cleaned, faithful transcription (with a citation header
+    pointing back to `references.bib`).
+  - `<slug>.note.md` — a Gibbsiq "lab note": what the paper does and how it links
+    to the project's layers and conventions.
+  - `<slug>.transcript.md` — where present, the raw `pdftotext` provenance dump
+    (frontmatter-stamped; not authoritative — see the equation audit).
+- [`tools/verify_citation.py`](../tools/verify_citation.py) resolves a single DOI
+  or arXiv id on demand; [`tools/transcribe_pdf.py`](../tools/transcribe_pdf.py)
+  re-extracts faithful text from any PDF.
 
 ## Rules for Future Agents
 

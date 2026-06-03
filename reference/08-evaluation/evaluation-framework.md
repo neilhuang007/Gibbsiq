@@ -122,7 +122,7 @@ Candidate implementations should emit a JSON file in this shape:
 Run:
 
 ```bash
-PYTHONPATH=src python -m gibbsiq.evaluation examples/evaluation-candidate.example.json
+PYTHONPATH=src python -m gibbsiq.evaluation test_suite/examples/evaluation-candidate.example.json
 ```
 
 The evaluator prints a JSON report with `passed`, `summary`, per-fixture `status`, and structured `differences`. It exits with status `0` only when every known fixture is present and passing.
@@ -186,7 +186,7 @@ An implementation fails evaluation if any of these happen:
 ## Suggested Test Layout
 
 ```text
-tests/
+test_suite/tests/
   test_energy_equivalence.py
   test_exact_fixtures.py
   test_gibbs_conditionals.py
@@ -205,3 +205,5 @@ The first implementation is acceptable when:
 - exact and simulated annealing baselines run against the same fixture IDs;
 - diagnostics catch all fixture failure modes;
 - benchmark outputs are reproducible from stored seeds and config.
+
+

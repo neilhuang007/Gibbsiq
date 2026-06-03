@@ -79,4 +79,3 @@ Risks:
 - dense graphs produce many small blocks;
 - padding can waste accelerator work;
 - block strategy affects mixing and diagnostics.
-

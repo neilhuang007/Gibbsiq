@@ -1,74 +1,152 @@
-# Gibbsiq
+# Gibbsiq: A Diagnostics-First Solver for QUBO and Ising Optimization on Thermodynamic Sampling Hardware
 
-THRML-native QUBO / Ising / BQM optimization with built-in diagnostics and inspection.
+## Abstract
 
-## Objective
+Combinatorial optimization problems such as maximum cut, number partitioning, and the travelling salesman problem can be expressed as quadratic unconstrained binary optimization (QUBO) or, equivalently, as ground-state search over an Ising energy function. However, the stochastic solvers that target these problems return distributions of candidate states, and a low-energy sample is trustworthy only when the underlying Markov chain has mixed. This document presents Gibbsiq, a diagnostics-first solver that compiles QUBO, Ising, and binary quadratic models (BQM) into a single internal Ising representation and samples them on the THRML block-Gibbs runtime, a simulator of thermodynamic sampling hardware.
 
-Build a solver stack that:
+We pair each run with convergence diagnostics—autocorrelation, effective sample size, between-chain disagreement, diversity, and feasibility—drawn from the Markov chain Monte Carlo (MCMC) literature, so that sampler health is reported alongside the recovered solution rather than assumed. Our design leverages the sparse, local structure of the Ising graph that THRML exposes for block-Gibbs sampling. We describe the problem setting, situate the work within the literature on Ising solvers and MCMC diagnostics, and summarize the current implementation.
 
-- accepts QUBO, Ising, and BQM inputs;
-- lowers models into THRML block-Gibbs execution;
-- returns samples, energies, traces, and metadata;
-- reports mixing, diversity, feasibility, and runtime diagnostics;
-- compares against standard QUBO / Ising baselines.
+**Keywords:** combinatorial optimization, QUBO, Ising model, block-Gibbs sampling, thermodynamic computing, convergence diagnostics
 
-Target API:
+---
+
+## 1. Introduction
+
+Combinatorial optimization is central to operations research, scheduling, routing, and scientific search, and a large class of such problems can be cast as quadratic unconstrained binary optimization. Computing the ground state of a general Ising model is NP-hard [1], so exact minimization is intractable at scale and practical solvers draw samples biased toward low energy rather than certifying optima. A broad family of physical and classical machines pursues this objective, including quantum annealers [4, 5, 6], coherent Ising machines [8], simulated bifurcation [9], digital annealers [10], and probabilistic (p-bit) Ising machines [11, 12].
+
+For these solvers, the central algorithmic primitive is Gibbs sampling—an MCMC method that updates each variable according to its conditional distribution given the state of its neighbors. This locality is what makes the primitive efficient: in a sparse Ising graph, each spin depends only on a small neighborhood, precisely the structure that thermodynamic sampling hardware and its simulator THRML exploit.
+
+The central observation motivating this work is that the reliability of such samplers is measurable but, in the optimization setting, is rarely measured. A reported best energy can come from a collapsed distribution, a single chain trapped in one basin, a cooling schedule that mixed poorly, or penalty weights that make infeasible states artificially cheap, and none of these failures is visible in the optimum alone. The Bayesian computation community already treats sampler reliability as a measured quantity through statistics such as $\widehat{R}$ and effective sample size [15, 16, 17]; combinatorial optimization solvers do not. We close this gap by making convergence diagnostics part of the solver contract.
+
+Our main contributions are:
+
+1. A problem interface that ingests QUBO, Ising, and BQM models into a single internal Ising representation with deterministic variable ordering and offset-preserving conversion.
+2. A runtime adapter that lowers this representation onto THRML block-Gibbs sampling with schedule, seed, and trace control.
+3. A diagnostics layer that reports autocorrelation, effective sample size, between-chain disagreement, diversity, feasibility, and explicit failure flags for each run.
+4. A benchmark harness that scores the sampler against exact enumeration and classical baselines under matched seeds and resource budgets, with a witness-based oracle that recomputes objective value and feasibility from the input model.
+
+This document is structured as follows. Section 2 reviews QUBO and Ising formulations, the sampling-based solvers that target them, and convergence diagnostics from the MCMC literature. Section 3 describes the system architecture. Section 4 summarizes the current implementation. Sections 5 and 6 give usage and installation.
+
+---
+
+### 2.1 QUBO and Ising Models
+
+An Ising model defines a probability distribution over spin configurations $\mathbf{s} \in \{-1, +1\}^n$ via an energy function $E(\mathbf{s})$:
+
+$$
+p(\mathbf{s}) = \frac{1}{Z} \exp(-\beta E(\mathbf{s}))
+$$
+
+where $Z$ is the partition function and $\beta$ is an inverse-temperature parameter. We adopt the energy convention
+
+$$
+E(\mathbf{s}) = \mathrm{offset} + \sum_i h_i s_i + \sum_{i \lt j} J_{ij} s_i s_j
+$$
+
+with linear fields $h_i$, upper-triangular couplings $J_{ij}$, and a constant offset that is preserved through every conversion. Many discrete optimization tasks are equivalently written as quadratic unconstrained binary optimization,
+
+$$
+\min_{\mathbf{x} \in \{0,1\}^n} \mathbf{x}^\top Q \mathbf{x}
+$$
+
+This is mapped to the Ising form by the substitution $\mathbf{s} = 2\mathbf{x} - \mathbf{1}$. Barahona [1] established that finding the ground state of a general Ising spin glass is NP-hard. Lucas [2] gave explicit, polynomial-size Ising formulations for Karp's 21 NP-complete problems, supplying the reductions on which our benchmark corpus draws, while Glover, Kochenberger, and Du [3] surveyed QUBO as a unifying model and catalogued the penalty constructions that absorb hard constraints into the objective.
+
+### 2.2 Sampling-Based Ising Solvers
+
+One line of work encodes the objective as a quantum Hamiltonian and drives the system toward its ground state. Kadowaki and Nishimori [4] introduced quantum annealing in the transverse-field Ising model, Farhi et al. [5] framed adiabatic quantum optimization for NP-complete problems, and Johnson et al. [6] demonstrated programmable quantum annealing on superconducting flux qubits. These devices require dilution-refrigerator cooling near absolute zero, so refrigeration dominates their energy and infrastructure cost.
+
+A parallel family of classical and analog Ising machines pursues the same objective at or near room temperature. Simulated annealing [7] remains the reference heuristic; coherent Ising machines realize spins as optical parametric oscillators [8]; simulated bifurcation reformulates the search as the adiabatic evolution of a classical nonlinear Hamiltonian system [9]; and application-specific digital hardware accelerates parallel-trial annealing on CMOS [10]. These machines motivate the classical baselines against which we score our runs.
+
+Probabilistic computing replaces the deterministic bit with the p-bit, a unit that fluctuates between states under controllable thermal noise. Camsari et al. [11] formalized stochastic p-bits and their use in invertible logic, and Aadit et al. [12] demonstrated massively parallel probabilistic computing with sparse Ising machines. This paradigm treats thermal noise as the computational resource rather than as a quantity to be suppressed, and therefore operates at ambient temperature. Jelinčič et al. [13] describe an all-transistor thermodynamic sampling architecture whose p-bits settle into low-energy configurations of a programmed energy function and which is reported to match GPU-quality sampling at approximately $10^4$ times lower energy per update without cryogenics. Its accompanying open-source JAX runtime, [THRML](https://github.com/extropic-ai/thrml), performs GPU-accelerated block-Gibbs sampling on sparse factor graphs and simulates the hardware; we target THRML as our execution substrate.
+
+### 2.3 Gibbs Sampling and Convergence Diagnostics
+
+Block-Gibbs sampling, the primitive THRML exposes, originates in the stochastic-relaxation work of Geman and Geman [14]. For a single spin, the algorithm draws from the conditional
+
+$$
+p(s_i \mid \mathbf{s}_{\neg i}) = \sigma(-2 \beta \gamma_i), \qquad \gamma_i = h_i + \sum_j J_{ij} s_j
+$$
+
+where $\sigma$ is the logistic sigmoid and $\gamma_i$ is the local field at site $i$. Because the sampler returns a distribution rather than a point, its output inherits the reliability concerns of MCMC. Gelman and Rubin [15] introduced the potential-scale-reduction statistic $\widehat{R}$, which contrasts within-chain and between-chain variance to detect non-convergence; Geyer [16] formalized autocorrelation-based effective-sample-size estimation; and Vehtari et al. [17] provided a rank-normalized $\widehat{R}$ and effective-sample-size estimators that remain valid under heavy tails and non-stationary variance. We carry these diagnostics into the combinatorial-optimization sampling loop.
+
+---
+
+## 3. System Design
+
+Gibbsiq is organized as five layers. The interface layer ingests QUBO, Ising, and dimod BQM inputs and normalizes them into one internal Ising representation with deterministic variable ordering and offset-preserving conversion, and decodes solutions back to user variables. The runtime adapter lowers that representation into THRML nodes, blocks, factors, schedules, and seeds, and captures sampling traces. The diagnostics layer computes energy and best-so-far traces, autocorrelation, effective-sample-size estimates, between-chain disagreement, solution diversity (unique fraction, top-$k$ mass, entropy, Hamming spread), constraint feasibility, and explicit failure flags such as mode collapse and absence of recent improvement. The inspector layer presents topology, trace summaries, warnings, best states, and baseline comparisons. The benchmark layer scores THRML against exact enumeration and the classical baselines of Section 2.2 under matched seeds and fixed-work and fixed-time budgets.
+
+The intended top-level interface is
 
 ```python
-model = compile_qubo(problem)
+model  = compile_qubo(problem)
 result = THRMLSampler(config).sample(model, num_reads=128)
 Inspector.from_result(result).show()
 ```
 
-## Rationale
+## 5. Usage and Installation
 
-Sampling optimizers can fail silently: high autocorrelation, mode collapse, weak feasibility, bad schedules, or poor formulation can all produce misleading best samples. Gibbsiq makes sampler health part of the default result.
+```python
+from gibbsiq import compile_qubo, compile_ising
 
-Source-backed rationale: [reference/why-this-project-matters.md](reference/why-this-project-matters.md)
+# QUBO as {(i, j): coefficient}; diagonal (i, i) entries are linear (binary) terms.
+model = compile_qubo({(0, 0): -1.0, (1, 1): -1.0, (0, 1): 2.0})
+model.energy({0: 1, 1: 0}, vartype="BINARY")               # returns -1.0
+model.conditional_probability(0, {0: 1, 1: 1}, beta=1.0)   # P(s_0 = +1 | rest)
+model.offset                                               # offset preserved through conversion
 
-## Stack
+compile_ising({0: 0.5}, {(0, 1): -1.0}).energy({0: 1, 1: 1})   # returns -0.5
+```
 
-1. Interface: QUBO / Ising / BQM ingestion and decoding.
-2. Runtime: THRML lowering, block partitioning, schedules, seeds, initialization.
-3. Diagnostics: traces, autocorrelation, ESS-style metrics, diversity, feasibility, failure flags.
-4. Inspector: topology, traces, summaries, warnings, baseline comparison.
-5. Benchmarks: Max-Cut, SK spin glass, sparse Ising, knapsack, TSP reductions.
+```bash
+# JSON fixture evaluator and test suite
+gibbsiq-evaluate ./test_suite/examples/evaluation-candidate.example.json
+PYTHONPATH=src python -m unittest discover -s test_suite/tests
+```
 
-## Roadmap
+Requires Python 3.13 or later. The core package has no required dependencies and uses only the standard library. `dimod` is optional, needed only for `to_dimod()` interoperability and the dimod conformance tests, which are skipped when it is absent.
 
-Each stage has goal, deliverables, exit criteria, implementation notes, and references:
+```bash
+pip install -e .            # core
+pip install -e ".[dimod]"   # core plus dimod interoperability
+pip install -e ".[dev]"     # full test suite
+```
 
-0. [Research and framing](reference/00-roadmap/stage-00-research-and-framing.md)
-1. [Core model compatibility](reference/00-roadmap/stage-01-core-model-compatibility.md)
-2. [First THRML sampler](reference/00-roadmap/stage-02-first-thrml-sampler.md)
-3. [Diagnostics pipeline](reference/00-roadmap/stage-03-diagnostics-pipeline.md)
-4. [Inspector and reporting](reference/00-roadmap/stage-04-inspector-and-reporting.md)
-5. [Baselines and benchmarks](reference/00-roadmap/stage-05-baselines-and-benchmarks.md)
-6. [Adaptive hardware-aware runtime](reference/00-roadmap/stage-06-adaptive-hardware-runtime.md)
+On Windows PowerShell, set `$env:PYTHONPATH = "src"` before the module invocations above.
 
-Roadmap index: [reference/00-roadmap/README.md](reference/00-roadmap/README.md)
-
-## v0 Target
-
-- solve small Max-Cut and Ising instances;
-- expose dimod-like sampler methods;
-- execute through THRML;
-- return samples, energies, traces, metadata;
-- produce first-pass diagnostics;
-- compare against simulated annealing;
-- export reproducible benchmark artifacts.
+---
 
 ## References
 
-Research pack: [reference/README.md](reference/README.md)
+[1] F. Barahona. On the computational complexity of Ising spin glass models. *Journal of Physics A: Mathematical and General*, 15(10):3241–3253, 1982.
 
-## Evaluation JSON
+[2] A. Lucas. Ising formulations of many NP problems. *Frontiers in Physics*, 2:5, 2014.
 
-Implementations can emit candidate fixture outputs as JSON and run:
+[3] F. Glover, G. Kochenberger, and Y. Du. Quantum Bridge Analytics I: a tutorial on formulating and using QUBO models. *4OR*, 17:335–371, 2019.
 
-```powershell
-$env:PYTHONPATH = "src"
-python -m gibbsiq.evaluation .\examples\evaluation-candidate.example.json
-```
+[4] T. Kadowaki and H. Nishimori. Quantum annealing in the transverse Ising model. *Physical Review E*, 58(5):5355–5363, 1998.
 
-The evaluator prints a JSON report and exits with status `0` only when all golden fixtures pass.
+[5] E. Farhi, J. Goldstone, S. Gutmann, J. Lapan, A. Lundgren, and D. Preda. A quantum adiabatic evolution algorithm applied to random instances of an NP-complete problem. *Science*, 292(5516):472–475, 2001.
+
+[6] M. W. Johnson, M. H. S. Amin, S. Gildert, et al. Quantum annealing with manufactured spins. *Nature*, 473:194–198, 2011.
+
+[7] S. Kirkpatrick, C. D. Gelatt, and M. P. Vecchi. Optimization by simulated annealing. *Science*, 220(4598):671–680, 1983.
+
+[8] P. L. McMahon, A. Marandi, Y. Haribara, et al. A fully programmable 100-spin coherent Ising machine with all-to-all connections. *Science*, 354(6312):614–617, 2016.
+
+[9] H. Goto, K. Tatsumura, and A. R. Dixon. Combinatorial optimization by simulating adiabatic bifurcations in nonlinear Hamiltonian systems. *Science Advances*, 5(4):eaav2372, 2019.
+
+[10] M. Aramon, G. Rosenberg, E. Valiante, T. Miyazawa, H. Tamura, and H. G. Katzgraber. Physics-inspired optimization for quadratic unconstrained problems using a digital annealer. *Frontiers in Physics*, 7:48, 2019.
+
+[11] K. Y. Camsari, R. Faria, B. M. Sutton, and S. Datta. Stochastic p-bits for invertible logic. *Physical Review X*, 7(3):031014, 2017.
+
+[12] N. A. Aadit, A. Grimaldi, M. Carpentieri, et al. Massively parallel probabilistic computing with sparse Ising machines. *Nature Electronics*, 5:460–468, 2022.
+
+[13] A. Jelinčič, O. Lockwood, A. Garlapati, P. Schillinger, I. Chuang, G. Verdon, and T. McCourt. An efficient probabilistic hardware architecture for diffusion-like models. arXiv:2510.23972, 2025.
+
+[14] S. Geman and D. Geman. Stochastic relaxation, Gibbs distributions, and the Bayesian restoration of images. *IEEE Transactions on Pattern Analysis and Machine Intelligence*, 6(6):721–741, 1984.
+
+[15] A. Gelman and D. B. Rubin. Inference from iterative simulation using multiple sequences. *Statistical Science*, 7(4):457–472, 1992.
+
+[16] C. J. Geyer. Practical Markov chain Monte Carlo. *Statistical Science*, 7(4):473–483, 1992.
+
+[17] A. Vehtari, A. Gelman, D. Simpson, B. Carpenter, and P.-C. Bürkner. Rank-normalization, folding, and localization: an improved $\widehat{R}$ for assessing convergence of MCMC. *Bayesian Analysis*, 16(2):667–718, 2021.

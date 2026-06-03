@@ -10,7 +10,7 @@ Files:
 Run the evaluator:
 
 ```bash
-python -m gibbsiq.evaluation examples/evaluation-candidate.example.json
+python -m gibbsiq.evaluation test_suite/examples/evaluation-candidate.example.json
 ```
 
 Candidate input format:
@@ -37,3 +37,4 @@ Rules:
 - If a formula changes, update `../equation-audit.md` first.
 - Energies use the Gibbsiq convention from `../equation-audit.md`.
 - Floating-point comparisons should use absolute tolerance `1e-9` unless the fixture says otherwise.
+

@@ -1,0 +1,4000 @@
+{
+  "schema_version": "2026-05-31",
+  "energy_convention": "E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j, s_i in {-1,+1}",
+  "description": "Brute-force-verifiable ground-truth optimization instances. Every optimum, degeneracy, and witness is proven by exhaustive enumeration. Use to score a Gibbsiq solver against known-optimal answers.",
+  "generator": "tools/generate_ground_truth.py",
+  "families": [
+    "knapsack",
+    "maxcut",
+    "number_partition",
+    "sk_spin_glass",
+    "tsp"
+  ],
+  "fixtures": [
+    {
+      "id": "gt_maxcut_er_n8_p50_s1",
+      "family": "maxcut",
+      "purpose": "Exact Max-Cut optimum on a seeded Erdos-Renyi graph (n=8, p=0.5) verified by full 2^8 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 1,
+        "model": "erdos_renyi",
+        "p_edge": 0.5,
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "5"
+          ],
+          [
+            "0",
+            "6"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "4"
+          ],
+          [
+            "1",
+            "6"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "4"
+          ],
+          [
+            "2",
+            "6"
+          ],
+          [
+            "3",
+            "5"
+          ],
+          [
+            "3",
+            "6"
+          ],
+          [
+            "4",
+            "6"
+          ],
+          [
+            "4",
+            "7"
+          ],
+          [
+            "5",
+            "6"
+          ],
+          [
+            "5",
+            "7"
+          ],
+          [
+            "6",
+            "7"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 8,
+        "num_edges": 17,
+        "best_cut_value": 12,
+        "best_ising_energy": -7.0,
+        "ground_state_degeneracy": 14,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": -1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": -1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": 1,
+            "6": -1,
+            "7": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": 1,
+            "6": 1,
+            "7": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": -1,
+            "7": -1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": -1,
+            "6": 1,
+            "7": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_er_n10_p40_s2",
+      "family": "maxcut",
+      "purpose": "Exact Max-Cut optimum on a seeded Erdos-Renyi graph (n=10, p=0.4) verified by full 2^10 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 2,
+        "model": "erdos_renyi",
+        "p_edge": 0.4,
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "edges": [
+          [
+            "0",
+            "3"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "8"
+          ],
+          [
+            "1",
+            "4"
+          ],
+          [
+            "1",
+            "6"
+          ],
+          [
+            "2",
+            "5"
+          ],
+          [
+            "2",
+            "6"
+          ],
+          [
+            "2",
+            "7"
+          ],
+          [
+            "2",
+            "9"
+          ],
+          [
+            "3",
+            "4"
+          ],
+          [
+            "3",
+            "8"
+          ],
+          [
+            "3",
+            "9"
+          ],
+          [
+            "4",
+            "5"
+          ],
+          [
+            "4",
+            "6"
+          ],
+          [
+            "5",
+            "6"
+          ],
+          [
+            "7",
+            "8"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 10,
+        "num_edges": 16,
+        "best_cut_value": 12,
+        "best_ising_energy": -8.0,
+        "ground_state_degeneracy": 24,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": -1,
+            "8": 1,
+            "9": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": 1,
+            "8": 1,
+            "9": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": -1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": -1,
+            "8": 1,
+            "9": -1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": -1,
+            "8": 1,
+            "9": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": -1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": -1,
+            "8": 1,
+            "9": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_er_n12_p30_s3",
+      "family": "maxcut",
+      "purpose": "Exact Max-Cut optimum on a seeded Erdos-Renyi graph (n=12, p=0.3) verified by full 2^12 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 3,
+        "model": "erdos_renyi",
+        "p_edge": 0.3,
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "6"
+          ],
+          [
+            "0",
+            "7"
+          ],
+          [
+            "0",
+            "9"
+          ],
+          [
+            "0",
+            "10"
+          ],
+          [
+            "1",
+            "6"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "7"
+          ],
+          [
+            "3",
+            "11"
+          ],
+          [
+            "4",
+            "5"
+          ],
+          [
+            "4",
+            "6"
+          ],
+          [
+            "6",
+            "11"
+          ],
+          [
+            "8",
+            "10"
+          ],
+          [
+            "9",
+            "11"
+          ],
+          [
+            "10",
+            "11"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 12,
+        "num_edges": 15,
+        "best_cut_value": 14,
+        "best_ising_energy": -13.0,
+        "ground_state_degeneracy": 4,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": 1,
+            "10": 1,
+            "11": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": 1,
+            "10": 1,
+            "11": -1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": -1,
+            "10": -1,
+            "11": 1
+          },
+          {
+            "0": 1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": -1,
+            "10": -1,
+            "11": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_er_n14_p50_s4",
+      "family": "maxcut",
+      "purpose": "Exact Max-Cut optimum on a seeded Erdos-Renyi graph (n=14, p=0.5) verified by full 2^14 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 4,
+        "model": "erdos_renyi",
+        "p_edge": 0.5,
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "2"
+          ],
+          [
+            "0",
+            "3"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "5"
+          ],
+          [
+            "0",
+            "6"
+          ],
+          [
+            "0",
+            "10"
+          ],
+          [
+            "0",
+            "12"
+          ],
+          [
+            "0",
+            "13"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "8"
+          ],
+          [
+            "1",
+            "9"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "7"
+          ],
+          [
+            "2",
+            "8"
+          ],
+          [
+            "2",
+            "9"
+          ],
+          [
+            "2",
+            "13"
+          ],
+          [
+            "3",
+            "9"
+          ],
+          [
+            "3",
+            "11"
+          ],
+          [
+            "3",
+            "12"
+          ],
+          [
+            "3",
+            "13"
+          ],
+          [
+            "4",
+            "6"
+          ],
+          [
+            "4",
+            "7"
+          ],
+          [
+            "4",
+            "9"
+          ],
+          [
+            "4",
+            "11"
+          ],
+          [
+            "4",
+            "12"
+          ],
+          [
+            "5",
+            "6"
+          ],
+          [
+            "5",
+            "7"
+          ],
+          [
+            "5",
+            "8"
+          ],
+          [
+            "5",
+            "10"
+          ],
+          [
+            "5",
+            "11"
+          ],
+          [
+            "5",
+            "13"
+          ],
+          [
+            "6",
+            "9"
+          ],
+          [
+            "6",
+            "10"
+          ],
+          [
+            "6",
+            "11"
+          ],
+          [
+            "7",
+            "8"
+          ],
+          [
+            "7",
+            "9"
+          ],
+          [
+            "7",
+            "10"
+          ],
+          [
+            "7",
+            "11"
+          ],
+          [
+            "7",
+            "12"
+          ],
+          [
+            "8",
+            "13"
+          ],
+          [
+            "9",
+            "10"
+          ],
+          [
+            "9",
+            "13"
+          ],
+          [
+            "11",
+            "12"
+          ],
+          [
+            "11",
+            "13"
+          ],
+          [
+            "12",
+            "13"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 14,
+        "num_edges": 47,
+        "best_cut_value": 33,
+        "best_ising_energy": -19.0,
+        "ground_state_degeneracy": 4,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": -1,
+            "10": 1,
+            "11": -1,
+            "12": -1,
+            "13": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": -1,
+            "10": -1,
+            "11": -1,
+            "12": -1,
+            "13": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": 1,
+            "10": 1,
+            "11": 1,
+            "12": 1,
+            "13": -1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": 1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": 1,
+            "10": -1,
+            "11": 1,
+            "12": 1,
+            "13": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_n10_v20_s5",
+      "family": "number_partition",
+      "purpose": "Exact minimum subset-sum difference for 10 seeded integers, verified by full 2^10 enumeration (Lucas 2014, sec. 2.1).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 5,
+        "value_range": [
+          1,
+          20
+        ],
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "number_partition",
+        "numbers": [
+          20,
+          9,
+          12,
+          17,
+          1,
+          15,
+          8,
+          2,
+          6,
+          4
+        ],
+        "ising_energy": "A * (sum_i n_i s_i)^2 with A=1"
+      },
+      "expected": {
+        "min_subset_sum_difference": 0,
+        "best_ising_energy": 0.0,
+        "ground_state_degeneracy": 24,
+        "is_perfect_partition": true,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              17,
+              1,
+              15,
+              8,
+              6
+            ],
+            "set_minus": [
+              20,
+              9,
+              12,
+              2,
+              4
+            ]
+          },
+          {
+            "set_plus": [
+              17,
+              1,
+              15,
+              8,
+              2,
+              4
+            ],
+            "set_minus": [
+              20,
+              9,
+              12,
+              6
+            ]
+          },
+          {
+            "set_plus": [
+              12,
+              15,
+              8,
+              2,
+              6,
+              4
+            ],
+            "set_minus": [
+              20,
+              9,
+              17,
+              1
+            ]
+          },
+          {
+            "set_plus": [
+              12,
+              17,
+              8,
+              6,
+              4
+            ],
+            "set_minus": [
+              20,
+              9,
+              1,
+              15,
+              2
+            ]
+          },
+          {
+            "set_plus": [
+              12,
+              17,
+              1,
+              15,
+              2
+            ],
+            "set_minus": [
+              20,
+              9,
+              8,
+              6,
+              4
+            ]
+          },
+          {
+            "set_plus": [
+              9,
+              17,
+              15,
+              6
+            ],
+            "set_minus": [
+              20,
+              12,
+              1,
+              8,
+              2,
+              4
+            ]
+          },
+          {
+            "set_plus": [
+              9,
+              17,
+              15,
+              2,
+              4
+            ],
+            "set_minus": [
+              20,
+              12,
+              1,
+              8,
+              6
+            ]
+          },
+          {
+            "set_plus": [
+              9,
+              17,
+              1,
+              8,
+              2,
+              6,
+              4
+            ],
+            "set_minus": [
+              20,
+              12,
+              15
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_n12_v50_s6",
+      "family": "number_partition",
+      "purpose": "Exact minimum subset-sum difference for 12 seeded integers, verified by full 2^12 enumeration (Lucas 2014, sec. 2.1).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 6,
+        "value_range": [
+          1,
+          50
+        ],
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "number_partition",
+        "numbers": [
+          37,
+          6,
+          32,
+          49,
+          17,
+          3,
+          1,
+          10,
+          43,
+          38,
+          31,
+          49
+        ],
+        "ising_energy": "A * (sum_i n_i s_i)^2 with A=1"
+      },
+      "expected": {
+        "min_subset_sum_difference": 0,
+        "best_ising_energy": 0.0,
+        "ground_state_degeneracy": 20,
+        "is_perfect_partition": true,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              17,
+              1,
+              10,
+              43,
+              38,
+              49
+            ],
+            "set_minus": [
+              37,
+              6,
+              32,
+              49,
+              3,
+              31
+            ]
+          },
+          {
+            "set_plus": [
+              49,
+              17,
+              43,
+              49
+            ],
+            "set_minus": [
+              37,
+              6,
+              32,
+              3,
+              1,
+              10,
+              38,
+              31
+            ]
+          },
+          {
+            "set_plus": [
+              49,
+              17,
+              1,
+              10,
+              43,
+              38
+            ],
+            "set_minus": [
+              37,
+              6,
+              32,
+              3,
+              31,
+              49
+            ]
+          },
+          {
+            "set_plus": [
+              32,
+              3,
+              43,
+              31,
+              49
+            ],
+            "set_minus": [
+              37,
+              6,
+              49,
+              17,
+              1,
+              10,
+              38
+            ]
+          },
+          {
+            "set_plus": [
+              32,
+              3,
+              1,
+              10,
+              43,
+              38,
+              31
+            ],
+            "set_minus": [
+              37,
+              6,
+              49,
+              17,
+              49
+            ]
+          },
+          {
+            "set_plus": [
+              32,
+              49,
+              3,
+              43,
+              31
+            ],
+            "set_minus": [
+              37,
+              6,
+              17,
+              1,
+              10,
+              38,
+              49
+            ]
+          },
+          {
+            "set_plus": [
+              32,
+              49,
+              17,
+              1,
+              10,
+              49
+            ],
+            "set_minus": [
+              37,
+              6,
+              3,
+              43,
+              38,
+              31
+            ]
+          },
+          {
+            "set_plus": [
+              6,
+              49,
+              1,
+              10,
+              43,
+              49
+            ],
+            "set_minus": [
+              37,
+              32,
+              17,
+              3,
+              38,
+              31
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_n14_v99_s7",
+      "family": "number_partition",
+      "purpose": "Exact minimum subset-sum difference for 14 seeded integers, verified by full 2^14 enumeration (Lucas 2014, sec. 2.1).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 7,
+        "value_range": [
+          1,
+          99
+        ],
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "number_partition",
+        "numbers": [
+          42,
+          20,
+          51,
+          84,
+          7,
+          10,
+          69,
+          13,
+          47,
+          75,
+          8,
+          65,
+          28,
+          5
+        ],
+        "ising_energy": "A * (sum_i n_i s_i)^2 with A=1"
+      },
+      "expected": {
+        "min_subset_sum_difference": 0,
+        "best_ising_energy": 0.0,
+        "ground_state_degeneracy": 70,
+        "is_perfect_partition": true,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              7,
+              69,
+              13,
+              75,
+              65,
+              28,
+              5
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              84,
+              10,
+              47,
+              8
+            ]
+          },
+          {
+            "set_plus": [
+              7,
+              10,
+              69,
+              75,
+              8,
+              65,
+              28
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              84,
+              13,
+              47,
+              5
+            ]
+          },
+          {
+            "set_plus": [
+              7,
+              10,
+              69,
+              13,
+              47,
+              75,
+              8,
+              28,
+              5
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              84,
+              65
+            ]
+          },
+          {
+            "set_plus": [
+              84,
+              10,
+              75,
+              65,
+              28
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              7,
+              69,
+              13,
+              47,
+              8,
+              5
+            ]
+          },
+          {
+            "set_plus": [
+              84,
+              10,
+              13,
+              47,
+              75,
+              28,
+              5
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              7,
+              69,
+              8,
+              65
+            ]
+          },
+          {
+            "set_plus": [
+              84,
+              7,
+              13,
+              47,
+              75,
+              8,
+              28
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              10,
+              69,
+              65,
+              5
+            ]
+          },
+          {
+            "set_plus": [
+              84,
+              7,
+              10,
+              13,
+              75,
+              8,
+              65
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              69,
+              47,
+              28,
+              5
+            ]
+          },
+          {
+            "set_plus": [
+              84,
+              7,
+              10,
+              13,
+              47,
+              8,
+              65,
+              28
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              69,
+              75,
+              5
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_frustrated_n11_v30_s16",
+      "family": "number_partition",
+      "purpose": "Exact minimum subset-sum difference for 11 seeded integers, verified by full 2^11 enumeration (Lucas 2014, sec. 2.1).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 16,
+        "value_range": [
+          1,
+          30
+        ],
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "number_partition",
+        "numbers": [
+          13,
+          16,
+          16,
+          10,
+          14,
+          8,
+          15,
+          1,
+          14,
+          28,
+          22
+        ],
+        "ising_energy": "A * (sum_i n_i s_i)^2 with A=1"
+      },
+      "expected": {
+        "min_subset_sum_difference": 1,
+        "best_ising_energy": 1.0,
+        "ground_state_degeneracy": 50,
+        "is_perfect_partition": false,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              15,
+              14,
+              28,
+              22
+            ],
+            "set_minus": [
+              13,
+              16,
+              16,
+              10,
+              14,
+              8,
+              1
+            ]
+          },
+          {
+            "set_plus": [
+              14,
+              14,
+              28,
+              22
+            ],
+            "set_minus": [
+              13,
+              16,
+              16,
+              10,
+              8,
+              15,
+              1
+            ]
+          },
+          {
+            "set_plus": [
+              14,
+              1,
+              14,
+              28,
+              22
+            ],
+            "set_minus": [
+              13,
+              16,
+              16,
+              10,
+              8,
+              15
+            ]
+          },
+          {
+            "set_plus": [
+              14,
+              15,
+              28,
+              22
+            ],
+            "set_minus": [
+              13,
+              16,
+              16,
+              10,
+              8,
+              1,
+              14
+            ]
+          },
+          {
+            "set_plus": [
+              14,
+              8,
+              15,
+              14,
+              28
+            ],
+            "set_minus": [
+              13,
+              16,
+              16,
+              10,
+              1,
+              22
+            ]
+          },
+          {
+            "set_plus": [
+              16,
+              10,
+              15,
+              1,
+              14,
+              22
+            ],
+            "set_minus": [
+              13,
+              16,
+              14,
+              8,
+              28
+            ]
+          },
+          {
+            "set_plus": [
+              16,
+              10,
+              8,
+              15,
+              1,
+              28
+            ],
+            "set_minus": [
+              13,
+              16,
+              14,
+              14,
+              22
+            ]
+          },
+          {
+            "set_plus": [
+              16,
+              10,
+              14,
+              15,
+              1,
+              22
+            ],
+            "set_minus": [
+              13,
+              16,
+              8,
+              14,
+              28
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_frustrated_n13_v7_s17",
+      "family": "number_partition",
+      "purpose": "Exact minimum subset-sum difference for 13 seeded integers, verified by full 2^13 enumeration (Lucas 2014, sec. 2.1).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 17,
+        "value_range": [
+          1,
+          7
+        ],
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "number_partition",
+        "numbers": [
+          6,
+          4,
+          7,
+          3,
+          3,
+          3,
+          2,
+          7,
+          6,
+          6,
+          5,
+          6,
+          3
+        ],
+        "ising_energy": "A * (sum_i n_i s_i)^2 with A=1"
+      },
+      "expected": {
+        "min_subset_sum_difference": 1,
+        "best_ising_energy": 1.0,
+        "ground_state_degeneracy": 724,
+        "is_perfect_partition": false,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              7,
+              6,
+              6,
+              5,
+              6
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              3,
+              2,
+              3
+            ]
+          },
+          {
+            "set_plus": [
+              2,
+              7,
+              6,
+              6,
+              6,
+              3
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              3,
+              5
+            ]
+          },
+          {
+            "set_plus": [
+              3,
+              7,
+              6,
+              5,
+              6,
+              3
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              2,
+              6
+            ]
+          },
+          {
+            "set_plus": [
+              3,
+              7,
+              6,
+              5,
+              6,
+              3
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              2,
+              6
+            ]
+          },
+          {
+            "set_plus": [
+              3,
+              7,
+              6,
+              6,
+              6,
+              3
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              2,
+              5
+            ]
+          },
+          {
+            "set_plus": [
+              3,
+              7,
+              6,
+              6,
+              5,
+              3
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              2,
+              6
+            ]
+          },
+          {
+            "set_plus": [
+              3,
+              2,
+              6,
+              6,
+              5,
+              6,
+              3
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              7
+            ]
+          },
+          {
+            "set_plus": [
+              3,
+              2,
+              7,
+              6,
+              6,
+              6
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              5,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_knapsack_n10_s8",
+      "family": "knapsack",
+      "purpose": "Exact 0/1 knapsack optimum for 10 seeded items, verified by full 2^10 enumeration (Lucas 2014, sec. 5.2).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 8,
+        "capacity_rule": "floor(sum(weights)/2)",
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "knapsack",
+        "weights": [
+          4,
+          6,
+          7,
+          3,
+          4,
+          12,
+          1,
+          2,
+          3,
+          4
+        ],
+        "values": [
+          17,
+          7,
+          13,
+          1,
+          15,
+          16,
+          15,
+          13,
+          16,
+          19
+        ],
+        "capacity": 23
+      },
+      "expected": {
+        "max_value": 96,
+        "weight_at_optimum": 21,
+        "capacity": 23,
+        "num_optimal_selections": 1,
+        "witness_selections": [
+          [
+            0,
+            3,
+            4,
+            6,
+            7,
+            8,
+            9
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_knapsack_n14_s9",
+      "family": "knapsack",
+      "purpose": "Exact 0/1 knapsack optimum for 14 seeded items, verified by full 2^14 enumeration (Lucas 2014, sec. 5.2).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 9,
+        "capacity_rule": "floor(sum(weights)/2)",
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "knapsack",
+        "weights": [
+          15,
+          20,
+          12,
+          9,
+          5,
+          6,
+          22,
+          1,
+          11,
+          17,
+          15,
+          20,
+          3,
+          11
+        ],
+        "values": [
+          36,
+          40,
+          3,
+          25,
+          11,
+          29,
+          28,
+          11,
+          11,
+          16,
+          4,
+          8,
+          9,
+          33
+        ],
+        "capacity": 83
+      },
+      "expected": {
+        "max_value": 205,
+        "weight_at_optimum": 81,
+        "capacity": 83,
+        "num_optimal_selections": 1,
+        "witness_selections": [
+          [
+            0,
+            1,
+            3,
+            4,
+            5,
+            7,
+            8,
+            12,
+            13
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_tsp_n6_s10",
+      "family": "tsp",
+      "purpose": "Exact optimal symmetric TSP tour for 6 seeded cities, verified by (6-1)!/2 permutation enumeration (Lucas 2014, sec. 7.2).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 10,
+        "distance_metric": "rounded_euclidean_2d",
+        "grid": 100,
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "tsp",
+        "num_cities": 6,
+        "coordinates": [
+          [
+            73,
+            4
+          ],
+          [
+            54,
+            61
+          ],
+          [
+            73,
+            1
+          ],
+          [
+            26,
+            59
+          ],
+          [
+            62,
+            35
+          ],
+          [
+            83,
+            20
+          ]
+        ],
+        "distance_matrix": [
+          [
+            0,
+            60,
+            3,
+            72,
+            33,
+            19
+          ],
+          [
+            60,
+            0,
+            63,
+            28,
+            27,
+            50
+          ],
+          [
+            3,
+            63,
+            0,
+            75,
+            36,
+            21
+          ],
+          [
+            72,
+            28,
+            75,
+            0,
+            43,
+            69
+          ],
+          [
+            33,
+            27,
+            36,
+            43,
+            0,
+            26
+          ],
+          [
+            19,
+            50,
+            21,
+            69,
+            26,
+            0
+          ]
+        ]
+      },
+      "expected": {
+        "num_cities": 6,
+        "optimal_tour_length": 177,
+        "num_optimal_tours": 1,
+        "witness_tours": [
+          [
+            0,
+            2,
+            5,
+            4,
+            1,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_tsp_n8_s11",
+      "family": "tsp",
+      "purpose": "Exact optimal symmetric TSP tour for 8 seeded cities, verified by (8-1)!/2 permutation enumeration (Lucas 2014, sec. 7.2).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 11,
+        "distance_metric": "rounded_euclidean_2d",
+        "grid": 100,
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "tsp",
+        "num_cities": 8,
+        "coordinates": [
+          [
+            57,
+            71
+          ],
+          [
+            99,
+            59
+          ],
+          [
+            57,
+            65
+          ],
+          [
+            75,
+            24
+          ],
+          [
+            23,
+            65
+          ],
+          [
+            60,
+            80
+          ],
+          [
+            78,
+            23
+          ],
+          [
+            12,
+            57
+          ]
+        ],
+        "distance_matrix": [
+          [
+            0,
+            44,
+            6,
+            50,
+            35,
+            9,
+            52,
+            47
+          ],
+          [
+            44,
+            0,
+            42,
+            42,
+            76,
+            44,
+            42,
+            87
+          ],
+          [
+            6,
+            42,
+            0,
+            45,
+            34,
+            15,
+            47,
+            46
+          ],
+          [
+            50,
+            42,
+            45,
+            0,
+            66,
+            58,
+            3,
+            71
+          ],
+          [
+            35,
+            76,
+            34,
+            66,
+            0,
+            40,
+            69,
+            14
+          ],
+          [
+            9,
+            44,
+            15,
+            58,
+            40,
+            0,
+            60,
+            53
+          ],
+          [
+            52,
+            42,
+            47,
+            3,
+            69,
+            60,
+            0,
+            74
+          ],
+          [
+            47,
+            87,
+            46,
+            71,
+            14,
+            53,
+            74,
+            0
+          ]
+        ]
+      },
+      "expected": {
+        "num_cities": 8,
+        "optimal_tour_length": 223,
+        "num_optimal_tours": 1,
+        "witness_tours": [
+          [
+            0,
+            2,
+            4,
+            7,
+            3,
+            6,
+            1,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_tsp_n9_s12",
+      "family": "tsp",
+      "purpose": "Exact optimal symmetric TSP tour for 9 seeded cities, verified by (9-1)!/2 permutation enumeration (Lucas 2014, sec. 7.2).",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 12,
+        "distance_metric": "rounded_euclidean_2d",
+        "grid": 100,
+        "source_basis": [
+          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+        ],
+        "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
+      },
+      "input": {
+        "format": "tsp",
+        "num_cities": 9,
+        "coordinates": [
+          [
+            60,
+            34
+          ],
+          [
+            84,
+            67
+          ],
+          [
+            85,
+            44
+          ],
+          [
+            18,
+            48
+          ],
+          [
+            1,
+            47
+          ],
+          [
+            61,
+            35
+          ],
+          [
+            82,
+            58
+          ],
+          [
+            88,
+            76
+          ],
+          [
+            29,
+            71
+          ]
+        ],
+        "distance_matrix": [
+          [
+            0,
+            41,
+            27,
+            44,
+            60,
+            1,
+            33,
+            50,
+            48
+          ],
+          [
+            41,
+            0,
+            23,
+            69,
+            85,
+            39,
+            9,
+            10,
+            55
+          ],
+          [
+            27,
+            23,
+            0,
+            67,
+            84,
+            26,
+            14,
+            32,
+            62
+          ],
+          [
+            44,
+            69,
+            67,
+            0,
+            17,
+            45,
+            65,
+            75,
+            25
+          ],
+          [
+            60,
+            85,
+            84,
+            17,
+            0,
+            61,
+            82,
+            92,
+            37
+          ],
+          [
+            1,
+            39,
+            26,
+            45,
+            61,
+            0,
+            31,
+            49,
+            48
+          ],
+          [
+            33,
+            9,
+            14,
+            65,
+            82,
+            31,
+            0,
+            19,
+            55
+          ],
+          [
+            50,
+            10,
+            32,
+            75,
+            92,
+            49,
+            19,
+            0,
+            59
+          ],
+          [
+            48,
+            55,
+            62,
+            25,
+            37,
+            48,
+            55,
+            59,
+            0
+          ]
+        ]
+      },
+      "expected": {
+        "num_cities": 9,
+        "optimal_tour_length": 217,
+        "num_optimal_tours": 1,
+        "witness_tours": [
+          [
+            0,
+            3,
+            4,
+            8,
+            7,
+            1,
+            6,
+            2,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_sk_n8_s13",
+      "family": "sk_spin_glass",
+      "purpose": "Exact ground state of a seeded Sherrington-Kirkpatrick spin glass (n=8, J in +/-1, h=0), verified by full 2^8 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 13,
+        "coupling_distribution": "uniform_pm_1",
+        "formulation_source": "Sherrington, D. & Kirkpatrick, S. (1975). Solvable Model of a Spin-Glass. Phys. Rev. Lett. 35, 1792. DOI 10.1103/PhysRevLett.35.1792."
+      },
+      "input": {
+        "format": "ising",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ],
+        "linear": {
+          "0": 0.0,
+          "1": 0.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "quadratic": {
+          "0,1": 1.0,
+          "0,2": 1.0,
+          "0,3": -1.0,
+          "0,4": -1.0,
+          "0,5": -1.0,
+          "0,6": -1.0,
+          "0,7": -1.0,
+          "1,2": -1.0,
+          "1,3": -1.0,
+          "1,4": -1.0,
+          "1,5": 1.0,
+          "1,6": -1.0,
+          "1,7": 1.0,
+          "2,3": -1.0,
+          "2,4": -1.0,
+          "2,5": 1.0,
+          "2,6": -1.0,
+          "2,7": -1.0,
+          "3,4": 1.0,
+          "3,5": 1.0,
+          "3,6": 1.0,
+          "3,7": -1.0,
+          "4,5": 1.0,
+          "4,6": 1.0,
+          "4,7": -1.0,
+          "5,6": 1.0,
+          "5,7": 1.0,
+          "6,7": 1.0
+        },
+        "offset": 0.0
+      },
+      "expected": {
+        "num_spins": 8,
+        "ground_state_energy": -12.0,
+        "ground_state_degeneracy": 4,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": -1,
+            "5": 1,
+            "6": -1,
+            "7": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": -1,
+            "5": 1,
+            "6": 1,
+            "7": -1
+          },
+          {
+            "0": 1,
+            "1": 1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_sk_n10_s14",
+      "family": "sk_spin_glass",
+      "purpose": "Exact ground state of a seeded Sherrington-Kirkpatrick spin glass (n=10, J in +/-1, h=0), verified by full 2^10 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 14,
+        "coupling_distribution": "uniform_pm_1",
+        "formulation_source": "Sherrington, D. & Kirkpatrick, S. (1975). Solvable Model of a Spin-Glass. Phys. Rev. Lett. 35, 1792. DOI 10.1103/PhysRevLett.35.1792."
+      },
+      "input": {
+        "format": "ising",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "linear": {
+          "0": 0.0,
+          "1": 0.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0
+        },
+        "quadratic": {
+          "0,1": -1.0,
+          "0,2": -1.0,
+          "0,3": 1.0,
+          "0,4": 1.0,
+          "0,5": 1.0,
+          "0,6": -1.0,
+          "0,7": 1.0,
+          "0,8": 1.0,
+          "0,9": 1.0,
+          "1,2": 1.0,
+          "1,3": 1.0,
+          "1,4": -1.0,
+          "1,5": 1.0,
+          "1,6": -1.0,
+          "1,7": 1.0,
+          "1,8": 1.0,
+          "1,9": 1.0,
+          "2,3": 1.0,
+          "2,4": -1.0,
+          "2,5": -1.0,
+          "2,6": 1.0,
+          "2,7": -1.0,
+          "2,8": -1.0,
+          "2,9": -1.0,
+          "3,4": -1.0,
+          "3,5": 1.0,
+          "3,6": -1.0,
+          "3,7": -1.0,
+          "3,8": 1.0,
+          "3,9": -1.0,
+          "4,5": 1.0,
+          "4,6": 1.0,
+          "4,7": 1.0,
+          "4,8": -1.0,
+          "4,9": -1.0,
+          "5,6": 1.0,
+          "5,7": -1.0,
+          "5,8": -1.0,
+          "5,9": 1.0,
+          "6,7": -1.0,
+          "6,8": 1.0,
+          "6,9": 1.0,
+          "7,8": -1.0,
+          "7,9": 1.0,
+          "8,9": 1.0
+        },
+        "offset": 0.0
+      },
+      "expected": {
+        "num_spins": 10,
+        "ground_state_energy": -21.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": -1,
+            "7": 1,
+            "8": 1,
+            "9": 1
+          },
+          {
+            "0": 1,
+            "1": 1,
+            "2": -1,
+            "3": -1,
+            "4": -1,
+            "5": -1,
+            "6": 1,
+            "7": -1,
+            "8": -1,
+            "9": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_sk_n12_s15",
+      "family": "sk_spin_glass",
+      "purpose": "Exact ground state of a seeded Sherrington-Kirkpatrick spin glass (n=12, J in +/-1, h=0), verified by full 2^12 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "exhaustive_enumeration",
+        "seed": 15,
+        "coupling_distribution": "uniform_pm_1",
+        "formulation_source": "Sherrington, D. & Kirkpatrick, S. (1975). Solvable Model of a Spin-Glass. Phys. Rev. Lett. 35, 1792. DOI 10.1103/PhysRevLett.35.1792."
+      },
+      "input": {
+        "format": "ising",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11"
+        ],
+        "linear": {
+          "0": 0.0,
+          "1": 0.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0,
+          "10": 0.0,
+          "11": 0.0
+        },
+        "quadratic": {
+          "0,1": -1.0,
+          "0,2": -1.0,
+          "0,3": -1.0,
+          "0,4": -1.0,
+          "0,5": -1.0,
+          "0,6": -1.0,
+          "0,7": -1.0,
+          "0,8": -1.0,
+          "0,9": 1.0,
+          "0,10": -1.0,
+          "0,11": -1.0,
+          "1,2": 1.0,
+          "1,3": 1.0,
+          "1,4": 1.0,
+          "1,5": 1.0,
+          "1,6": 1.0,
+          "1,7": 1.0,
+          "1,8": 1.0,
+          "1,9": -1.0,
+          "1,10": -1.0,
+          "1,11": 1.0,
+          "2,3": 1.0,
+          "2,4": -1.0,
+          "2,5": 1.0,
+          "2,6": 1.0,
+          "2,7": -1.0,
+          "2,8": 1.0,
+          "2,9": 1.0,
+          "2,10": 1.0,
+          "2,11": -1.0,
+          "3,4": 1.0,
+          "3,5": 1.0,
+          "3,6": 1.0,
+          "3,7": 1.0,
+          "3,8": 1.0,
+          "3,9": 1.0,
+          "3,10": -1.0,
+          "3,11": 1.0,
+          "4,5": -1.0,
+          "4,6": -1.0,
+          "4,7": -1.0,
+          "4,8": -1.0,
+          "4,9": -1.0,
+          "4,10": 1.0,
+          "4,11": 1.0,
+          "5,6": -1.0,
+          "5,7": -1.0,
+          "5,8": -1.0,
+          "5,9": 1.0,
+          "5,10": -1.0,
+          "5,11": -1.0,
+          "6,7": 1.0,
+          "6,8": 1.0,
+          "6,9": 1.0,
+          "6,10": -1.0,
+          "6,11": -1.0,
+          "7,8": 1.0,
+          "7,9": -1.0,
+          "7,10": -1.0,
+          "7,11": 1.0,
+          "8,9": 1.0,
+          "8,10": -1.0,
+          "8,11": 1.0,
+          "9,10": 1.0,
+          "9,11": 1.0,
+          "10,11": 1.0
+        },
+        "offset": 0.0
+      },
+      "expected": {
+        "num_spins": 12,
+        "ground_state_energy": -26.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": -1,
+            "9": 1,
+            "10": -1,
+            "11": -1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": 1,
+            "8": 1,
+            "9": -1,
+            "10": 1,
+            "11": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k4",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the complete K4 graph (n=4, |E|=6). Closed-form optimum floor(4^2/4) = 4, independently cross-checked by full 2^4 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "complete K4",
+        "closed_form": "floor(4^2/4)",
+        "formulation_source": "Edwards, C. S. (1973). Some extremal properties of bipartite subgraphs. Canadian J. of Mathematics 25(3):475-485. DOI 10.4153/CJM-1973-048-x."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "2"
+          ],
+          [
+            "0",
+            "3"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "2",
+            "3"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 4,
+        "num_edges": 6,
+        "best_cut_value": 4,
+        "best_ising_energy": -2.0,
+        "ground_state_degeneracy": 6,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": -1,
+            "3": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1
+          },
+          {
+            "0": 1,
+            "1": 1,
+            "2": -1,
+            "3": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k5",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the complete K5 graph (n=5, |E|=10). Closed-form optimum floor(5^2/4) = 6, independently cross-checked by full 2^5 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "complete K5",
+        "closed_form": "floor(5^2/4)",
+        "formulation_source": "Edwards, C. S. (1973). Some extremal properties of bipartite subgraphs. Canadian J. of Mathematics 25(3):475-485. DOI 10.4153/CJM-1973-048-x."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "2"
+          ],
+          [
+            "0",
+            "3"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "4"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "4"
+          ],
+          [
+            "3",
+            "4"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 5,
+        "num_edges": 10,
+        "best_cut_value": 6,
+        "best_ising_energy": -2.0,
+        "ground_state_degeneracy": 20,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": -1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": -1,
+            "4": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k6",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the complete K6 graph (n=6, |E|=15). Closed-form optimum floor(6^2/4) = 9, independently cross-checked by full 2^6 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "complete K6",
+        "closed_form": "floor(6^2/4)",
+        "formulation_source": "Edwards, C. S. (1973). Some extremal properties of bipartite subgraphs. Canadian J. of Mathematics 25(3):475-485. DOI 10.4153/CJM-1973-048-x."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "2"
+          ],
+          [
+            "0",
+            "3"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "5"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "4"
+          ],
+          [
+            "1",
+            "5"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "4"
+          ],
+          [
+            "2",
+            "5"
+          ],
+          [
+            "3",
+            "4"
+          ],
+          [
+            "3",
+            "5"
+          ],
+          [
+            "4",
+            "5"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 6,
+        "num_edges": 15,
+        "best_cut_value": 9,
+        "best_ising_energy": -3.0,
+        "ground_state_degeneracy": 20,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": -1,
+            "5": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k7",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the complete K7 graph (n=7, |E|=21). Closed-form optimum floor(7^2/4) = 12, independently cross-checked by full 2^7 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "complete K7",
+        "closed_form": "floor(7^2/4)",
+        "formulation_source": "Edwards, C. S. (1973). Some extremal properties of bipartite subgraphs. Canadian J. of Mathematics 25(3):475-485. DOI 10.4153/CJM-1973-048-x."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "2"
+          ],
+          [
+            "0",
+            "3"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "5"
+          ],
+          [
+            "0",
+            "6"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "4"
+          ],
+          [
+            "1",
+            "5"
+          ],
+          [
+            "1",
+            "6"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "4"
+          ],
+          [
+            "2",
+            "5"
+          ],
+          [
+            "2",
+            "6"
+          ],
+          [
+            "3",
+            "4"
+          ],
+          [
+            "3",
+            "5"
+          ],
+          [
+            "3",
+            "6"
+          ],
+          [
+            "4",
+            "5"
+          ],
+          [
+            "4",
+            "6"
+          ],
+          [
+            "5",
+            "6"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 7,
+        "num_edges": 21,
+        "best_cut_value": 12,
+        "best_ising_energy": -3.0,
+        "ground_state_degeneracy": 70,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": -1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": 1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_cycle_c6",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the cycle C6 graph (n=6, |E|=6). Closed-form optimum n (even) = 6, independently cross-checked by full 2^6 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "cycle C6",
+        "closed_form": "n (even)",
+        "formulation_source": "West, D. B. (2001). Introduction to Graph Theory, 2nd ed. Prentice Hall (cycle max-cut, p. 76)."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "3",
+            "4"
+          ],
+          [
+            "4",
+            "5"
+          ],
+          [
+            "0",
+            "5"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 6,
+        "num_edges": 6,
+        "best_cut_value": 6,
+        "best_ising_energy": -6.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_cycle_c7",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the cycle C7 graph (n=7, |E|=7). Closed-form optimum n-1 (odd) = 6, independently cross-checked by full 2^7 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "cycle C7",
+        "closed_form": "n-1 (odd)",
+        "formulation_source": "West, D. B. (2001). Introduction to Graph Theory, 2nd ed. Prentice Hall (cycle max-cut, p. 76)."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "3",
+            "4"
+          ],
+          [
+            "4",
+            "5"
+          ],
+          [
+            "5",
+            "6"
+          ],
+          [
+            "0",
+            "6"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 7,
+        "num_edges": 7,
+        "best_cut_value": 6,
+        "best_ising_energy": -5.0,
+        "ground_state_degeneracy": 14,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": -1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_bipartite_k33",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the complete bipartite K_{3,3} graph (n=6, |E|=9). Closed-form optimum m*n = 3*3 = 9, independently cross-checked by full 2^6 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "complete bipartite K_{3,3}",
+        "closed_form": "m*n = 3*3",
+        "formulation_source": "Diestel, R. (2017). Graph Theory, 5th ed. Springer. DOI 10.1007/978-3-662-53622-3 (complete bipartite graphs)."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "edges": [
+          [
+            "0",
+            "3"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "5"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "4"
+          ],
+          [
+            "1",
+            "5"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "4"
+          ],
+          [
+            "2",
+            "5"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 6,
+        "num_edges": 9,
+        "best_cut_value": 9,
+        "best_ising_energy": -9.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1
+          },
+          {
+            "0": 1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_bipartite_k24",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the complete bipartite K_{2,4} graph (n=6, |E|=8). Closed-form optimum m*n = 2*4 = 8, independently cross-checked by full 2^6 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "complete bipartite K_{2,4}",
+        "closed_form": "m*n = 2*4",
+        "formulation_source": "Diestel, R. (2017). Graph Theory, 5th ed. Springer. DOI 10.1007/978-3-662-53622-3 (complete bipartite graphs)."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "edges": [
+          [
+            "0",
+            "2"
+          ],
+          [
+            "0",
+            "3"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "5"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "4"
+          ],
+          [
+            "1",
+            "5"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 6,
+        "num_edges": 8,
+        "best_cut_value": 8,
+        "best_ising_energy": -8.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": 1
+          },
+          {
+            "0": 1,
+            "1": 1,
+            "2": -1,
+            "3": -1,
+            "4": -1,
+            "5": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_hypercube_q3",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the hypercube Q3 graph (n=8, |E|=12). Closed-form optimum d*2^(d-1) = 3*4 = 12, independently cross-checked by full 2^8 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "hypercube Q3",
+        "closed_form": "d*2^(d-1) = 3*4",
+        "formulation_source": "Harary, F. (1969). Graph Theory. Addison-Wesley (hypercube bipartiteness, ch. 13)."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "2"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "1",
+            "3"
+          ],
+          [
+            "1",
+            "5"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "2",
+            "6"
+          ],
+          [
+            "3",
+            "7"
+          ],
+          [
+            "4",
+            "5"
+          ],
+          [
+            "4",
+            "6"
+          ],
+          [
+            "5",
+            "7"
+          ],
+          [
+            "6",
+            "7"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 8,
+        "num_edges": 12,
+        "best_cut_value": 12,
+        "best_ising_energy": -12.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": 1,
+            "7": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_petersen",
+      "family": "maxcut",
+      "purpose": "Max-Cut on the Petersen graph (n=10, |E|=15). Closed-form optimum 12 = 12, independently cross-checked by full 2^10 enumeration.",
+      "provenance": {
+        "generator": "tools/generate_ground_truth.py",
+        "method": "closed_form_with_enumeration_crosscheck",
+        "graph": "Petersen",
+        "closed_form": "12",
+        "formulation_source": "Barahona, F. (1983). The max-cut problem on graphs not contractible to K5. Operations Research Letters 2(3):107-111. DOI 10.1016/0167-6377(83)90016-0."
+      },
+      "input": {
+        "format": "maxcut",
+        "variables": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "edges": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "1",
+            "2"
+          ],
+          [
+            "2",
+            "3"
+          ],
+          [
+            "3",
+            "4"
+          ],
+          [
+            "0",
+            "4"
+          ],
+          [
+            "0",
+            "5"
+          ],
+          [
+            "1",
+            "6"
+          ],
+          [
+            "2",
+            "7"
+          ],
+          [
+            "3",
+            "8"
+          ],
+          [
+            "4",
+            "9"
+          ],
+          [
+            "5",
+            "7"
+          ],
+          [
+            "6",
+            "8"
+          ],
+          [
+            "7",
+            "9"
+          ],
+          [
+            "5",
+            "8"
+          ],
+          [
+            "6",
+            "9"
+          ]
+        ],
+        "ising_energy": "sum_edges s_u s_v"
+      },
+      "expected": {
+        "num_nodes": 10,
+        "num_edges": 15,
+        "best_cut_value": 12,
+        "best_ising_energy": -9.0,
+        "ground_state_degeneracy": 10,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": -1,
+            "8": -1,
+            "9": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": 1,
+            "8": 1,
+            "9": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": -1,
+            "7": -1,
+            "8": -1,
+            "9": 1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": -1
+          },
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": -1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": -1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": -1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": 1,
+            "9": 1
+          },
+          {
+            "0": 1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": 1,
+            "8": 1,
+            "9": -1
+          }
+        ]
+      }
+    }
+  ],
+  "content_sha256": "afb035eeeae7e0f8cff71846457ff750e14e3455fa72214efd63656f8a5f40fe"
+}

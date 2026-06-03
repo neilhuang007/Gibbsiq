@@ -1,5 +1,10 @@
 # Stage 2 - First THRML Sampler
 
+**Status: Current target.** Stage 1 (model IR and `SampleResult`) is in place. Required work:
+lower the Ising IR into a THRML block-Gibbs program and return a populated `SampleResult`,
+then validate a tiny Ising run against analytic Boltzmann probabilities within a declared
+statistical interval.
+
 ## Goal
 
 Run small Ising/BQM problems through THRML and return `SampleResult`.

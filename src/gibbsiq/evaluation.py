@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from gibbsiq.benchmark_oracle import verify_benchmark_fixture
+
 
 DEFAULT_TOLERANCE = 1e-9
 UNORDERED_LIST_KEYS = {
@@ -55,18 +57,39 @@ def default_fixture_dir() -> Path:
     return repository_root() / "reference" / "08-evaluation" / "fixtures"
 
 
+def default_benchmark_fixture() -> Path:
+    return (
+        repository_root()
+        / "reference"
+        / "06-benchmarks"
+        / "fixtures"
+        / "ground-truth-small.json"
+    )
+
+
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8-sig") as handle:
         return json.load(handle)
 
 
-def load_fixture_sets(fixture_dir: Path) -> dict[str, Any]:
+def load_fixture_sets(
+    fixture_dir: Path, benchmark_path: Path | None = None
+) -> dict[str, Any]:
     exact = load_json(fixture_dir / "exact-small-instances.json")
     diagnostics = load_json(fixture_dir / "diagnostic-fixtures.json")
-    fixtures: dict[str, dict[str, Any]] = {}
-    groups: dict[str, list[str]] = {"exact": [], "diagnostic": []}
 
-    for group_name, payload in (("exact", exact), ("diagnostic", diagnostics)):
+    if benchmark_path is None:
+        benchmark_path = default_benchmark_fixture()
+    benchmark = load_json(benchmark_path) if benchmark_path.exists() else {"fixtures": []}
+
+    fixtures: dict[str, dict[str, Any]] = {}
+    groups: dict[str, list[str]] = {"exact": [], "diagnostic": [], "benchmark": []}
+
+    for group_name, payload in (
+        ("exact", exact),
+        ("diagnostic", diagnostics),
+        ("benchmark", benchmark),
+    ):
         for fixture in payload["fixtures"]:
             fixture_id = fixture["id"]
             if fixture_id in fixtures:
@@ -78,6 +101,7 @@ def load_fixture_sets(fixture_dir: Path) -> dict[str, Any]:
         "schema_version": {
             "exact": exact.get("schema_version"),
             "diagnostic": diagnostics.get("schema_version"),
+            "benchmark": benchmark.get("schema_version"),
         },
         "fixtures": fixtures,
         "groups": groups,
@@ -105,6 +129,8 @@ def normalize_candidate(candidate: Any) -> dict[str, Any]:
             fixture_id = row.get("id") or row.get("fixture_id")
             if not isinstance(fixture_id, str) or not fixture_id:
                 raise ValueError(f"candidate row {index} is missing id/fixture_id")
+            if fixture_id in normalized:
+                raise ValueError(f"candidate row {index} duplicates fixture id {fixture_id!r}")
             actual = row.get("actual", row.get("output", row.get("result")))
             if actual is None:
                 actual = {key: value for key, value in row.items() if key not in {"id", "fixture_id"}}
@@ -239,9 +265,11 @@ def compare_unordered_lists(expected: list[Any], actual: list[Any], path: str) -
     expected_counts: dict[str, int] = {}
     actual_counts: dict[str, int] = {}
     for value in expected:
-        expected_counts[comparable(value)] = expected_counts.get(comparable(value), 0) + 1
+        key = comparable(value)
+        expected_counts[key] = expected_counts.get(key, 0) + 1
     for value in actual:
-        actual_counts[comparable(value)] = actual_counts.get(comparable(value), 0) + 1
+        key = comparable(value)
+        actual_counts[key] = actual_counts.get(key, 0) + 1
 
     if expected_counts == actual_counts:
         return []
@@ -264,6 +292,7 @@ def evaluate_candidate(
     fixture_dir = fixture_dir or default_fixture_dir()
     fixture_sets = load_fixture_sets(fixture_dir)
     fixtures: dict[str, dict[str, Any]] = fixture_sets["fixtures"]
+    benchmark_ids = set(fixture_sets["groups"].get("benchmark", []))
     actual_by_id = normalize_candidate(candidate)
 
     results = []
@@ -290,10 +319,13 @@ def evaluate_candidate(
             )
             continue
 
-        expected = fixture["expected"]
         actual = actual_by_id[fixture_id]
-        differences = compare_values(expected, actual, fixture_id, tolerance)
-        status = "passed" if not differences else "failed"
+        if fixture_id in benchmark_ids:
+            difference_dicts = verify_benchmark_fixture(fixture, actual, tolerance)
+        else:
+            differences = compare_values(fixture["expected"], actual, fixture_id, tolerance)
+            difference_dicts = [difference.to_json() for difference in differences]
+        status = "passed" if not difference_dicts else "failed"
         passed += int(status == "passed")
         failed += int(status == "failed")
         results.append(
@@ -301,13 +333,13 @@ def evaluate_candidate(
                 "id": fixture_id,
                 "status": status,
                 "passed": status == "passed",
-                "difference_count": len(differences),
-                "differences": [difference.to_json() for difference in differences],
+                "difference_count": len(difference_dicts),
+                "differences": difference_dicts,
             }
         )
 
     unknown_ids = sorted(set(actual_by_id) - set(fixtures))
-    overall_passed = failed == 0 and missing == 0
+    overall_passed = failed == 0 and missing == 0 and not unknown_ids
     return {
         "schema_version": "2026-05-28",
         "passed": overall_passed,
@@ -366,4 +398,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

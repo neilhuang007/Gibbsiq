@@ -1,5 +1,10 @@
 # Ising formulations of many NP problems
 
+
+> **Citation.** Canonical entry `lucas2014` in [`references.bib`](../../references.bib) (resolved via Crossref/DataCite). DOI [10.3389/fphy.2014.00005](https://doi.org/10.3389/fphy.2014.00005).
+>
+> **Companion note.** [`lucas-2014-ising-formulations.note.md`](./lucas-2014-ising-formulations.note.md) — how this paper links to Gibbsiq.
+
 Andrew Lucas
 
 Lyman Laboratory of Physics, Department of Physics, Harvard University, Cambridge, MA, USA
@@ -480,7 +485,7 @@ The ground states with $H_A = 0$ are trees which include every vertex. In the la
 
 It is straightforward to slightly reduce the size of the state space for the Hamiltonian cycles problem to exclude all following initial node 1 must always be included in a Hamiltonian cycle, and without loss of generality we can set $x_{1j} = \delta_{j1}$. This just means that the overall ordering of the cycle is chosen so that node 1 comes first. This reduces the number of spins to $(N - 1)^2$.
 
-In order to solve the correct problem, we need to make sure that we never remove any spins from $H_A$, from $H_A$, in order to have a negative ground state energy $H$. As each constraint in $H_A$ contributes an energy $\geq 2$ if it is violated, we need
+In order to solve the correct problem, we need to make sure that we never remove any spins from $H_A$, in order to have a negative ground state energy $H$. As each constraint in $H_A$ contributes an energy $\geq 2$ if it is violated, we need
 
 The number of spins required is $|V| \cdot (|V| + 1] + 2|E|/2 - |E|)$. The maximal possible number of edges on any graph is $|E| = O(|V|^2)$, so this Ising formulation may require a cubic number of spins in the size of the vertices set.
 

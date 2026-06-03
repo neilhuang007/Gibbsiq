@@ -1,5 +1,12 @@
 # Stage 1 - Core Model Compatibility
 
+**Status: Complete (2026-06-01).** Implemented in `src/gibbsiq/model.py` (Ising IR),
+`conversions.py` (offset-preserving QUBO/BQM to Ising), and `result.py` (`SampleResult`);
+verified by `test_suite/tests/test_model_compatibility.py` and
+`test_suite/tests/test_stage_01_core_model_compatibility.py`. Decisions recorded in
+`research-journal/2026-06-01-stage-01-model-compatibility.md`.
+Carry-over, non-blocking: hidden metamorphic tests, `to_qubo()`, `dimod` integration test.
+
 ## Goal
 
 Accept QUBO, Ising, and BQM inputs and normalize them into one internal Ising IR.
@@ -47,4 +54,5 @@ x_i = (s_i + 1) / 2
 - PyQUBO docs: https://pyqubo.readthedocs.io/en/latest/getting_started.html
 - PyQUBO repo: https://github.com/recruit-communications/pyqubo
 - OpenJij QUBO/Ising tutorial: https://tutorial.openjij.org/en/tutorial/001-openjij_introduction.html
+
 
