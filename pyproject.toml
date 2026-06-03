@@ -1,7 +1,29 @@
 [project]
 name = "gibbsiq"
 version = "0.1.0"
+description = "A diagnostics-first solver for QUBO and Ising optimization on the THRML block-Gibbs runtime"
+readme = "README.md"
 requires-python = ">=3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Neil Huang", email = "neilhuang007@gmail.com" }]
+keywords = [
+    "qubo",
+    "ising",
+    "combinatorial-optimization",
+    "gibbs-sampling",
+    "mcmc-diagnostics",
+    "thrml",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Physics",
+]
 # Core has zero required runtime dependencies — everything ships in the stdlib.
 dependencies = []
 
@@ -12,7 +34,7 @@ dimod = ["dimod>=0.12"]
 dev = ["dimod>=0.12"]
 
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -20,3 +42,8 @@ where = ["src"]
 
 [project.scripts]
 gibbsiq-evaluate = "gibbsiq.evaluation:main"
+
+[project.urls]
+Homepage = "https://github.com/neilhuang007/Gibbsiq"
+Repository = "https://github.com/neilhuang007/Gibbsiq"
+Issues = "https://github.com/neilhuang007/Gibbsiq/issues"
