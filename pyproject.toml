@@ -2,7 +2,14 @@
 name = "gibbsiq"
 version = "0.1.0"
 requires-python = ">=3.13"
+# Core has zero required runtime dependencies — everything ships in the stdlib.
 dependencies = []
+
+# Optional features. `dimod` is only needed for IsingModel.to_dimod() /
+# SampleResult.to_dimod() and the dimod conformance tests (skipped when absent).
+[project.optional-dependencies]
+dimod = ["dimod>=0.12"]
+dev = ["dimod>=0.12"]
 
 [build-system]
 requires = ["setuptools>=69"]
