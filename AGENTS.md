@@ -21,7 +21,7 @@ independently verified oracles.
 Current repository status: Stages 0–2 of the roadmap are complete (`reference/00-roadmap/README.md`).
 The model layer is implemented (Ising IR, offset-preserving conversion, `SampleResult`) and the
 THRML optimization runtime is implemented (`THRMLSampler`, `SamplerConfig`, `thrml_runtime.py`,
-`blocks.py` with deterministic DSATUR graph-coloring, audited lowering, schedule control, seed support, and multi-chain traces) with 128 passing tests. Parallel-tempering execution is the open Stage 2 exit criterion. Diagnostics, inspector, and baseline layers remain to be built;
+`blocks.py` with deterministic DSATUR graph-coloring, audited lowering, schedule control, seed support, multi-chain traces, and `benchmark_bridge.py` bridging sampler results into the strict benchmark oracle) with 149 passing tests. Parallel-tempering execution is the open Stage 2 exit criterion. Diagnostics, inspector, and baseline layers remain to be built;
 treat them as absent until a stage marks them complete.
 
 ## Non-Negotiable Contracts

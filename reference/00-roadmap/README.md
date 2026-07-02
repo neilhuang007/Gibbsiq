@@ -14,7 +14,7 @@ changing the THRML-first execution target. The 2026-07-01 positioning decision i
 | Stage | Title | Status |
 | --- | --- | --- |
 | 0 | [Research and framing](stage-00-research-and-framing.md) | Complete — research pack, evaluator, strict benchmark oracle, ground-truth corpus |
-| 1 | [Core model compatibility](stage-01-core-model-compatibility.md) | Complete (2026-06-01) — `compile_qubo`/`compile_ising`/`compile_bqm`, Ising IR, `SampleResult`; 55 tests passed at completion; current suite has 128 tests |
+| 1 | [Core model compatibility](stage-01-core-model-compatibility.md) | Complete (2026-06-01) — `compile_qubo`/`compile_ising`/`compile_bqm`, Ising IR, `SampleResult`; 55 tests passed at completion; current suite has 149 tests |
 | 2 | [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Complete (2026-07-01) — `THRMLSampler`, audited lowering, deterministic DSATUR graph-coloring blocks, schedule/seed/init control, vmapped multi-chain traces, independent energy recomputation, exhaustive small-instance validation; remaining: parallel-tempering execution |
 | 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Pending |
 | 4 | [Inspector and reporting](stage-04-inspector-and-reporting.md) | Pending |

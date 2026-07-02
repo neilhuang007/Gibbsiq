@@ -31,9 +31,11 @@ The repository has completed **Stages 0 and 1 of a 6-stage roadmap** (status:
 `reference/00-roadmap/README.md`). `src/gibbsiq/` holds the model IR and conversions
 (`model.py`, `conversions.py`), the `SampleResult` schema (`result.py`), the JSON evaluator
 (`evaluation.py`), the strict benchmark oracle (`benchmark_oracle.py`), the THRML runtime
-(`thrml_runtime.py` with `THRMLSampler` and `SamplerConfig`), and deterministic DSATUR
-graph-coloring block construction (`blocks.py`), with 55 passing tests at Stage 1 completion
-and 128 tests in the current suite. **Stage 2 (THRML optimization runtime)** is implemented as of 2026-07-01: the
+(`thrml_runtime.py` with `THRMLSampler` and `SamplerConfig`), deterministic DSATUR
+graph-coloring block construction (`blocks.py`), and the benchmark bridge
+(`benchmark_bridge.py`) lowering ground-truth fixtures into the IR and scoring sampler
+results against the strict oracle, with 55 passing tests at Stage 1 completion
+and 149 tests in the current suite. **Stage 2 (THRML optimization runtime)** is implemented as of 2026-07-01: the
 lowering, block strategy, schedule control, trace capture, and seed/init/multi-chain support
 are built and tested, and exhaustive small-instance validation (empirical frequencies over the
 full state space of a dense four-variable instance versus analytic Boltzmann probabilities)
@@ -175,16 +177,26 @@ The result schema must expose `samples`, `variables`, `energies`, `best_sample`,
   diagnostic flags.
 
 A third group, **`benchmark`**, is loaded from
-`reference/06-benchmarks/fixtures/ground-truth-small.json` — 17 small instances (Max-Cut,
-number partitioning, knapsack, TSP, SK spin glass) whose optima are **proven by exhaustive
-enumeration** in `tools/generate_ground_truth.py`. These are scored by
-`src/gibbsiq/benchmark_oracle.py` under a **strict** criterion, *not* the generic deep-compare:
-a candidate passes only if it matches the proven optimum value, the exact degeneracy, **and**
-supplies a witness state whose objective the oracle recomputes from the input model (feasibility
-+ optimality re-verified, never trusting self-reported numbers). See
+`reference/06-benchmarks/fixtures/ground-truth-small.json` — 27 small instances (Max-Cut,
+number partitioning, knapsack, TSP, SK spin glass, plus named graphs with published
+closed-form optima: Petersen, K4–K7, cycles, complete bipartite, hypercube Q3) whose optima
+are **proven by exhaustive enumeration** in `tools/generate_ground_truth.py`. These are scored
+by `src/gibbsiq/benchmark_oracle.py` under a **strict** criterion, *not* the generic
+deep-compare: a candidate passes only if it matches the proven optimum value, the exact
+degeneracy, **and** supplies a witness state whose objective the oracle recomputes from the
+input model (feasibility + optimality re-verified, never trusting self-reported numbers). See
 `reference/06-benchmarks/ground-truth-datasets.md` for the full dataset catalog (Tier A
 self-generated + Tier B external libraries, every value with a recorded source) and
 `test_suite/examples/benchmark-candidate.example.json` for the candidate shape.
+
+Sampler results reach the oracle through `src/gibbsiq/benchmark_bridge.py`:
+`compile_fixture` lowers a fixture's `input` block into the Ising IR and
+`candidate_from_result` builds the oracle candidate from a `SampleResult` — both read **only**
+the `input` block, never `expected`, so a candidate cannot echo proven values. Sampler
+candidates are scored with `verify_optimum_claim`, which matches the strict criterion except
+that enumeration-only keys (degeneracy, optimal-selection counts) may be omitted — sampling
+cannot prove them — though a volunteered value is still checked. Knapsack and TSP fixtures
+raise `NotImplementedError` in the bridge until a penalty/one-hot encoding layer exists.
 
 Candidate input accepts three shapes (see `normalize_candidate`): a `results`/`fixtures` list
 of `{id, actual}` rows, or a flat `{fixture_id: {...}}` map. Comparison is deep and recursive;
