@@ -1,6 +1,10 @@
 # Equation Audit
 
 Status: manually checked on 2026-05-28 against the downloaded PDFs and current primary docs.
+Diagnostics entries (EVAL-EQ-007, EVAL-EQ-008, EVAL-EQ-011, EVAL-EQ-012) extended on
+2026-07-02 for the Stage 3 pipeline and cross-validated against arviz (v0.21.0 algorithm
+source) and analytic AR(1) results; see
+`reference/research-journal/2026-07-02-stage-03-diagnostics-pipeline.md`.
 
 The raw transcript files are useful for search, but not for math. The equations below are the formulas that Gibbsiq evaluation fixtures may depend on.
 
@@ -114,6 +118,44 @@ Use: chain-disagreement warnings only.
 
 Important: optimization runs are not posterior inference. Gibbsiq should not claim convergence or optimality from low R-hat. It may use R-hat-style values as a disagreement flag over energy, magnetization, violation count, or distance-to-best features.
 
+Split application (Stage 3, audited 2026-07-02): the reported `rhat` applies the core
+formula to half-split chains. Each raw chain of `N_raw` draws contributes its first
+`N_raw // 2` and last `N_raw // 2` draws as two chains (the middle draw is dropped when
+`N_raw` is odd), so the formula runs with `M = 2 * M_raw` chains of `N = N_raw // 2` draws.
+Variant declaration: Gibbsiq reports the PLAIN split R-hat, not the rank-normalized or
+folded variants of Vehtari et al. 2021; the three are numerically different and must not be
+mixed. Cross-validated to machine precision against `arviz.rhat(method="split")`.
+
+Estimator conventions (two variance quantities coexist and are distinct keys):
+
+```text
+s_m^2 in W uses ddof = 1 (divide by N - 1) on split chains
+within_chain_variances (reported per raw chain) uses population variance (divide by N_raw)
+between_chain_variance (reported) is B computed on UNSPLIT raw chains
+```
+
+The unsplit `between_chain_variance = 96.0` in the frozen
+`chain_disagreement_zero_within_variance` fixture pins the unsplit-B convention; the
+`rhat` value itself is always split-based. Conflating these is the classic R-hat
+implementation bug.
+
+Degenerate statuses (never NaN/Inf in serialized output):
+
+```text
+fewer than 2 chains or fewer than 4 raw draws per chain -> rhat_status = "insufficient_data"
+W == 0 and B == 0 (identical constant chains)           -> rhat_status = "undefined_constant_trace"
+W == 0 and B > 0                                        -> rhat_status = "undefined_or_infinite_zero_within_variance"
+otherwise                                               -> rhat_status = "ok" with numeric rhat
+```
+
+The 4-raw-draw minimum is checked on raw (pre-split) draws, matching arviz's validity gate.
+
+Stationarity contract: R-hat (and EVAL-EQ-008 ESS) assume the recorded draws target a fixed
+distribution. The THRML runtime guarantees this by construction: `warmup_beta_ladder`
+anneals only during warmup and every recorded read is collected at constant `beta`. If
+in-sampling schedules land (parallel tempering), these diagnostics must be computed per
+constant-beta segment keyed off `traces["beta_schedule"]`, never across segments.
+
 ## EVAL-EQ-008: Effective Sample Size Core
 
 Source: Vehtari et al. PDF, pages 6-8, eqs. 7 and 11-13.
@@ -134,6 +176,56 @@ tau_hat = 1 + 2 * sum_{t=1..T} rho_hat_t
 Use: ESS-style sampler health checks.
 
 Threshold note: Vehtari et al. recommend rank-normalized ESS greater than 400 and R-hat less than 1.01 for MCMC reporting. Gibbsiq v0 should report these as diagnostic context, not as optimizer pass/fail proof.
+
+Convention warning (factor of 2): Gibbsiq's `tau_hat = 1 + 2 * sum rho_t` follows
+Vehtari/Geyer/Stan. Sokal's lecture-notes convention defines `tau_int = 1/2 + sum rho_t`
+(half of ours in the large-tau limit) and the emcee package additionally uses a different
+(Sokal window) truncation rule. Values from those sources are not comparable at fixture
+tolerance; do not copy them into fixtures.
+
+Exact truncation and estimator (Stage 3, audited 2026-07-02; matches arviz
+`_ess`/`stats_utils.autocov` at the algorithm-step level so goldens cross-check to 1e-9):
+
+```text
+inputs: M raw chains of N_raw draws each; require N_raw >= 4 (checked on RAW draws)
+split:  half-split as in EVAL-EQ-007 -> M' = 2 * M chains of N = N_raw // 2 draws
+
+acov_m(t) = (1 / N) * sum_{i=1..N-t} (x_m,i - mean_m) * (x_m,i+t - mean_m)   [biased, per-chain mean]
+mean_var  = mean_m acov_m(0) * N / (N - 1)
+var_plus  = mean_var * (N - 1) / N            [+ var(chain_means, ddof=1) when M' > 1]
+
+rho_0 = 1
+rho_t = 1 - (mean_var - mean_m acov_m(t)) / var_plus          for t >= 1
+
+Geyer initial positive sequence:
+  t = 1; even = rho_0; odd = rho_1; all higher rho start at 0
+  while t < N - 3 and (even + odd) > 0:
+      even = rho_{t+1}; odd = rho_{t+2}
+      if even + odd >= 0: keep rho_{t+1} and rho_{t+2} (else both stay 0)
+      t += 2
+  max_t = t - 2
+  if even > 0: keep rho_{max_t+1} = even                      [improve-estimation term]
+
+Geyer initial monotone sequence (pair-averaging clamp), t = 1, 3, ... while t <= max_t - 2:
+  if rho_{t+1} + rho_{t+2} > rho_{t-1} + rho_t:
+      rho_{t+1} = (rho_{t-1} + rho_t) / 2; rho_{t+2} = rho_{t+1}
+
+tau_hat = -1 + 2 * sum_{t=0..max_t} rho_t + rho_{max_t+1}
+tau_hat = max(tau_hat, 1 / log10(M' * N))                     [tau floor]
+ESS     = M' * N / tau_hat
+```
+
+Edge case: when `N < 5` the positive-sequence loop never runs (`max_t = -1`) and `tau_hat`
+collapses to the floor; the implementation must return a numeric value there, not crash.
+
+Degenerate statuses (deliberate divergence from arviz): arviz returns `ESS = array size`
+for a constant array, which is a healthy-looking ESS on a frozen sampler and violates the
+Non-Negotiable Failure Cases. Gibbsiq instead returns
+`autocorrelation_status = "constant_trace"` and `ess_status = "undefined_constant_trace"`.
+Below 4 raw draws both statuses are `"insufficient_data"`. Statuses replace NaN/Inf in all
+serialized output.
+
+The stationarity contract in EVAL-EQ-007 applies identically here.
 
 ## EVAL-EQ-009: Benchmark Performance Score
 
@@ -170,4 +262,57 @@ reported_resources = formulation_time
 ```
 
 Use fixed-time and fixed-work comparisons separately. If parameters are tuned, report the tuning budget and include it in resource accounting when claiming operational performance.
+
+## EVAL-EQ-011: Sample Diversity Metrics
+
+Source: standard definitions (Shannon entropy; Hamming distance), pinned by the frozen
+`mode_collapse_counts_n4_reads128` fixture and cross-validated exactly against
+`scipy.stats.entropy` and `scipy.spatial.distance.pdist(metric="hamming")` on 2026-07-02.
+
+For `R` reads over `n` variables with distinct-state counts `c_k` (`sum_k c_k = R`,
+frequencies `p_k = c_k / R`):
+
+```text
+unique_fraction = num_distinct_states / R
+top_k_mass      = sum of the k largest p_k                    (reported for k = 1, 3, 10)
+entropy_nats    = -sum_k p_k * ln(p_k)                        (natural log, in nats)
+```
+
+Mean pairwise Hamming distance is averaged over ALL C(R, 2) unordered read pairs, including
+pairs of reads that landed in the same state (which contribute distance 0). With
+`d(a, b)` the number of differing variables between states `a` and `b`:
+
+```text
+mean_pairwise_hamming_distance = [ sum_{k < l} c_k * c_l * d(a_k, a_l) ] / C(R, 2)
+normalized_mean_pairwise_hamming_distance = mean_pairwise_hamming_distance / n
+```
+
+`mean_pairwise_hamming_distance` is in variable units (average number of differing
+variables per pair). Frozen-fixture pins (n = 4, R = 128):
+entropy_nats = 0.3096046315802033,
+mean_pairwise_hamming_distance = 0.27288385826771655 (= 2218 / 8128), and
+normalized_mean_pairwise_hamming_distance = 0.06822096456692914. Common wrong variants that
+these pins kill: log2 entropy, distinct-state-only Hamming (excluding same-state pairs),
+and ordered-pair denominators.
+
+Use: diversity section of the diagnostics contract; `mode_collapse` and `low_diversity`
+flags.
+
+## EVAL-EQ-012: Magnetization and Distance-to-Best Traces
+
+Source: standard Ising magnetization; distance-to-best defined by the Stage 3 contract.
+
+For read `t` with spins `s_i(t)` over `n` variables:
+
+```text
+magnetization_t = (1 / n) * sum_i s_i(t)
+distance_to_best_t = Hamming distance between read t and the run's best sample
+```
+
+The best sample is the read with minimal energy; ties resolve to the FIRST minimal index in
+flat read order, matching `SampleResult.best_index`. Both traces are per-chain
+lists-of-lists with the same shape as `traces["energy"]`. Degenerate optima make
+`distance_to_best` depend on the tie rule, which is why the rule is pinned here.
+
+Use: trace capture in the THRML runtime; Stage 4 inspector plots.
 

@@ -18,10 +18,10 @@ important distinction is the audit trail: model conversion is checked, sampler b
 measured, failures are flagged, and benchmark claims are checked against exact or
 independently verified oracles.
 
-Current repository status: Stages 0–2 of the roadmap are complete (`reference/00-roadmap/README.md`).
-The model layer is implemented (Ising IR, offset-preserving conversion, `SampleResult`) and the
+Current repository status: Stages 0–3 of the roadmap are complete (`reference/00-roadmap/README.md`).
+The model layer is implemented (Ising IR, offset-preserving conversion, `SampleResult`), the
 THRML optimization runtime is implemented (`THRMLSampler`, `SamplerConfig`, `thrml_runtime.py`,
-`blocks.py` with deterministic DSATUR graph-coloring, audited lowering, schedule control, seed support, multi-chain traces, and `benchmark_bridge.py` bridging sampler results into the strict benchmark oracle) with 149 passing tests. Parallel-tempering execution is the open Stage 2 exit criterion. Diagnostics, inspector, and baseline layers remain to be built;
+`blocks.py` with deterministic DSATUR graph-coloring, audited lowering, schedule control, seed support, multi-chain traces, and `benchmark_bridge.py` bridging sampler results into the strict benchmark oracle), and the diagnostics layer is implemented (`diagnostics.py`, pure stdlib: Geyer ESS/tau and plain split R-hat cross-validated against arviz and an R-`posterior` reference, diversity/energy/chain sections, family-scoped failure flags with a thresholds echo, magnetization and distance-to-best traces, embedded in every `sample()` call) with 209 tests (6 skip without the arviz dev extra). Parallel-tempering execution is the open Stage 2 exit criterion. Inspector and baseline layers remain to be built;
 treat them as absent until a stage marks them complete.
 
 ## Non-Negotiable Contracts

@@ -117,6 +117,80 @@
         "rhat_status": "undefined_or_infinite_zero_within_variance",
         "required_flags": ["chain_disagreement", "zero_within_chain_variance"]
       }
+    },
+    {
+      "id": "healthy_multichain_energy_trace",
+      "actual": {
+        "num_chains": 4,
+        "num_chains_used": 4,
+        "draws_per_chain": 128,
+        "chain_means": [-0.06118319735197784, -0.002851507443669988, 0.0815862057935817, 0.010937005894290301],
+        "within_chain_variances": [1.076579578155016, 1.0950217374056492, 0.9681216515318221, 1.0423827196742337],
+        "between_chain_variance": 0.44051383681705397,
+        "rhat_status": "ok",
+        "rhat": 0.9971300303075038,
+        "split_within_chain_variance": 1.0554624045499308,
+        "ess_status": "ok",
+        "ess": 573.9426350857319,
+        "tau_hat": 0.8920752157112717,
+        "required_flags": []
+      }
+    },
+    {
+      "id": "autocorrelated_energy_trace_ar1",
+      "actual": {
+        "count": 256,
+        "min": -4.626248160926747,
+        "max": 5.436299014517196,
+        "mean": -0.3289174981043321,
+        "variance": 3.4562111627739704,
+        "best_energy": -4.626248160926747,
+        "best_improvement_count": 9,
+        "recent_improvement": true,
+        "draws_per_chain": 256,
+        "autocorrelation_status": "ok",
+        "tau_hat": 12.027266222274006,
+        "ess_status": "ok",
+        "ess": 21.28496993987698,
+        "required_flags": ["low_ess", "poor_mixing"]
+      }
+    },
+    {
+      "id": "chain_disagreement_numeric_rhat",
+      "actual": {
+        "num_chains": 4,
+        "num_chains_used": 4,
+        "draws_per_chain": 8,
+        "chain_means": [1.0, 2.0, 11.0, 12.0],
+        "within_chain_variances": [1.0, 1.0, 1.0, 1.0],
+        "between_chain_variance": 269.3333333333333,
+        "rhat_status": "ok",
+        "rhat": 4.732109164300539,
+        "split_within_chain_variance": 1.3333333333333333,
+        "ess_status": "ok",
+        "ess": 48.16479930623699,
+        "tau_hat": 0.6643856189774724,
+        "required_flags": ["chain_disagreement"]
+      }
+    },
+    {
+      "id": "insufficient_data_short_trace",
+      "actual": {
+        "count": 3,
+        "min": 1.0,
+        "max": 3.0,
+        "mean": 2.0,
+        "variance": 0.6666666666666666,
+        "best_energy": 1.0,
+        "best_improvement_count": 2,
+        "recent_improvement": true,
+        "draws_per_chain": 3,
+        "autocorrelation_status": "insufficient_data",
+        "tau_hat": null,
+        "ess_status": "insufficient_data",
+        "ess": null,
+        "required_flags": ["insufficient_diagnostic_data"]
+      }
     }
   ]
 }

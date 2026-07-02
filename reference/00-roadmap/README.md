@@ -1,6 +1,6 @@
 # Roadmap
 
-## Status (updated 2026-07-01)
+## Status (updated 2026-07-02)
 
 The roadmap is THRML-first. Gibbsiq is the optimization infrastructure and trust layer above
 THRML. Diagnostics, dimod compatibility, and baseline adapters exist to make THRML-backed
@@ -16,15 +16,18 @@ changing the THRML-first execution target. The 2026-07-01 positioning decision i
 | 0 | [Research and framing](stage-00-research-and-framing.md) | Complete — research pack, evaluator, strict benchmark oracle, ground-truth corpus |
 | 1 | [Core model compatibility](stage-01-core-model-compatibility.md) | Complete (2026-06-01) — `compile_qubo`/`compile_ising`/`compile_bqm`, Ising IR, `SampleResult`; 55 tests passed at completion; current suite has 149 tests |
 | 2 | [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Complete (2026-07-01) — `THRMLSampler`, audited lowering, deterministic DSATUR graph-coloring blocks, schedule/seed/init control, vmapped multi-chain traces, independent energy recomputation, exhaustive small-instance validation; remaining: parallel-tempering execution |
-| 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Pending |
+| 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Complete (2026-07-02) — `src/gibbsiq/diagnostics.py` (pure stdlib): Geyer ESS/tau and split R-hat cross-validated against arviz (486 cases, `1e-9`) and an R-`posterior` reference (`4.9e-15` worst rel. err.), diversity/energy/chain sections, family-scoped failure flags, thresholds echo, magnetization and distance-to-best traces, every `sample()` call embeds the payload; 4 new golden fixtures with a mutation-kill matrix |
 | 4 | [Inspector and reporting](stage-04-inspector-and-reporting.md) | Pending |
 | 5 | [Baselines and benchmarks](stage-05-baselines-and-benchmarks.md) | Pending |
 | 6 | [Adaptive hardware-aware runtime](stage-06-adaptive-hardware-runtime.md) | Pending |
 
-Progress follows the staged order. Stages 0–2 are complete. Stage 2 (lowering the Ising IR
-into THRML programs with block construction, schedule control, seeds, and trace capture) landed
-on 2026-07-01 with exhaustive small-instance validation and parallel-tempering execution as
-open exit criteria; Stage 3 (diagnostics) is the current target.
+Progress follows the staged order. Stages 0–3 are complete. Stage 3 (diagnostics) landed on
+2026-07-02: every THRML run emits the full telemetry payload, synthetic failure fixtures
+trigger their expected flags, and the ESS/R-hat implementations are anchored to external
+references (journal: `2026-07-02-stage-03-diagnostics-pipeline.md`). Stage 4 (inspector and
+reporting) is the current target. Parallel-tempering execution remains the open Stage 2 exit
+criterion; when it lands, diagnostics move to per-constant-beta segments per the EVAL-EQ-007
+stationarity contract.
 
 Stage 1 carry-over items, tracked in the journal and not blocking Stage 2: hidden-style
 metamorphic tests (variable relabel, offset shift, spin-gauge), a `to_qubo()` reverse

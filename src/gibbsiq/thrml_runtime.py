@@ -28,6 +28,7 @@ from typing import Any
 
 from gibbsiq.blocks import BlockPartition, color_blocks, graph_density, validate_partition
 from gibbsiq.conversions import compile_ising, compile_qubo
+from gibbsiq.diagnostics import compute_diagnostics, distance_to_best_trace, magnetization_trace
 from gibbsiq.model import IsingModel, Variable, finite_float
 from gibbsiq.result import SampleResult
 
@@ -259,10 +260,12 @@ class THRMLSampler:
         chain_ids: list[int] = []
         energy_trace: list[list[float]] = []
         best_trace: list[list[float]] = []
+        sample_chains: list[list[dict[Variable, int]]] = []
         for chain_index in range(config.num_chains):
             remaining = num_reads - len(samples)
             chain_energies: list[float] = []
             chain_best: list[float] = []
+            chain_samples: list[dict[Variable, int]] = []
             for row in spins[chain_index][:remaining]:
                 sample = {variable: int(value) for variable, value in zip(model.variables, row)}
                 energy = model.energy(sample)
@@ -270,8 +273,16 @@ class THRMLSampler:
                 chain_ids.append(chain_index)
                 chain_energies.append(energy)
                 chain_best.append(energy if not chain_best else min(chain_best[-1], energy))
+                chain_samples.append(sample)
             energy_trace.append(chain_energies)
             best_trace.append(chain_best)
+            sample_chains.append(chain_samples)
+
+        # Trace post-processing and diagnostics share one timing bucket
+        # (EVAL-EQ-010 resource split): everything after decode is telemetry.
+        diagnostics_started = time.perf_counter()
+        flat_energies = [energy for chain in energy_trace for energy in chain]
+        best_sample = samples[min(range(len(flat_energies)), key=flat_energies.__getitem__)]
 
         beta_schedule = [
             {"phase": "warmup", "beta": beta, "sweeps": sweeps} for beta, sweeps in segments
@@ -289,6 +300,8 @@ class THRMLSampler:
             "best_energy_so_far": best_trace,
             "sample_chain_ids": chain_ids,
             "beta_schedule": beta_schedule,
+            "magnetization": magnetization_trace(sample_chains, model.variables),
+            "distance_to_best": distance_to_best_trace(sample_chains, best_sample, model.variables),
         }
 
         device = jax.devices()[0]
@@ -315,4 +328,21 @@ class THRMLSampler:
         }
         metadata.update(partition.to_metadata())
 
-        return SampleResult.from_model(model, samples, traces=traces, metadata=metadata)
+        diagnostics = compute_diagnostics(
+            energy_chains=energy_trace,
+            samples=samples,
+            variables=model.variables,
+            timings={
+                "lower_seconds": lower_seconds,
+                "sample_seconds": sample_seconds,
+                "device_platform": device.platform,
+                "device_kind": device.device_kind,
+            },
+        )
+        diagnostics_seconds = time.perf_counter() - diagnostics_started
+        diagnostics["runtime"]["diagnostics_seconds"] = diagnostics_seconds
+        metadata["diagnostics_seconds"] = diagnostics_seconds
+
+        return SampleResult.from_model(
+            model, samples, traces=traces, diagnostics=diagnostics, metadata=metadata
+        )

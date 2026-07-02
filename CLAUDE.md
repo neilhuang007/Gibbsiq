@@ -27,20 +27,23 @@ and benchmark oracle are kept backend-portable at the architectural level as a h
 contract-level portability that keeps the THRML-first execution target, journaled in
 `reference/research-journal/2026-07-01-trust-layer-positioning.md`.
 
-The repository has completed **Stages 0 and 1 of a 6-stage roadmap** (status:
+The repository has completed **Stages 0 through 3 of a 6-stage roadmap** (status:
 `reference/00-roadmap/README.md`). `src/gibbsiq/` holds the model IR and conversions
 (`model.py`, `conversions.py`), the `SampleResult` schema (`result.py`), the JSON evaluator
 (`evaluation.py`), the strict benchmark oracle (`benchmark_oracle.py`), the THRML runtime
 (`thrml_runtime.py` with `THRMLSampler` and `SamplerConfig`), deterministic DSATUR
-graph-coloring block construction (`blocks.py`), and the benchmark bridge
+graph-coloring block construction (`blocks.py`), the benchmark bridge
 (`benchmark_bridge.py`) lowering ground-truth fixtures into the IR and scoring sampler
-results against the strict oracle, with 55 passing tests at Stage 1 completion
-and 149 tests in the current suite. **Stage 2 (THRML optimization runtime)** is implemented as of 2026-07-01: the
-lowering, block strategy, schedule control, trace capture, and seed/init/multi-chain support
-are built and tested, and exhaustive small-instance validation (empirical frequencies over the
-full state space of a dense four-variable instance versus analytic Boltzmann probabilities)
-passes in the test suite. Diagnostics, inspector, and baseline layers remain to be built.
-Parallel-tempering execution is the open Stage 2 exit criterion.
+results against the strict oracle, and the diagnostics layer (`diagnostics.py`, pure
+stdlib). **Stage 2 (THRML optimization runtime)** landed 2026-07-01 with exhaustive
+small-instance validation; parallel-tempering execution is its open exit criterion.
+**Stage 3 (diagnostics pipeline)** landed 2026-07-02: Geyer ESS/tau and plain split R-hat
+(arviz v0.21.0 algorithm, cross-validated to 1e-9 against arviz and to 1e-8 against an
+R-`posterior` reference), diversity/energy/chain sections, family-scoped failure flags with
+a thresholds echo, and magnetization / distance-to-best traces — every `sample()` call
+embeds the payload. Trace-window diagnostics assume a constant-beta collection window
+(guaranteed by the runtime; see EVAL-EQ-007). The full suite runs 209 tests (6 skip without
+the optional arviz dev dependency). Inspector and baseline layers remain to be built.
 
 ## Commands
 

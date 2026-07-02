@@ -1,5 +1,12 @@
 # Stage 3 - Diagnostics Pipeline
 
+**Status: complete (2026-07-02).** Implemented in `src/gibbsiq/diagnostics.py` and wired
+into `THRMLSampler.sample`; audited in EVAL-EQ-007/008/011/012; journaled in
+`reference/research-journal/2026-07-02-stage-03-diagnostics-pipeline.md`. The constraint
+feasibility summary reports `not_available` until the penalty/one-hot encoding layer exists,
+and the unpenalized-objective trace waits on the same layer. When parallel tempering lands
+(open Stage 2 exit criterion), diagnostics move to per-constant-beta segments.
+
 ## Goal
 
 Compute sampler-health metrics from THRML-backed samples, traces, and metadata. Diagnostics

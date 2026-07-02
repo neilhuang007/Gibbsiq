@@ -93,14 +93,32 @@ Required diagnostic families:
 - no-recent-improvement warning;
 - mode-collapse warning.
 
-Fixture source: `fixtures/diagnostic-fixtures.json`.
+Fixture source: `fixtures/diagnostic-fixtures.json`. Seven fixtures as of 2026-07-02: the
+original three (`mode_collapse_counts_n4_reads128`, `constant_energy_trace`,
+`chain_disagreement_zero_within_variance`) plus `healthy_multichain_energy_trace` (negative
+control, flags exactly empty), `autocorrelated_energy_trace_ar1` (pins Geyer tau/ESS),
+`chain_disagreement_numeric_rhat` (hand-exact split R-hat `sqrt(627/28)`), and
+`insufficient_data_short_trace` (raw-draws validity gate).
+
+Degenerate inputs return explicit statuses instead of NaN/Inf: `ok`, `constant_trace`,
+`undefined_constant_trace`, `undefined_or_infinite_zero_within_variance`,
+`insufficient_data`. Formulas and statuses are audited in EVAL-EQ-007/008/011/012.
+
+Family scoping: a fixture's `input` block declares which telemetry family it exercises
+(`sample_counts` selects diversity, `energy_trace` selects energy, `chains` selects chains),
+and `required_flags` is compared as an exact multiset scoped to that family. The runtime
+path unions all families. This keeps frozen goldens stable as new metrics land: new flags
+can only appear in a new family or a new fixture, never silently inside an old one.
 
 Pass criteria:
 
 - constant traces do not produce NaN diagnostics in public output;
 - mode collapse fixtures raise `mode_collapse`;
 - disagreement fixtures raise `chain_disagreement`;
-- diagnostics explicitly distinguish "not enough data" from "healthy".
+- diagnostics explicitly distinguish "not enough data" from "healthy";
+- the healthy negative-control fixture keeps `required_flags` exactly empty;
+- pinned tau/ESS/R-hat values match at `1e-9` (they kill Sokal windowing, factor-of-2 tau,
+  unsplit and rank-normalized R-hat, and ddof errors by construction).
 
 ## JSON Evaluator
 
