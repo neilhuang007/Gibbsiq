@@ -67,7 +67,7 @@ $10^5$ spins it finds lower-energy states at reduced cost.
 - Companion SB-annealing paper in this section →
   [`./pawlowski-2026-simulated-bifurcation-annealing.md`](./pawlowski-2026-simulated-bifurcation-annealing.md).
 - THRML block-Gibbs runtime (schedule / trace hooks) →
-  [`../thrml-gibbs-implementation.md`](../thrml-gibbs-implementation.md).
+  [`../thrml-optimization-runtime.md`](../thrml-optimization-runtime.md).
 - Energy convention and offset handling (`CLAUDE.md` → "Canonical conventions"),
   audited in [`../../08-evaluation/equation-audit.md`](../../08-evaluation/equation-audit.md).
 - Max-Cut Ising formulation used for benchmarks → Lucas 2014,

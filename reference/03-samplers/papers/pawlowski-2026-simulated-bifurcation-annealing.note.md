@@ -67,7 +67,7 @@ runtime overhead, while staying competitive elsewhere.
   and [`./turingq-2025-qis3-qubo-solver.md`](./turingq-2025-qis3-qubo-solver.md).
 - Baseline solver catalog and the THRML Gibbs runtime →
   [`../baseline-solvers.md`](../baseline-solvers.md),
-  [`../thrml-gibbs-implementation.md`](../thrml-gibbs-implementation.md).
+  [`../thrml-optimization-runtime.md`](../thrml-optimization-runtime.md).
 - Energy convention and offset preservation → `CLAUDE.md` → "Canonical conventions";
   benchmark sourcing/witness rules →
   [`../../06-benchmarks/ground-truth-datasets.md`](../../06-benchmarks/ground-truth-datasets.md).

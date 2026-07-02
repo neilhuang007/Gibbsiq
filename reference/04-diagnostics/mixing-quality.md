@@ -1,5 +1,10 @@
 # Diagnostics
 
+Diagnostics in Gibbsiq are THRML runtime telemetry. They summarize the sample distribution
+and scalar traces produced by a run. They are required because a stochastic optimizer can
+return a low-energy sample even when the chain is collapsed, highly autocorrelated, or stuck
+in one mode. Diagnostics warn about those failure modes; they do not prove optimality.
+
 ## Sources
 
 - Vehtari et al.: https://sites.stat.columbia.edu/gelman/research/published/Vehtari_etal_2020_rhat_ess.pdf
@@ -108,4 +113,3 @@ diagnostics = {
     "flags": [...],
 }
 ```
-

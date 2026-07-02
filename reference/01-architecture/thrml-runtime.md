@@ -3,9 +3,9 @@
 ## Sources
 
 - Docs: https://docs.thrml.ai/
-- Architecture: https://docs.thrml.ai/en/latest/architecture/
-- Block sampling API: https://docs.thrml.ai/en/latest/api/block_sampling/
-- Spin example: https://docs.thrml.ai/en/latest/examples/02_spin_models/
+- Architecture: https://docs.thrml.ai/en/latest/architecture
+- Block sampling API: https://docs.thrml.ai/en/latest/api/block_sampling
+- Spin example: https://docs.thrml.ai/en/latest/examples/02_spin_models
 - Repo: https://github.com/extropic-ai/thrml
 
 ## THRML Concepts
@@ -29,7 +29,11 @@ QUBO/BQM/Ising input
 -> diagnostics/inspector
 ```
 
-THRML is the runtime substrate. Gibbsiq owns conversion, schema, diagnostics, baselines, reports.
+THRML is the runtime substrate. It provides the probabilistic-programming primitives:
+nodes hold variables, factors define energy terms, blocks define variables updated together,
+programs coordinate sampling, and schedules specify warmup and sample collection. Gibbsiq
+owns the optimization layer around those primitives: conversion, block strategy, schedules,
+seeds, trace capture, schema, diagnostics, baselines, and reports.
 
 ## Internal IR
 
@@ -64,6 +68,8 @@ class THRMLProgramBundle:
     clamped_blocks: list
     model: object
     program: object
+    schedule: object
+    metadata: dict
 ```
 
 ## v0 Block Strategy
@@ -79,3 +85,14 @@ Risks:
 - dense graphs produce many small blocks;
 - padding can waste accelerator work;
 - block strategy affects mixing and diagnostics.
+
+## Runtime Strategy
+
+The Stage 2 runtime should keep the public configuration compatible with:
+
+- fixed-temperature correctness tests;
+- annealing schedules;
+- batched independent chains;
+- future beta-ladder / parallel-tempering execution;
+- clamped-block conditional probes;
+- dense-graph fallbacks or explicit baseline comparison.

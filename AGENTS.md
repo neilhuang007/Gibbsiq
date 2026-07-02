@@ -4,20 +4,25 @@ Guidance for AI agents working on Gibbsiq.
 
 ## Project Identity
 
-Gibbsiq is a diagnostics-first optimization research project. The target product is a
-QUBO / Ising / BQM solver workflow that can run through THRML block Gibbs sampling and
-strong classical baselines, then report whether the result should be trusted.
+Gibbsiq is THRML-native optimization infrastructure for QUBO / Ising / BQM models. The
+target product lowers standard optimization models into THRML block-Gibbs programs, records
+the raw evidence needed to audit the run, compares against classical baselines, and reports
+whether the result should be trusted.
 
-The important distinction is not "another optimizer found a low-energy sample." The
-project is about turning stochastic optimization from blind trial-and-error into an
-instrumented workflow: model conversion is audited, sampler behavior is measured, failures
-are flagged, and benchmark claims are checked against exact or independently verified
-oracles.
+The project is THRML-first. Do not reinterpret it as a generic diagnostics package.
+Diagnostics, dimod compatibility, and baseline adapters exist to make THRML-backed
+optimization auditable and comparable.
 
-Current repository status: Stages 0–1 of the roadmap are complete
-(`reference/00-roadmap/README.md`). The model layer is implemented (Ising IR, offset-preserving
-conversion, `SampleResult`) with 55 passing tests. The THRML runtime, diagnostics, inspector,
-and baseline layers remain to be built; treat them as absent until a stage marks them complete.
+The important distinction is not that another optimizer found a low-energy sample. The
+important distinction is the audit trail: model conversion is checked, sampler behavior is
+measured, failures are flagged, and benchmark claims are checked against exact or
+independently verified oracles.
+
+Current repository status: Stages 0–2 of the roadmap are complete (`reference/00-roadmap/README.md`).
+The model layer is implemented (Ising IR, offset-preserving conversion, `SampleResult`) and the
+THRML optimization runtime is implemented (`THRMLSampler`, `SamplerConfig`, `thrml_runtime.py`,
+`blocks.py` with deterministic DSATUR graph-coloring, audited lowering, schedule control, seed support, and multi-chain traces) with 128 passing tests. Parallel-tempering execution is the open Stage 2 exit criterion. Diagnostics, inspector, and baseline layers remain to be built;
+treat them as absent until a stage marks them complete.
 
 ## Non-Negotiable Contracts
 
@@ -45,8 +50,8 @@ When implementation begins, keep modules small and direct. Avoid god files, brit
 layers, and broad abstractions that do not match the roadmap. The intended layers are:
 
 1. Interface and internal Ising IR.
-2. THRML runtime adapter.
-3. Diagnostics.
+2. THRML optimization runtime.
+3. Diagnostics and telemetry.
 4. Inspector/reporting.
 5. Baselines and benchmarks.
 
@@ -105,6 +110,7 @@ Do not reward best energy alone.
 Before editing technical claims:
 
 - Read `PROJECT_BRIEF.md`, `spec.md`, `CLAUDE.md`, and `reference/README.md`.
+- For orientation, read `reference/glossary.md` and `reference/claims-evidence-map.md`.
 - For math, read `reference/08-evaluation/equation-audit.md` before any raw paper transcript.
 - For evaluation work, read `reference/08-evaluation/evaluation-framework.md` and
   `reference/08-evaluation/agentic-evaluation-research.md`.
@@ -123,11 +129,13 @@ python tools/generate_ground_truth.py --out reference/06-benchmarks/fixtures/gro
 
 ## Current Research Priority
 
-Stage 1 (core model compatibility) is done. The next implementation target is **Stage 2: a
-first THRML block-Gibbs sampler** that lowers the Ising IR and returns a populated
-`SampleResult`, validated against analytic Boltzmann probabilities within a declared
-statistical interval. In parallel, the diagnostics and benchmark-loader work is now unblocked
-(both can start from Stage 1 artifacts / fixtures).
+Stage 1 (core model compatibility) is done. The next implementation target is **Stage 2: the
+THRML optimization runtime**. It lowers the Ising IR into THRML programs, constructs
+graph-aware blocks, records schedule/seed/initialization metadata, captures raw samples and
+traces, and returns a populated `SampleResult`. The first statistical validation target is a
+tiny Ising model whose empirical frequencies match analytic Boltzmann probabilities within a
+declared interval. Diagnostics and benchmark-loader work can proceed in parallel when it
+uses Stage 1 artifacts or Stage 2-style traces.
 
 Throughout, keep converting the project into an agentic workflow with verifiable rewards:
 specify what is checked by public tests, what is held back as blind tests, and how rewards
@@ -208,9 +216,9 @@ as you go so the methodology can be transcribed without reconstructing it from g
    `src/gibbsiq/benchmark_oracle.py`, `tools/generate_ground_truth.py`,
    `reference/06-benchmarks/ground-truth-datasets.md`. Candidate venue: NeurIPS Datasets &
    Benchmarks / eval workshop.
-2. **Secondary — systems/tools.** "Gibbsiq: a diagnostics-first contract for trustworthy
+2. **Secondary — systems/tools.** "Gibbsiq: THRML-native infrastructure for auditable
    combinatorial optimization." Folds in as the harness/system section of (1); standalone
-   only once the solver runs (JOSS/SoftwareX). 
+   only once the solver runs (JOSS/SoftwareX).
 3. **Follow-up, gated on Stage 2–5 — empirical study.** "When do thermodynamic/block-Gibbs
    samplers beat classical baselines on QUBO?" Requires the THRML adapter + baselines +
    fixed-work/fixed-time runs. Do NOT make empirical performance claims before this exists.

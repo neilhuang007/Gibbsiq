@@ -1,0 +1,150 @@
+# Gibbsiq Technical Specification
+
+## Scope
+
+Gibbsiq is THRML-native optimization infrastructure for QUBO, Ising, and BQM models. It is
+being built to provide the path from a standard quadratic optimization model to an auditable
+THRML sampling run. A model enters through a stable interface, is converted into the
+canonical Ising convention, will be lowered into THRML nodes, factors, blocks, and sampling
+programs, and will produce a result artifact containing raw samples, traces, diagnostics,
+metadata, and benchmark evidence. In the current repository, the model interface,
+conversion layer, result schema, evaluator, and benchmark oracle are implemented; the THRML
+runtime and later reporting layers remain target behavior.
+
+The project is not a backend-agnostic diagnostics package. dimod compatibility, classical
+baselines, and diagnostic fixtures are included because THRML-backed optimization needs
+adoption bridges and independent controls. The primary execution path remains THRML.
+
+By analogy, Gibbsiq holds the position that Ocean and dimod hold for D-Wave and that ArviZ
+holds for Stan and PyMC: the ingestion, runtime-contract, diagnostics, and
+independent-verification layer for the THRML ecosystem, with THRML itself as the general
+programming layer for thermodynamic sampling units. The durable contribution is independent
+verification and diagnostics, which a hardware vendor cannot credibly supply for its own
+device; model ingestion and lowering may later be absorbed by an Extropic-owned optimization
+SDK, while the verification and diagnostics contracts remain. The `SampleResult` schema,
+diagnostic inputs, and witness-recomputing benchmark oracle are therefore specified to be
+backend-portable at the architectural level. This is contract-level portability as a hedge:
+the same audited artifacts stay useful for the broader Ising-machine field if the THRML
+hardware path is delayed, while execution stays THRML-first.
+
+## Non-Negotiable Technical Contracts
+
+- Canonical energy:
+
+```text
+E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j
+```
+
+- Spins use `s_i in {-1,+1}`.
+- Quadratic terms are upper-triangular and are not double-counted.
+- Offsets must survive every QUBO/BQM/Ising conversion and appear in result metadata.
+- The audited single-site conditional is:
+
+```text
+P(s_i = +1 | s_-i) = sigmoid(-2 * beta * gamma_i)
+```
+
+- `gamma_i = h_i + sum_j J_ij s_j`.
+- R-hat, ESS, diversity, and related diagnostics are warnings about sampler health, not
+  proofs of optimality.
+- Benchmark claims require witness states and independent objective recomputation.
+
+## Product Layers
+
+1. **Interface and internal model**
+   - Ingest QUBO, Ising, and dimod-style BQM inputs.
+   - Normalize them into deterministic internal Ising models.
+   - Preserve offsets and source-format metadata.
+   - Export to dimod when the optional dependency is installed.
+
+2. **THRML optimization runtime**
+   - Lower the internal Ising model into THRML nodes, factors, blocks, and programs.
+   - Build graph-aware block partitions from nonzero couplings.
+   - Support seeds, initialization policies, fixed-beta schedules, and later beta ladders.
+   - Capture raw samples, energy traces, schedule metadata, block metadata, versions, device,
+     and timing.
+   - Recompute energies under Gibbsiq's convention instead of trusting backend output.
+
+3. **Diagnostics and telemetry**
+   - Compute energy summaries, best-so-far traces, autocorrelation, ESS-style estimates,
+     diversity, chain disagreement, feasibility, and failure flags.
+   - Consume Stage 2 `SampleResult` artifacts without rerunning the sampler.
+   - Distinguish unhealthy runs from `not_enough_data`.
+
+4. **Inspector and reports**
+   - Present topology, trace summaries, warnings, best states, feasibility, and baseline
+     comparison.
+   - Preserve raw data links and metadata so reports can be audited.
+
+5. **Baselines and benchmarks**
+   - Compare THRML-backed runs against exact enumeration and classical baselines under fixed
+     seeds and declared resource budgets.
+   - Keep fixed-work and fixed-time comparisons separate.
+   - Recompute objectives from candidate witnesses.
+
+## Data Path
+
+```text
+QUBO/BQM/Ising input
+-> IsingModel
+-> THRMLProgramBundle
+-> SampleResult
+-> diagnostics
+-> inspector or benchmark report
+```
+
+Each arrow is a checked boundary. Model conversion is checked by exhaustive small-instance
+energy equivalence. THRML lowering is checked by analytic Gibbs conditionals and tiny
+Boltzmann distributions. Benchmark reports are checked by witness recomputation.
+
+## Known Non-Claims
+
+- No THRML speedup is claimed until measured against classical and GPU baselines under
+  recorded fixed-work or fixed-time budgets.
+- Fixed-beta Gibbs is a validation target, not a claim of competitive optimization quality.
+- R-hat, ESS, diversity, and related diagnostics are warnings about sampler behavior, not
+  proofs of optimality.
+- Dense QUBO graphs may reduce or eliminate block-parallel advantage because graph coloring
+  can produce many small color classes.
+- Best-known benchmark values are not correctness oracles unless the source and witness are
+  independently verified.
+
+## Stage 2 Target
+
+The current implementation target is the first THRML optimization runtime. It must provide
+the smallest reliable path from model input to THRML execution:
+
+- `THRMLSampler.sample`;
+- `THRMLSampler.sample_qubo`;
+- `THRMLSampler.sample_ising`;
+- IR-to-THRML lowering;
+- graph-coloring block construction;
+- seed, initialization, schedule, and `num_reads` controls;
+- independent energy recomputation under the canonical convention;
+- raw sample and trace capture;
+- analytic validation on tiny Ising fixtures.
+
+The API must leave room for batched independent chains and parallel tempering. Fixed-beta
+Gibbs is the first correctness target because it is easiest to validate against exact
+probabilities; it is not the final optimization strategy.
+
+## Evidence Standard
+
+A result is done only when the matching independent check has run and the evidence is
+recorded. At minimum, record:
+
+- command used;
+- pass/fail result;
+- seed and RNG identity;
+- solver/backend versions;
+- device and operating system when numerics or performance may depend on them;
+- raw samples and traces for stochastic claims;
+- timing split into compile, sample, diagnostics, tuning, and wall-clock;
+- SHA-256 checksum for generated artifacts;
+- primary-source URL or DOI for external numbers.
+
+## Current Status
+
+Stages 0 and 1 are complete. The implemented code provides the canonical Ising model,
+offset-preserving QUBO/BQM/Ising conversion, `SampleResult`, the JSON evaluator, and the
+strict benchmark oracle. Stage 2 remains to be implemented.

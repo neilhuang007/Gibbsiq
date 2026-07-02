@@ -4,22 +4,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-Gibbsiq is a **diagnostics-first** combinatorial optimization solver for QUBO / Ising / BQM
-problems, built on the THRML block-Gibbs runtime. Its differentiator is that sampler health
-(mixing, diversity, feasibility, mode collapse, schedule problems) is part of the solver
-*contract*, not an optional add-on. Every result is meant to answer two questions at once:
-"what is the best solution?" and "should we trust how we found it?".
+Gibbsiq is **THRML-native optimization infrastructure** for QUBO / Ising / BQM problems.
+It turns standard optimization models into auditable THRML programs. Its differentiator is
+not diagnostics in isolation. Its differentiator is the complete THRML optimization contract:
+audited model conversion, graph-aware block construction, schedules, seed and initialization
+control, trace capture, sampler-health diagnostics, baseline comparison, and witness-based
+benchmark verification.
+
+Do not reinterpret the project as a backend-agnostic diagnostics package. dimod and baseline
+support are adoption and comparison bridges into the THRML path. Diagnostics are mandatory
+telemetry for THRML-backed optimization runs, not an independent product objective.
+
+The accurate analogy is Ocean and dimod for D-Wave plus ArviZ for Stan and PyMC, applied to
+the THRML ecosystem: Gibbsiq is the ingestion, runtime-contract, diagnostics, and
+independent-verification layer, while the general programming layer for thermodynamic sampling
+units is THRML itself. Gibbsiq does not aim to be a PyTorch-like TSU programming layer; that
+role belongs to THRML (Extropic-owned). The durable moat is independent verification and
+diagnostics, which a hardware vendor cannot credibly supply for its own device; ingestion and
+lowering may later be absorbed by an Extropic-owned optimization SDK, while the verification
+and diagnostics contracts remain. Accordingly, the `SampleResult` schema, diagnostic inputs,
+and benchmark oracle are kept backend-portable at the architectural level as a hedge. This is
+contract-level portability that keeps the THRML-first execution target, journaled in
+`reference/research-journal/2026-07-01-trust-layer-positioning.md`.
 
 The repository has completed **Stages 0 and 1 of a 6-stage roadmap** (status:
 `reference/00-roadmap/README.md`). `src/gibbsiq/` holds the model IR and conversions
 (`model.py`, `conversions.py`), the `SampleResult` schema (`result.py`), the JSON evaluator
-(`evaluation.py`), and the strict benchmark oracle (`benchmark_oracle.py`), with 55 passing
-tests. The current target is **Stage 2 (first THRML sampler)**; the THRML runtime,
-diagnostics, inspector, and baseline layers remain to be built.
+(`evaluation.py`), the strict benchmark oracle (`benchmark_oracle.py`), the THRML runtime
+(`thrml_runtime.py` with `THRMLSampler` and `SamplerConfig`), and deterministic DSATUR
+graph-coloring block construction (`blocks.py`), with 55 passing tests at Stage 1 completion
+and 128 tests in the current suite. **Stage 2 (THRML optimization runtime)** is implemented as of 2026-07-01: the
+lowering, block strategy, schedule control, trace capture, and seed/init/multi-chain support
+are built and tested, and exhaustive small-instance validation (empirical frequencies over the
+full state space of a dense four-variable instance versus analytic Boltzmann probabilities)
+passes in the test suite. Diagnostics, inspector, and baseline layers remain to be built.
+Parallel-tempering execution is the open Stage 2 exit criterion.
 
 ## Commands
 
-The project targets **Python >= 3.13** and currently has **zero runtime dependencies**.
+The project targets **Python >= 3.10** and the core package has **zero required runtime dependencies**.
 
 ```powershell
 # Run the JSON fixture evaluator (primary verification entry point today)
@@ -32,7 +55,7 @@ gibbsiq-evaluate .\test_suite\examples\evaluation-candidate.example.json
 # Evaluate a candidate and write the report to a file
 python -m gibbsiq.evaluation <candidate.json> --output report.json --tolerance 1e-9
 
-# Run the unit tests (stdlib unittest, no third-party deps)
+# Run the unit tests (stdlib unittest, no third-party deps required; THRML tests skip without pip install -e ".[thrml]")
 python -m unittest discover -s test_suite/tests
 
 # Regenerate the brute-force ground-truth benchmark corpus (deterministic)
@@ -118,11 +141,12 @@ The intended product is five layers (see `spec.md` and `reference/00-roadmap/`):
 1. **Interface** — ingest QUBO / Ising / BQM into one internal Ising IR with deterministic
    variable ordering and offset-preserving conversion. IR fields: `variables`, `linear`,
    `quadratic`, `offset`, `vartype`, `graph`, `source_format`, `variable_order`, `metadata`.
-2. **THRML runtime** — lower the IR into THRML nodes/blocks/factors/programs and run block
-   Gibbs with schedule/seed/init/read controls and trace hooks.
-3. **Diagnostics** — energy & best-so-far traces, autocorrelation, ESS-style estimate,
-   R-hat-style chain disagreement, diversity (unique fraction, top-k mass, entropy, Hamming),
-   feasibility, and failure flags (`mode_collapse`, `chain_disagreement`,
+2. **THRML optimization runtime** — lower the IR into THRML nodes/blocks/factors/programs and
+   run block Gibbs with schedule/seed/init/read controls, deterministic DSATUR graph-coloring
+   block construction, and trace hooks.
+3. **Diagnostics and telemetry** — energy & best-so-far traces, autocorrelation, ESS-style
+   estimate, R-hat-style chain disagreement, diversity (unique fraction, top-k mass, entropy,
+   Hamming), feasibility, and failure flags (`mode_collapse`, `chain_disagreement`,
    `no_recent_improvement`, etc.).
 4. **Inspector** — `Inspector.from_result(result).show()` produces topology/trace/diagnostic
    reports, best-state tables, and baseline comparisons.
@@ -181,7 +205,7 @@ notes plus primary-source papers (`.md` summaries alongside `.pdf`):
 - `00-roadmap/` — staged plan (stage 0 research → stage 6 adaptive hardware runtime).
 - `01-architecture/` — THRML runtime notes.
 - `02-interfaces/` — QUBO/BQM API, PyQUBO, qubolite.
-- `03-samplers/` — baseline solvers, THRML Gibbs implementation.
+- `03-samplers/` — baseline solvers, THRML optimization runtime notes.
 - `04-diagnostics/` — mixing quality, R-hat/ESS (Vehtari), penalty weighting.
 - `05-theory/` — Lucas 2014 Ising formulations of NP problems, p-bit / probabilistic computing.
 - `06-benchmarks/` — `benchmark-plan.md` and benchmark-suite papers (Max-Cut/GSET, Amplify).
@@ -197,7 +221,8 @@ formulations (Max-Cut, TSP, knapsack, graph coloring, etc.).
 ## Workflow notes
 
 - THRML docs: https://docs.thrml.ai/ — repo: https://github.com/extropic-ai/thrml
+- Project glossary: `reference/glossary.md`; claims/evidence map:
+  `reference/claims-evidence-map.md`.
 - The git default branch (and the base for PRs) is `master`.
 - Energy-sign and offset bugs are the highest-risk class here; when implementing conversions or
   conditionals, validate against the exact fixtures before anything else.
-

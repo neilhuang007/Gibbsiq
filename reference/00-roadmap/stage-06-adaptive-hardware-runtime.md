@@ -45,11 +45,10 @@ Controls:
 ## References
 
 - Runtime note: ../01-architecture/thrml-runtime.md
-- THRML sampler note: ../03-samplers/thrml-gibbs-implementation.md
+- THRML runtime note: ../03-samplers/thrml-optimization-runtime.md
 - Theory note: ../05-theory/probabilistic-computing-and-pbits.md
 - THRML docs: https://docs.thrml.ai/
-- THRML architecture: https://docs.thrml.ai/en/latest/architecture/
+- THRML architecture: https://docs.thrml.ai/en/latest/architecture
 - Extropic thermodynamic computing: http://extropic.ai/writing/thermodynamic-computing-from-zero-to-one
 - pc-COP: https://arxiv.org/html/2504.04543v1
 - p-Bits for PSL: https://arxiv.org/abs/1809.04028
-

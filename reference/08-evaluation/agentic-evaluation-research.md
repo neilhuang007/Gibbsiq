@@ -310,7 +310,7 @@ Project-local sources:
 External primary sources:
 
 - THRML documentation: https://docs.thrml.ai/
-- THRML architecture docs: https://docs.thrml.ai/en/latest/architecture/
+- THRML architecture docs: https://docs.thrml.ai/en/latest/architecture
 - D-Wave dimod docs: https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod/
 - Lucas, "Ising formulations of many NP problems": https://doi.org/10.3389/fphy.2014.00005
 - Vehtari et al., "Rank-normalization, folding, and localization": https://projecteuclid.org/journals/bayesian-analysis/volume-16/issue-2/Rank-Normalization-Folding-and-Localization--An-Improved-R%CB%86-for/10.1214/20-BA1221.full
@@ -326,5 +326,4 @@ External primary sources:
 - SWE-bench Pro methodology: https://labs.scale.com/leaderboard/swe_bench_pro_public
 - Verifiable Process Rewards for Agentic Reasoning: https://arxiv.org/html/2605.10325v1
 - METR frontier risk report on agent reward hacking: https://metr.org/blog/2026-05-19-frontier-risk-report
-
 

@@ -7,7 +7,7 @@ Copy code only when the license is compatible and attribution/license notices ar
 | Area | Source | License | Reuse Guidance |
 |---|---|---:|---|
 | THRML runtime | https://github.com/extropic-ai/thrml | Apache-2.0 | Model block sampling, spin examples, and JAX/PyTree integration patterns. Do not assume it provides Gibbsiq diagnostics or QUBO conversion. |
-| THRML docs | https://docs.thrml.ai/en/latest/examples/02_spin_models/ | Docs | Use for current spin model and block sampling API expectations. |
+| THRML docs | https://docs.thrml.ai/en/latest/examples/02_spin_models | Docs | Use for current spin model and block sampling API expectations. |
 | BQM/QUBO interface | https://github.com/dwavesystems/dimod | Apache-2.0 | Model `Sampler`, `SampleSet`, vartype, BQM, and exact-solver behavior. Good source for dimod-compatible API shape. |
 | Current D-Wave samplers | https://github.com/dwavesystems/dwave-samplers | Apache-2.0 | Prefer over old `dwave-neal` for current simulated annealing adapter patterns. |
 | Legacy neal SA | https://github.com/dwavesystems/dwave-neal | Apache-2.0 | Useful for compatibility with existing Ocean examples; repository is older. |
@@ -32,4 +32,3 @@ Copy code only when the license is compatible and attribution/license notices ar
 - simulated-bifurcation-algorithm GitHub `pushed_at`: 2026-01-16.
 - ArviZ GitHub `pushed_at`: 2026-04-24.
 - stochastic-benchmark GitHub `pushed_at`: 2026-05-27.
-

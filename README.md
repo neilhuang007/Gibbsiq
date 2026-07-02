@@ -1,10 +1,10 @@
-# Gibbsiq: A Diagnostics-First Solver for QUBO and Ising Optimization on Thermodynamic Sampling Hardware
+# Gibbsiq: THRML-Native Optimization Infrastructure for QUBO and Ising Models
 
 ## Abstract
 
-Combinatorial optimization problems such as maximum cut, number partitioning, and the travelling salesman problem can be expressed as quadratic unconstrained binary optimization (QUBO) or, equivalently, as ground-state search over an Ising energy function. However, the stochastic solvers that target these problems return distributions of candidate states, and a low-energy sample is trustworthy only when the underlying Markov chain has mixed. This document presents Gibbsiq, a diagnostics-first solver that compiles QUBO, Ising, and binary quadratic models (BQM) into a single internal Ising representation and samples them on the THRML block-Gibbs runtime, a simulator of thermodynamic sampling hardware.
+Combinatorial optimization problems such as maximum cut, number partitioning, and the travelling salesman problem can be expressed as quadratic unconstrained binary optimization (QUBO) or as ground-state search over an Ising energy function. THRML provides a probabilistic execution substrate: models are represented as nodes, factors, blocks, and sampling programs aligned with thermodynamic sampling hardware. Gibbsiq is the optimization layer being built above that substrate. The implemented core compiles QUBO, Ising, and binary quadratic models (BQM) into a canonical Ising representation; the current Stage 2 target is to lower that representation into THRML block-Gibbs programs and record the samples, traces, metadata, and checks needed to evaluate the run.
 
-We pair each run with convergence diagnostics—autocorrelation, effective sample size, between-chain disagreement, diversity, and feasibility—drawn from the Markov chain Monte Carlo (MCMC) literature, so that sampler health is reported alongside the recovered solution rather than assumed. Our design leverages the sparse, local structure of the Ising graph that THRML exposes for block-Gibbs sampling. We describe the problem setting, situate the work within the literature on Ising solvers and MCMC diagnostics, and summarize the current implementation.
+The project is THRML-first. Diagnostics are required, but the execution target is THRML. The intended contribution is a reusable optimization stack with five parts: audited model conversion, graph-aware block construction, schedule and seed control, multi-chain trace capture, and benchmark oracles that recompute objective values from witness states. Positioned by analogy, Gibbsiq is to THRML what Ocean and dimod are to D-Wave and what ArviZ is to Stan and PyMC: the ingestion, runtime-contract, diagnostics, and independent-verification layer above the sampling substrate. The general programming layer for thermodynamic sampling units is THRML itself; Gibbsiq occupies the optimization and trust layer above it.
 
 **Keywords:** combinatorial optimization, QUBO, Ising model, block-Gibbs sampling, thermodynamic computing, convergence diagnostics
 
@@ -14,20 +14,24 @@ We pair each run with convergence diagnostics—autocorrelation, effective sampl
 
 Combinatorial optimization is central to operations research, scheduling, routing, and scientific search, and a large class of such problems can be cast as quadratic unconstrained binary optimization. Computing the ground state of a general Ising model is NP-hard [1], so exact minimization is intractable at scale and practical solvers draw samples biased toward low energy rather than certifying optima. A broad family of physical and classical machines pursues this objective, including quantum annealers [4, 5, 6], coherent Ising machines [8], simulated bifurcation [9], digital annealers [10], and probabilistic (p-bit) Ising machines [11, 12].
 
-For these solvers, the central algorithmic primitive is Gibbs sampling—an MCMC method that updates each variable according to its conditional distribution given the state of its neighbors. This locality is what makes the primitive efficient: in a sparse Ising graph, each spin depends only on a small neighborhood, precisely the structure that thermodynamic sampling hardware and its simulator THRML exploit.
+For these solvers, the algorithmic primitive relevant to Gibbsiq is Gibbs sampling: an MCMC method that updates each variable according to its conditional distribution given the state of its neighbors. This locality is hardware-relevant. In a sparse Ising graph, each spin depends only on a small neighborhood, which is the structure that thermodynamic sampling hardware and THRML expose through graph-colored block updates.
 
-The central observation motivating this work is that the reliability of such samplers is measurable but, in the optimization setting, is rarely measured. A reported best energy can come from a collapsed distribution, a single chain trapped in one basin, a cooling schedule that mixed poorly, or penalty weights that make infeasible states artificially cheap, and none of these failures is visible in the optimum alone. The Bayesian computation community already treats sampler reliability as a measured quantity through statistics such as $\widehat{R}$ and effective sample size [15, 16, 17]; combinatorial optimization solvers do not. We close this gap by making convergence diagnostics part of the solver contract.
+THRML is lower-level than an optimization SDK. A user starting from a QUBO or BQM should not have to hand-build `SpinNode` graphs, block partitions, schedules, trace capture, benchmark accounting, and convention checks for every experiment. Gibbsiq provides that translation and audit layer. Its durable contribution is independent verification: audited conversion, sampler-health diagnostics, and witness-recomputing benchmark oracles that a hardware vendor cannot credibly supply for its own device. Model ingestion and lowering may in time be absorbed by an Extropic-owned optimization SDK; the verification and diagnostics contracts are the part that survives that.
 
-Our main contributions are:
+The second observation motivating this work is that the reliability of stochastic optimization runs is measurable but, in the optimization setting, is rarely part of the solver result contract. A reported best energy can come from a collapsed distribution, a single chain trapped in one basin, a cooling schedule that mixed poorly, or penalty weights that make infeasible states artificially cheap, and none of these failures is visible in the optimum alone. The Bayesian computation community already treats sampler reliability as a measured quantity through statistics such as $\widehat{R}$ and effective sample size [15, 16, 17]. Gibbsiq carries these checks into the THRML optimization stack as telemetry and failure flags.
 
-1. A problem interface that ingests QUBO, Ising, and BQM models into a single internal Ising representation with deterministic variable ordering and offset-preserving conversion.
-2. A runtime adapter that lowers this representation onto THRML block-Gibbs sampling with schedule, seed, and trace control.
-3. A diagnostics layer that reports autocorrelation, effective sample size, between-chain disagreement, diversity, feasibility, and explicit failure flags for each run.
-4. A benchmark harness that scores the sampler against exact enumeration and classical baselines under matched seeds and resource budgets, with a witness-based oracle that recomputes objective value and feasibility from the input model.
+The implemented and planned contributions are:
 
-This document is structured as follows. Section 2 reviews QUBO and Ising formulations, the sampling-based solvers that target them, and convergence diagnostics from the MCMC literature. Section 3 describes the system architecture. Section 4 summarizes the current implementation. Sections 5 and 6 give usage and installation.
+1. Implemented: a problem interface that ingests QUBO, Ising, and BQM models into a single internal Ising representation with deterministic variable ordering and offset-preserving conversion.
+2. Implemented (2026-07-01): a THRML optimization runtime that lowers this representation into THRML nodes, factors, graph-colored blocks, sampling programs, schedules, seeds, initialization policies, and trace capture, validated by exhaustive small-instance comparison against analytic Boltzmann probabilities; the remaining exit criterion is parallel-tempering execution.
+3. Planned: a diagnostics layer that reports autocorrelation, effective sample size, between-chain disagreement, diversity, feasibility, and explicit failure flags for each THRML run.
+4. Partly implemented: a benchmark harness that scores candidate runs against exact enumeration under witness recomputation, with later classical-baseline comparisons under matched seeds and resource budgets.
+
+This document reviews QUBO and Ising formulations, the sampling-based solvers that target them, convergence diagnostics from the MCMC literature, the Gibbsiq architecture, and the current implementation.
 
 ---
+
+## 2. Background
 
 ### 2.1 QUBO and Ising Models
 
@@ -57,14 +61,14 @@ One line of work encodes the objective as a quantum Hamiltonian and drives the s
 
 A parallel family of classical and analog Ising machines pursues the same objective at or near room temperature. Simulated annealing [7] remains the reference heuristic; coherent Ising machines realize spins as optical parametric oscillators [8]; simulated bifurcation reformulates the search as the adiabatic evolution of a classical nonlinear Hamiltonian system [9]; and application-specific digital hardware accelerates parallel-trial annealing on CMOS [10]. These machines motivate the classical baselines against which we score our runs.
 
-Probabilistic computing replaces the deterministic bit with the p-bit, a unit that fluctuates between states under controllable thermal noise. Camsari et al. [11] formalized stochastic p-bits and their use in invertible logic, and Aadit et al. [12] demonstrated massively parallel probabilistic computing with sparse Ising machines. This paradigm treats thermal noise as the computational resource rather than as a quantity to be suppressed, and therefore operates at ambient temperature. Jelinčič et al. [13] describe an all-transistor thermodynamic sampling architecture whose p-bits settle into low-energy configurations of a programmed energy function and which is reported to match GPU-quality sampling at approximately $10^4$ times lower energy per update without cryogenics. Its accompanying open-source JAX runtime, [THRML](https://github.com/extropic-ai/thrml), performs GPU-accelerated block-Gibbs sampling on sparse factor graphs and simulates the hardware; we target THRML as our execution substrate.
+Probabilistic computing replaces the deterministic bit with the p-bit, a unit that fluctuates between states under controllable thermal noise. Camsari et al. [11] formalized stochastic p-bits and their use in invertible logic, and Aadit et al. [12] demonstrated massively parallel probabilistic computing with sparse Ising machines. This paradigm treats thermal noise as the computational resource rather than as a quantity to be suppressed, and therefore operates at ambient temperature. Jelinčič et al. [13] describe an all-transistor thermodynamic sampling architecture for diffusion-like models and report large simulated energy-efficiency gains for that setting. Gibbsiq does not treat those hardware projections as evidence of QUBO optimization speedup. The accompanying open-source JAX runtime, [THRML](https://github.com/extropic-ai/thrml), performs GPU-accelerated block-Gibbs sampling on sparse factor graphs and simulates the hardware; we target THRML as our execution substrate.
 
 ### 2.3 Gibbs Sampling and Convergence Diagnostics
 
 Block-Gibbs sampling, the primitive THRML exposes, originates in the stochastic-relaxation work of Geman and Geman [14]. For a single spin, the algorithm draws from the conditional
 
 $$
-p(s_i \mid \mathbf{s}_{\neg i}) = \sigma(-2 \beta \gamma_i), \qquad \gamma_i = h_i + \sum_j J_{ij} s_j
+P(s_i = +1 \mid \mathbf{s}_{\neg i}) = \sigma(-2 \beta \gamma_i), \qquad \gamma_i = h_i + \sum_j J_{ij} s_j
 $$
 
 where $\sigma$ is the logistic sigmoid and $\gamma_i$ is the local field at site $i$. Because the sampler returns a distribution rather than a point, its output inherits the reliability concerns of MCMC. Gelman and Rubin [15] introduced the potential-scale-reduction statistic $\widehat{R}$, which contrasts within-chain and between-chain variance to detect non-convergence; Geyer [16] formalized autocorrelation-based effective-sample-size estimation; and Vehtari et al. [17] provided a rank-normalized $\widehat{R}$ and effective-sample-size estimators that remain valid under heavy tails and non-stationary variance. We carry these diagnostics into the combinatorial-optimization sampling loop.
@@ -73,7 +77,24 @@ where $\sigma$ is the logistic sigmoid and $\gamma_i$ is the local field at site
 
 ## 3. System Design
 
-Gibbsiq is organized as five layers. The interface layer ingests QUBO, Ising, and dimod BQM inputs and normalizes them into one internal Ising representation with deterministic variable ordering and offset-preserving conversion, and decodes solutions back to user variables. The runtime adapter lowers that representation into THRML nodes, blocks, factors, schedules, and seeds, and captures sampling traces. The diagnostics layer computes energy and best-so-far traces, autocorrelation, effective-sample-size estimates, between-chain disagreement, solution diversity (unique fraction, top-$k$ mass, entropy, Hamming spread), constraint feasibility, and explicit failure flags such as mode collapse and absence of recent improvement. The inspector layer presents topology, trace summaries, warnings, best states, and baseline comparisons. The benchmark layer scores THRML against exact enumeration and the classical baselines of Section 2.2 under matched seeds and fixed-work and fixed-time budgets.
+Gibbsiq is organized as five layers. The interface layer ingests QUBO, Ising, and dimod BQM inputs, normalizes them into one internal Ising representation with deterministic variable ordering and offset-preserving conversion, and decodes solutions back to user variables. The THRML optimization runtime lowers that representation into THRML nodes, blocks, factors, programs, schedules, seeds, and initialization policies, then captures raw state and energy traces. The diagnostics layer computes energy and best-so-far traces, autocorrelation, effective-sample-size estimates, between-chain disagreement, solution diversity (unique fraction, top-$k$ mass, entropy, Hamming spread), constraint feasibility, and explicit failure flags such as mode collapse and absence of recent improvement. The inspector layer presents topology, trace summaries, warnings, best states, and baseline comparisons. The benchmark layer scores THRML-backed runs against exact enumeration and the classical baselines of Section 2.2 under matched seeds and fixed-work and fixed-time budgets.
+
+dimod compatibility lets users bring existing QUBO/BQM workloads into the THRML path and compare the result against established baselines. It is an interoperability bridge, not a change in execution target.
+
+The runtime contracts — the `SampleResult` schema, the diagnostic inputs, and the witness-recomputing benchmark oracle — are specified to be backend-portable at the architectural level. Execution stays THRML-first; the portability is a hedge, not a backend-agnostic product. If the THRML hardware path is delayed, the same audited artifacts carry over to the wider Ising-machine field.
+
+The data path is:
+
+```text
+QUBO/BQM/Ising
+-> IsingModel
+-> THRMLProgramBundle
+-> SampleResult
+-> Diagnostics
+-> Inspector / benchmark report
+```
+
+Gibbsiq does not currently claim that THRML is faster than classical or GPU baselines. It also does not treat R-hat, ESS, or diversity as proof of optimality. The current claim is narrower: Gibbsiq implements and tests the conversion, runtime lowering, and witness-oracle contracts; the THRML optimization runtime (lowering, graph-coloring block construction, schedule control, seed reproducibility, and trace capture) is implemented with recomputed energies and vmapped multi-chain support; diagnostics, inspector, and benchmark contracts remain to be specified and implemented.
 
 The intended top-level interface is
 
@@ -83,7 +104,7 @@ result = THRMLSampler(config).sample(model, num_reads=128)
 Inspector.from_result(result).show()
 ```
 
-## 5. Usage and Installation
+## 4. Usage and Installation
 
 ```python
 from gibbsiq import compile_qubo, compile_ising
@@ -97,21 +118,43 @@ model.offset                                               # offset preserved th
 compile_ising({0: 0.5}, {(0, 1): -1.0}).energy({0: 1, 1: 1})   # returns -0.5
 ```
 
+To run THRML-backed optimization, install the THRML runtime extra and use the sampler:
+
+```python
+from gibbsiq import SamplerConfig, THRMLSampler, compile_qubo
+
+model = compile_qubo({(0, 0): -1.0, (1, 1): -1.0, (0, 1): 2.0})
+config = SamplerConfig(beta=2.0, n_warmup=50, warmup_beta_ladder=(0.5, 1.0), num_chains=2, seed=0)
+result = THRMLSampler(config).sample(model, num_reads=128)
+print(result.best_energy)       # -1.0
+print(result.traces["energy"])  # per-chain energy traces
+print(result.metadata["num_blocks"])  # DSATUR block count
+```
+
 ```bash
 # JSON fixture evaluator and test suite
 gibbsiq-evaluate ./test_suite/examples/evaluation-candidate.example.json
 PYTHONPATH=src python -m unittest discover -s test_suite/tests
 ```
 
-Requires Python 3.13 or later. The core package has no required dependencies and uses only the standard library. `dimod` is optional, needed only for `to_dimod()` interoperability and the dimod conformance tests, which are skipped when it is absent.
+Requires Python 3.10 or later. The core package has no required dependencies and uses only the standard library. `dimod` is optional, needed only for `to_dimod()` interoperability and the dimod conformance tests, which are skipped when it is absent.
 
 ```bash
-pip install -e .            # core
-pip install -e ".[dimod]"   # core plus dimod interoperability
-pip install -e ".[dev]"     # full test suite
+pip install -e .                    # core (zero runtime dependencies)
+pip install -e ".[dimod]"           # core plus dimod interoperability
+pip install -e ".[thrml]"           # core plus THRML sampler (enables THRMLSampler)
+pip install -e ".[dev]"             # full test suite
 ```
 
 On Windows PowerShell, set `$env:PYTHONPATH = "src"` before the module invocations above.
+
+Additional reference material:
+
+- [Glossary](reference/glossary.md)
+- [Claims evidence map](reference/claims-evidence-map.md)
+- [Technical specification](spec.md)
+- [Stage 2 THRML optimization runtime](reference/00-roadmap/stage-02-thrml-optimization-runtime.md)
+- [THRML runtime notes](reference/03-samplers/thrml-optimization-runtime.md)
 
 ---
 

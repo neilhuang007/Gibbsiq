@@ -5,15 +5,22 @@ This file lists the most useful references from the first Tavily research pass. 
 ## THRML / Extropic
 
 - THRML docs: https://docs.thrml.ai/
-- THRML architecture: https://docs.thrml.ai/en/latest/architecture/
-- THRML block sampling API: https://docs.thrml.ai/en/latest/api/block_sampling/
-- THRML spin models example: https://docs.thrml.ai/en/latest/examples/02_spin_models/
-- THRML probabilistic computing example: https://docs.thrml.ai/en/latest/examples/00_probabilistic_computing/
+- THRML architecture: https://docs.thrml.ai/en/latest/architecture
+- THRML block sampling API: https://docs.thrml.ai/en/latest/api/block_sampling
+- THRML spin models example: https://docs.thrml.ai/en/latest/examples/02_spin_models
+- THRML probabilistic computing example: https://docs.thrml.ai/en/latest/examples/00_probabilistic_computing
 - THRML repository: https://github.com/extropic-ai/thrml
 - THRML repository license/currentness checked 2026-05-28: Apache-2.0, pushed 2026-05-26.
 - Extropic software overview: https://extropic.ai/software
 - Extropic thermodynamic computing essay: http://extropic.ai/writing/thermodynamic-computing-from-zero-to-one
 - Extropic/THRML cited hardware architecture paper: https://arxiv.org/abs/2510.23972
+- Local paper PDF: `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.pdf`
+- Local cleaned transcript: `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.md`
+- Local lab note: `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.note.md`
+- Tavily re-check on 2026-06-14 confirmed the paper describes THRML as a JAX/XLA simulation
+  library for hardware EBMs and Extropic's essay describes `thrml` as a way to develop
+  algorithms for TSUs before hardware availability. Do not convert those sources into a
+  QUBO speedup claim without Gibbsiq benchmark evidence.
 
 ## QUBO / BQM / Formulation APIs
 
@@ -106,4 +113,3 @@ This file lists the most useful references from the first Tavily research pass. 
 - Exact small-instance fixtures: `reference/08-evaluation/fixtures/exact-small-instances.json`
 - Diagnostic fixtures: `reference/08-evaluation/fixtures/diagnostic-fixtures.json`
 - Implementation source candidates: `reference/08-evaluation/source-implementation-candidates.md`
-

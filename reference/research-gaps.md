@@ -25,14 +25,32 @@ These are explicit gaps found during the first research pass. Do not assume they
 
 ## Design Consequence
 
-Treat THRML as the execution substrate, not the whole product. Gibbsiq should own:
+Treat THRML as the execution substrate, not the whole optimization product. Gibbsiq should
+own the missing optimization infrastructure around THRML:
 
 - `compile_qubo` / `compile_bqm` lowering.
 - `THRMLSampler` public API.
+- graph-aware block construction for optimization instances.
+- schedule, seed, initialization, and multi-chain configuration.
+- trace capture and canonical energy recomputation.
 - Stable result object and metadata schema.
-- Diagnostics pipeline.
+- Diagnostics and telemetry pipeline.
 - Inspector/report layer.
 - Baseline wrappers and benchmark harness.
+
+This is not a pivot to a backend-agnostic diagnostics library. dimod and baseline
+interoperability are adoption and comparison bridges. The central goal remains a
+THRML-native optimization stack.
+
+The durable part of that stack is independent verification and diagnostics. A hardware vendor
+cannot credibly own the trust layer for its own device, so audited conversion, sampler-health
+diagnostics, and witness-recomputing benchmark oracles retain value even if ingestion and
+lowering are later absorbed by an Extropic-owned optimization SDK. The result schema,
+diagnostic inputs, and benchmark oracle are kept backend-portable at the architectural level
+as a hedge: execution stays THRML-first, and the same audited artifacts apply to the wider
+Ising-machine field if the THRML hardware path is delayed. The accurate analogy for this
+layer is Ocean and dimod for D-Wave plus ArviZ for Stan and PyMC, applied to the THRML
+ecosystem.
 
 ## High-Risk Areas
 
@@ -41,4 +59,9 @@ Treat THRML as the execution substrate, not the whole product. Gibbsiq should ow
 - Diagnostic interpretation: optimization runs are not posterior inference; ESS/R-hat ideas need careful adaptation to energy, objective, and state features.
 - Benchmark fairness: comparing THRML to SA/SQA/SB requires fixed seeds, fixed time budgets, repeated trials, and honest reporting of wall-clock plus quality.
 - Python version: local `pyproject.toml` currently says Python `>=3.13`, while THRML docs state Python `>=3.10`; verify THRML compatibility with Python 3.13 before choosing dependencies.
-
+- Ecosystem timing: THRML is young. Avoid unverified speed claims. Build the optimization
+  layer while the API surface is still small enough to influence.
+- Ingestion commoditization: model ingestion and IR-to-THRML lowering could be absorbed by an
+  Extropic-owned optimization SDK. Keep the independent verification and diagnostics
+  contracts, which a vendor cannot self-certify, as the durable differentiator, and keep those
+  contracts backend-portable.

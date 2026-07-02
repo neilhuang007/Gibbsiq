@@ -1,10 +1,12 @@
 # Reference Index
 
-Research snapshot: 2026-05-17.
+Research snapshot: 2026-06-14.
 
 ## Start Here
 
 - [Source map](source-map.md)
+- [Glossary](glossary.md)
+- [Claims evidence map](claims-evidence-map.md)
 - [Research gaps](research-gaps.md)
 - [Roadmap](00-roadmap/README.md)
 
@@ -12,7 +14,7 @@ Research snapshot: 2026-05-17.
 
 - [THRML runtime](01-architecture/thrml-runtime.md)
 - [QUBO/BQM API](02-interfaces/qubo-bqm-api.md)
-- [THRML Gibbs sampler](03-samplers/thrml-gibbs-implementation.md)
+- [THRML optimization runtime](03-samplers/thrml-optimization-runtime.md)
 - [Baseline solvers](03-samplers/baseline-solvers.md)
 - [Diagnostics](04-diagnostics/mixing-quality.md)
 - [Theory](05-theory/probabilistic-computing-and-pbits.md)

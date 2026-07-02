@@ -2,7 +2,9 @@
 
 ## Goal
 
-Compute sampler-health metrics from samples, traces, and metadata.
+Compute sampler-health metrics from THRML-backed samples, traces, and metadata. Diagnostics
+summarize whether the Markov chains produced useful evidence. They do not certify
+optimality; exact or independently verified oracles do that for benchmark instances.
 
 ## Deliverables
 
@@ -20,9 +22,11 @@ Compute sampler-health metrics from samples, traces, and metadata.
 ## Exit Criteria
 
 - Every THRML run emits diagnostics.
-- Baseline outputs can use applicable diagnostics.
+- Baseline outputs can use applicable diagnostics when the data semantics match.
 - Synthetic failure fixtures trigger expected flags.
 - Diagnostics serialize into result artifacts.
+- Diagnostics consume the raw samples and traces emitted by Stage 2 without rerunning the
+  sampler.
 
 ## Implementation Notes
 
@@ -44,4 +48,3 @@ Initial scalar traces:
 - ArviZ docs: https://python.arviz.org/
 - emcee autocorrelation: https://emcee.readthedocs.io/en/stable/tutorials/autocorr/
 - Sampler diagnostics benchmark: https://www.auai.org/uai2018/proceedings/papers/37.pdf
-
