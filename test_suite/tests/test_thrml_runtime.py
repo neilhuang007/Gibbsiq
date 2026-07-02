@@ -19,7 +19,14 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 import random  # noqa: E402
 
-from gibbsiq import BlockPartition, SamplerConfig, compile_ising, compile_qubo, spin_to_binary  # noqa: E402
+from gibbsiq import (  # noqa: E402
+    BlockPartition,
+    SamplerConfig,
+    compile_ising,
+    compile_qubo,
+    compute_diagnostics,
+    spin_to_binary,
+)
 
 try:  # noqa: SIM105
     import thrml  # noqa: F401
@@ -349,6 +356,103 @@ class ResultSchemaTests(unittest.TestCase):
         sampler = THRMLSampler(SamplerConfig(n_warmup=5))
         with self.assertRaises(ValueError):
             sampler.sample(model, num_reads=0)
+
+
+@unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
+class DiagnosticsWiringTests(unittest.TestCase):
+    """Stage 3: every sample() call embeds the full diagnostics payload."""
+
+    def _sample(self, num_reads: int = 24, num_chains: int = 2):
+        model = compile_ising({"a": 0.1, "b": -0.1, "c": 0.0}, {("a", "b"): 0.2, ("b", "c"): -0.3})
+        config = SamplerConfig(beta=1.0, n_warmup=30, num_chains=num_chains, seed=4)
+        return THRMLSampler(config).sample(model, num_reads=num_reads)
+
+    def test_payload_sections_thresholds_and_timing_present(self) -> None:
+        result = self._sample()
+        diagnostics = result.diagnostics
+        for key in ("energy", "diversity", "chains", "constraints", "runtime", "flags", "thresholds"):
+            self.assertIn(key, diagnostics, msg=key)
+        self.assertEqual(diagnostics["constraints"], {"status": "not_available"})
+        runtime = diagnostics["runtime"]
+        for key in (
+            "lower_seconds",
+            "sample_seconds",
+            "device_platform",
+            "device_kind",
+            "reads_per_second",
+            "diagnostics_seconds",
+        ):
+            self.assertIn(key, runtime, msg=key)
+        self.assertGreaterEqual(runtime["diagnostics_seconds"], 0.0)
+        self.assertEqual(result.metadata["diagnostics_seconds"], runtime["diagnostics_seconds"])
+
+    def test_new_traces_shaped_like_energy_and_independently_recomputed(self) -> None:
+        result = self._sample(num_reads=7, num_chains=3)
+        magnetization = result.traces["magnetization"]
+        distance = result.traces["distance_to_best"]
+        shape = [len(chain) for chain in result.traces["energy"]]
+        self.assertEqual([len(chain) for chain in magnetization], shape)
+        self.assertEqual([len(chain) for chain in distance], shape)
+        best = result.best_sample
+        positions = {chain_index: 0 for chain_index in range(3)}
+        for sample, chain_id in zip(result.samples, result.traces["sample_chain_ids"]):
+            position = positions[chain_id]
+            mean_spin = sum(sample[variable] for variable in result.variables) / len(result.variables)
+            self.assertAlmostEqual(magnetization[chain_id][position], mean_spin, places=12)
+            hamming = sum(1 for variable in result.variables if sample[variable] != best[variable])
+            self.assertEqual(distance[chain_id][position], hamming)
+            positions[chain_id] += 1
+
+    def test_embedded_diagnostics_equal_recomputation_from_result(self) -> None:
+        result = self._sample()
+        recomputed = compute_diagnostics(
+            energy_chains=result.traces["energy"],
+            samples=list(result.samples),
+            variables=result.variables,
+        )
+        for section in ("energy", "diversity", "chains", "flags", "thresholds"):
+            self.assertEqual(result.diagnostics[section], recomputed[section], msg=section)
+
+    def test_single_read_with_many_chains_reports_insufficient_data(self) -> None:
+        result = self._sample(num_reads=1, num_chains=4)
+        chains = result.diagnostics["chains"]
+        self.assertEqual(chains["num_chains"], 4)
+        self.assertEqual(chains["num_chains_used"], 1)
+        self.assertIn("insufficient_diagnostic_data", result.diagnostics["flags"])
+        self.assertEqual([len(chain) for chain in result.traces["magnetization"]], [1, 0, 0, 0])
+
+    def test_trapped_ferromagnet_flags_chain_disagreement(self) -> None:
+        # Asymmetric two-well: the strong ferromagnetic ring locks each chain
+        # into the all-up or all-down well; the small field separates the well
+        # energies, so trapped chains disagree with zero within-chain variance
+        # (seed 1 puts chains in both wells).
+        model = compile_ising(
+            {i: 0.05 for i in range(6)},
+            {(i, (i + 1) % 6): -2.0 for i in range(6)},
+        )
+        config = SamplerConfig(beta=3.0, n_warmup=20, num_chains=4, init="random", seed=1)
+        result = THRMLSampler(config).sample(model, num_reads=200)
+        self.assertIn("chain_disagreement", result.diagnostics["flags"])
+        self.assertEqual(
+            result.diagnostics["chains"]["rhat_status"],
+            "undefined_or_infinite_zero_within_variance",
+        )
+
+    def test_well_mixed_hot_run_has_no_disagreement_or_collapse(self) -> None:
+        # low_diversity and no_recent_improvement fire legitimately on a small
+        # stationary state space, so assert specific flags absent, never
+        # flags == [].
+        model = compile_ising({"a": 0.1, "b": -0.1}, {("a", "b"): 0.2})
+        config = SamplerConfig(beta=0.5, n_warmup=100, steps_per_sample=2, num_chains=4, seed=0)
+        result = THRMLSampler(config).sample(model, num_reads=400)
+        flags = result.diagnostics["flags"]
+        self.assertNotIn("chain_disagreement", flags)
+        self.assertNotIn("mode_collapse", flags)
+        chains = result.diagnostics["chains"]
+        self.assertEqual(chains["rhat_status"], "ok")
+        self.assertLess(chains["rhat"], 1.01)
+        self.assertEqual(chains["ess_status"], "ok")
+        self.assertGreater(chains["ess"], 400.0)
 
 
 if __name__ == "__main__":

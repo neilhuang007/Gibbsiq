@@ -35,10 +35,12 @@ dependencies = []
 # Optional features. `dimod` is only needed for IsingModel.to_dimod() /
 # SampleResult.to_dimod() and the dimod conformance tests (skipped when absent).
 # `thrml` enables the THRMLSampler runtime; its tests skip when it is absent.
+# `arviz` enables the diagnostics crosscheck tests; they skip when it is absent.
 [project.optional-dependencies]
 dimod = ["dimod>=0.12"]
 thrml = ["thrml>=0.1.3"]
-dev = ["dimod>=0.12", "thrml>=0.1.3"]
+arviz = ["arviz>=0.21"]
+dev = ["dimod>=0.12", "thrml>=0.1.3", "arviz>=0.21"]
 
 [build-system]
 requires = ["setuptools>=77"]

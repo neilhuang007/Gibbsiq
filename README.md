@@ -24,7 +24,7 @@ The implemented and planned contributions are:
 
 1. Implemented: a problem interface that ingests QUBO, Ising, and BQM models into a single internal Ising representation with deterministic variable ordering and offset-preserving conversion.
 2. Implemented (2026-07-01): a THRML optimization runtime that lowers this representation into THRML nodes, factors, graph-colored blocks, sampling programs, schedules, seeds, initialization policies, and trace capture, validated by exhaustive small-instance comparison against analytic Boltzmann probabilities; the remaining exit criterion is parallel-tempering execution.
-3. Planned: a diagnostics layer that reports autocorrelation, effective sample size, between-chain disagreement, diversity, feasibility, and explicit failure flags for each THRML run.
+3. Implemented (2026-07-02): a diagnostics layer that reports autocorrelation and integrated autocorrelation time, effective sample size, between-chain disagreement (plain split $\widehat{R}$), diversity, and explicit failure flags for each THRML run, computed in the standard library and cross-validated against arviz and an R-`posterior` reference; constraint feasibility reporting waits on the penalty/encoding layer.
 4. Partly implemented: a benchmark harness that scores candidate runs against exact enumeration under witness recomputation, with later classical-baseline comparisons under matched seeds and resource budgets.
 
 This document reviews QUBO and Ising formulations, the sampling-based solvers that target them, convergence diagnostics from the MCMC literature, the Gibbsiq architecture, and the current implementation.

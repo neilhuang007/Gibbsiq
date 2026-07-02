@@ -103,7 +103,7 @@ class EvaluationHarnessTest(unittest.TestCase):
         report = evaluate_candidate(load_json("test_suite/examples/evaluation-candidate.example.json"))
 
         self.assertFalse(report["passed"])
-        self.assertEqual(report["summary"]["passed"], 8)
+        self.assertEqual(report["summary"]["passed"], 12)
         self.assertEqual(report["summary"]["missing"], 27)
         self.assertEqual(report["summary"]["failed"], 0)
         self.assertTrue(
