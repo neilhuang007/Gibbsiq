@@ -92,7 +92,10 @@ def ising_energy(model: dict[str, Any], spins: dict[str, int]) -> float:
     return energy
 
 
-def _verify_maxcut(model, witness, optimum, tolerance):
+VerifyResult = tuple[bool, str | None, int | float | None]
+
+
+def _verify_maxcut(model: dict[str, Any], witness: Any, optimum: Any, tolerance: float) -> VerifyResult:
     spins = _normalize_spins(model, witness)
     cut = maxcut_cut_value(model, spins)
     if cut != optimum:
@@ -100,7 +103,7 @@ def _verify_maxcut(model, witness, optimum, tolerance):
     return True, None, cut
 
 
-def _verify_ising(model, witness, optimum, tolerance):
+def _verify_ising(model: dict[str, Any], witness: Any, optimum: Any, tolerance: float) -> VerifyResult:
     spins = _normalize_spins(model, witness)
     energy = ising_energy(model, spins)
     if not math.isclose(energy, float(optimum), rel_tol=0.0, abs_tol=tolerance):
@@ -108,7 +111,7 @@ def _verify_ising(model, witness, optimum, tolerance):
     return True, None, energy
 
 
-def _verify_number_partition(model, witness, optimum, tolerance):
+def _verify_number_partition(model: dict[str, Any], witness: Any, optimum: Any, tolerance: float) -> VerifyResult:
     if not isinstance(witness, dict) or "set_plus" not in witness or "set_minus" not in witness:
         return False, "partition witness needs 'set_plus' and 'set_minus' lists", None
     plus = list(witness["set_plus"])
@@ -121,7 +124,7 @@ def _verify_number_partition(model, witness, optimum, tolerance):
     return True, None, diff
 
 
-def _verify_knapsack(model, witness, optimum, tolerance):
+def _verify_knapsack(model: dict[str, Any], witness: Any, optimum: Any, tolerance: float) -> VerifyResult:
     if not isinstance(witness, list):
         return False, "knapsack witness must be a list of selected item indices", None
     selection = list(witness)
@@ -140,7 +143,7 @@ def _verify_knapsack(model, witness, optimum, tolerance):
     return True, None, value
 
 
-def _verify_tsp(model, witness, optimum, tolerance):
+def _verify_tsp(model: dict[str, Any], witness: Any, optimum: Any, tolerance: float) -> VerifyResult:
     if not isinstance(witness, list):
         return False, "tsp witness must be a list (a tour permutation)", None
     tour = list(witness)
