@@ -51,10 +51,12 @@ def sample_to_spin(sample: Mapping[Variable, int], variables: tuple[Variable, ..
             if value not in (-1, 1):
                 raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
             spins[variable] = int(value)
-        else:
+        elif vartype == "BINARY":
             if value not in (0, 1):
                 raise ValueError(f"binary value for {variable!r} must be 0 or 1, got {value!r}")
             spins[variable] = 2 * int(value) - 1
+        else:
+            raise ValueError(f"cannot convert {vartype!r} samples to spins; expected SPIN or BINARY")
     return spins
 
 

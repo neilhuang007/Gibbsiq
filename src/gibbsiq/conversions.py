@@ -158,28 +158,24 @@ def _parse_qubo(
         raw_variables = variables if variables is not None else qubo.get("variables")
         raw_offset = qubo.get("offset", 0.0) if offset is None else offset
         linear = {key: float(value) for key, value in dict(qubo.get("linear", {})).items()}
-        quadratic = {}
-        for key, value in dict(qubo.get("quadratic", {})).items():
-            left, right = _parse_pair_key(key)
-            coefficient = float(value)
-            if left == right:
-                linear[left] = linear.get(left, 0.0) + coefficient
-            else:
-                pair = _ordered_pair(left, right, raw_variables)
-                quadratic[pair] = quadratic.get(pair, 0.0) + coefficient
+        term_items = dict(qubo.get("quadratic", {})).items()
     else:
         raw_variables = variables
         raw_offset = 0.0 if offset is None else offset
-        linear: dict[Variable, float] = {}
-        quadratic: dict[tuple[Variable, Variable], float] = {}
-        for key, value in qubo.items():
-            left, right = _parse_pair_key(key)
-            coefficient = float(value)
-            if left == right:
-                linear[left] = linear.get(left, 0.0) + coefficient
-            else:
-                pair = _ordered_pair(left, right, raw_variables)
-                quadratic[pair] = quadratic.get(pair, 0.0) + coefficient
+        linear = {}
+        term_items = qubo.items()
+
+    # Binary diagonal entries (u == u) are linear terms; off-diagonal entries are
+    # accumulated onto their canonically-ordered pair.
+    quadratic: dict[tuple[Variable, Variable], float] = {}
+    for key, value in term_items:
+        left, right = _parse_pair_key(key)
+        coefficient = float(value)
+        if left == right:
+            linear[left] = linear.get(left, 0.0) + coefficient
+        else:
+            pair = _ordered_pair(left, right, raw_variables)
+            quadratic[pair] = quadratic.get(pair, 0.0) + coefficient
 
     order = _resolve_variables(raw_variables, linear, quadratic)
     quadratic = _normalize_pairs(quadratic, order)
