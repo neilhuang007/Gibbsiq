@@ -41,9 +41,13 @@ small-instance validation; parallel-tempering execution is its open exit criteri
 (arviz v0.21.0 algorithm, cross-validated to 1e-9 against arviz and to 1e-8 against an
 R-`posterior` reference), diversity/energy/chain sections, family-scoped failure flags with
 a thresholds echo, and magnetization / distance-to-best traces — every `sample()` call
-embeds the payload. Trace-window diagnostics assume a constant-beta collection window
-(guaranteed by the runtime; see EVAL-EQ-007). The full suite runs 209 tests (6 skip without
-the optional arviz dev dependency). Inspector and baseline layers remain to be built.
+embeds the payload. SOTA alignment landed 2026-07-03: rank-normalized + folded split R-hat
+under separately named `rank_normalized_rhat*` keys (EVAL-EQ-013; the plain `rhat` key is
+frozen), and magnetization chain-disagreement wiring (`chains.magnetization` subsection)
+closing the equal-energy double-well blind spot. Trace-window diagnostics assume a
+constant-beta collection window (guaranteed by the runtime; see EVAL-EQ-007). The full suite
+runs 265 tests (12 skip without the optional arviz dev dependency). Inspector and baseline
+layers remain to be built.
 
 ## Commands
 
@@ -232,6 +236,35 @@ When adding benchmark instances with known optima, record per the `evaluation-fr
 (**with source**), formulation metadata, solver config, raw samples/traces, diagnostics, and
 timings. Lucas 2014 (`reference/05-theory/`) is the canonical source for NP-problem Ising
 formulations (Max-Cut, TSP, knapsack, graph coloring, etc.).
+
+## Research journal (always record decisions here)
+
+Document every research decision and the process behind it in a dated entry under
+`reference/research-journal/`. This is a hard convention, not an optional nicety: the journal
+is the publication-grade record whose methodology transcribes directly into the final paper,
+so any session that makes a design choice, runs an experiment, resolves a hard point, or
+shifts positioning must leave an entry rather than let the reasoning live only in code and git
+history. One dated entry per work session (`YYYY-MM-DD-topic.md`); entries are append-only —
+when a decision is later revised, add a new entry instead of rewriting an old one.
+
+- **Writing tone is fixed by `reference/research-journal/style.md`.** Write each entry in the
+  register of the project's anchor paper (Jelinčić et al. 2025, arXiv:2510.23972): direct,
+  detailed, declarative present tense, every claim tied to a mechanism, a measurement, or a
+  primary-reference identifier. State the positive fact; do not define something by what it is
+  not, and do not use the "not X but Y" contrast as a sentence pattern. No emojis and no
+  rhetorical `**bold**` / `*italic*` emphasis in journal prose.
+- **Skeleton** (use the sections an entry needs): Paper Hook, Context, Hard-Parts Analysis
+  (`H1..Hn`, lead with this whenever the work had non-trivial reasoning), Decisions, Rejected
+  Alternatives, Sources Read / Examples Used, Follow-Up, Verification. The strongest models to
+  imitate are `2026-07-02-stage-03-diagnostics-pipeline.md` and
+  `2026-07-01-stage-02-thrml-runtime-implementation.md`.
+- The same tone governs the wider `reference/` pack; `style.md` subsumes the emoji/negation
+  rules and adds the paper register.
+- **Before starting work, read `reference/research-journal/gotchas-and-todo.md`.** It records
+  the recurring writing and engineering pitfalls (Gibbs sign, offset preservation, R-hat
+  variant mixing, constant-trace ESS, THRML sign mapping and edgeless-model `IndexError`,
+  echo-proofing, one-line display math) and the live cross-stage TODO list. When a pitfall
+  costs time, add a row; when a TODO closes, record it in a dated entry and remove it there.
 
 ## Workflow notes
 

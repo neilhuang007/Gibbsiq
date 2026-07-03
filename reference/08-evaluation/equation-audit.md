@@ -122,9 +122,11 @@ Split application (Stage 3, audited 2026-07-02): the reported `rhat` applies the
 formula to half-split chains. Each raw chain of `N_raw` draws contributes its first
 `N_raw // 2` and last `N_raw // 2` draws as two chains (the middle draw is dropped when
 `N_raw` is odd), so the formula runs with `M = 2 * M_raw` chains of `N = N_raw // 2` draws.
-Variant declaration: Gibbsiq reports the PLAIN split R-hat, not the rank-normalized or
-folded variants of Vehtari et al. 2021; the three are numerically different and must not be
-mixed. Cross-validated to machine precision against `arviz.rhat(method="split")`.
+Variant declaration (updated 2026-07-03): the `rhat` key is and stays the PLAIN split
+R-hat; the rank-normalized + folded variant of Vehtari et al. 2021 is reported under the
+SEPARATELY NAMED `rank_normalized_rhat*` keys specified in EVAL-EQ-013. The variants are
+numerically different and must never share a key: frozen fixtures pin the plain value.
+Cross-validated to machine precision against `arviz.rhat(method="split")`.
 
 Estimator conventions (two variance quantities coexist and are distinct keys):
 
@@ -150,11 +152,36 @@ otherwise                                               -> rhat_status = "ok" wi
 
 The 4-raw-draw minimum is checked on raw (pre-split) draws, matching arviz's validity gate.
 
+Non-finite input rule (audited 2026-07-03): the degenerate statuses above cover only FINITE
+inputs. A non-finite energy value (NaN or +/-Inf) in any chain raises `ValueError` at the
+input boundary (`_rectangularize`), mirroring the `finite_float` validation in the model and
+config layers. Silently accepting NaN would either leak non-finite values into serialized
+output (forbidden above) or, worse, produce a finite-but-meaningless ESS because NaN
+comparisons silently terminate the Geyer scan. The THRML runtime cannot produce non-finite
+energies (every model coefficient passes `finite_float`), so this guard protects the
+baseline-adapter path where external sampler output enters `compute_diagnostics`.
+
 Stationarity contract: R-hat (and EVAL-EQ-008 ESS) assume the recorded draws target a fixed
 distribution. The THRML runtime guarantees this by construction: `warmup_beta_ladder`
 anneals only during warmup and every recorded read is collected at constant `beta`. If
 in-sampling schedules land (parallel tempering), these diagnostics must be computed per
 constant-beta segment keyed off `traces["beta_schedule"]`, never across segments.
+
+Magnetization chain-disagreement wiring (audited 2026-07-03): the runtime payload also runs
+the chain-disagreement estimators (this equation and EVAL-EQ-013) on the per-chain
+magnetization trace (EVAL-EQ-012) and reports them under the `chains.magnetization`
+subsection. Rationale: degenerate optima with EQUAL energy are invisible to every statistic
+of the energy trace — two chains frozen in opposite ground states of a double well produce
+identical constant energy traces — while the magnetization trace separates the wells (the
+zero-within-variance status or a numeric R-hat above threshold both fire). The
+`chain_disagreement` flag therefore fires from EITHER the energy-trace path or the
+magnetization path. The magnetization subsection contributes ONLY `chain_disagreement`;
+`zero_within_chain_variance` and `insufficient_diagnostic_data` remain energy-trace-scoped
+(frozen fixtures pin their energy-family semantics, and a frozen-but-agreeing sampler
+already reports constant-trace statuses through the energy family). Known residual blind
+spot, verified empirically: chains trapped in the SAME well are invisible to every
+within-sample diagnostic; defenses are extrinsic (overdispersed inits, multi-seed, PT swap
+statistics).
 
 ## EVAL-EQ-008: Effective Sample Size Core
 
@@ -214,6 +241,9 @@ tau_hat = -1 + 2 * sum_{t=0..max_t} rho_t + rho_{max_t+1}
 tau_hat = max(tau_hat, 1 / log10(M' * N))                     [tau floor]
 ESS     = M' * N / tau_hat
 ```
+
+Non-finite inputs raise `ValueError` at the boundary; the statuses below cover only finite
+degenerate inputs (see the non-finite input rule in EVAL-EQ-007).
 
 Edge case: when `N < 5` the positive-sequence loop never runs (`max_t = -1`) and `tau_hat`
 collapses to the floor; the implementation must return a numeric value there, not crash.
@@ -315,4 +345,108 @@ lists-of-lists with the same shape as `traces["energy"]`. Degenerate optima make
 `distance_to_best` depend on the tie rule, which is why the rule is pinned here.
 
 Use: trace capture in the THRML runtime; Stage 4 inspector plots.
+
+## EVAL-EQ-013: Rank-Normalized and Folded Split R-hat
+
+Source: Vehtari et al. 2021 (rank normalization sec. 3.1, folding sec. 3.2); algorithm-step
+port of arviz v0.21.0 `_rhat_rank` / `_z_scale` / `_backtransform_ranks`
+(`arviz/stats/diagnostics.py`, cloned and audited line-by-line 2026-07-03). Reported under
+the separately named keys `rank_normalized_rhat`, `rank_normalized_rhat_bulk`,
+`rank_normalized_rhat_folded`, `rank_normalized_rhat_status`; the plain `rhat` key of
+EVAL-EQ-007 is untouched.
+
+```text
+inputs: M raw chains of N_raw draws; gate: M >= 2 and N_raw >= 4 (RAW draws, as EVAL-EQ-007)
+split:  half-split per EVAL-EQ-007 -> M' = 2 * M chains of N = N_raw // 2 draws
+S = M' * N                                    (pooled split draw count)
+
+rank:   r_j = rank of draw j within the POOLED split draws; ties take the average rank
+z:      z_j = Phi^{-1}( (r_j - 3/8) / (S - 2 * 3/8 + 1) )     [Blom (1958) backtransform]
+bulk:   rank_normalized_rhat_bulk = EVAL-EQ-007 core on the z-values in the M' x N layout
+        (the chains are already split; the core formula is applied directly, no re-split)
+
+fold:   zeta_j = | x_j - median(pooled split draws) |
+        (even S: median is the mean of the two middle order statistics)
+tail:   rank_normalized_rhat_folded = EVAL-EQ-007 core on rank-normalized zeta
+        (the folded values are re-ranked and re-z-scaled from scratch)
+
+rank_normalized_rhat = max(bulk, folded)
+```
+
+What folding adds: the plain and bulk variants compare between-chain MEAN disagreement
+against within-chain variance, so chains sharing a mean but differing in SPREAD pass
+undetected (pinned by the variance-only fixture data: plain split R-hat 0.9997 vs
+rank-normalized 1.6935 on sd-0.1/sd-10 chains). Folding around the pooled median converts a
+scale difference into a location difference, which the bulk machinery then detects. Taking
+the max makes the reported value sensitive to both failure modes.
+
+Rank ordering rule: ranks are computed on the POOLED split draws (all chains together),
+never per chain — per-chain ranking erases exactly the between-chain location signal R-hat
+exists to measure. Splitting happens BEFORE ranking so within-chain drift still splits into
+disagreeing half-chains in rank space.
+
+Ties and discrete traces: average-tie ranking is exact, so heavily tied inputs (an Ising
+energy trace over a small model takes only a handful of distinct values) degrade gracefully:
+each tie group maps to one z-value and the estimator compares level-occupancy between
+chains. Ties require EXACT float equality, mirroring both the plain-variant `W == 0` checks
+and arviz `rankdata` semantics.
+
+Fold-ordering lineage (verified against R `posterior` sources 2026-07-03): arviz folds
+AFTER splitting, around the median of the pooled split draws
+(`abs(split_ary - median(split_ary))`); R `posterior` folds BEFORE splitting, around the
+median of the raw draws (`fold_draws(x) = abs(x - median(x))`, then split). The two
+orderings agree exactly whenever the per-chain raw draw count is even, because the split
+array is then a reshape of the same multiset and the medians coincide. They differ for odd
+raw counts: both split rules drop each chain's middle draw, arviz's median excludes those
+dropped draws, and posterior's median includes them. This port pins the arviz ordering, and
+every rank-variant cross-validation runs against arviz; a future cross-validation against
+`posterior` must use even per-chain draw counts to be bit-comparable.
+
+Median tie knife-edge (characterized 2026-07-03): the pooled split count `S = M' * N` is
+always even, so the pooled median is the average of the two middle order statistics, and
+those two draws fold to exactly equidistant values — whether they tie BIT-EXACTLY is
+floating-point rounding luck. Breaking that one tie sits at the steep bottom of the normal
+quantile and moves the folded component at the 1e-6 level (measured: 4e-6 on 800 gaussian
+draws under an affine rescale). This is inherent to the published algorithm — arviz behaves
+identically on identical bits — so invariance properties are only exact in exact arithmetic:
+the bulk component is invariant under any strictly increasing transform (ranks are
+preserved), the folded component only under increasing AFFINE transforms and only up to this
+knife-edge. Consequence for fixtures: never pin a folded value produced from continuous data
+whose two central order statistics tie; discrete/integer traces are safe.
+
+Degenerate statuses (never NaN/Inf in serialized output; same vocabulary as EVAL-EQ-007):
+
+```text
+fewer than 2 chains or fewer than 4 raw draws per chain  -> "insufficient_data"
+bulk z: W == 0 and B == 0 (constant pooled trace)        -> "undefined_constant_trace"
+bulk z: W == 0 and B > 0  (chains constant at
+  distinct values)                                       -> "undefined_or_infinite_zero_within_variance"
+folded z: W == 0 and B > 0 (chains symmetric around the
+  pooled median with distinct spreads)                   -> "undefined_or_infinite_zero_within_variance"
+folded z: W == 0 and B == 0 (folding collapsed, e.g. a
+  balanced two-valued trace symmetric around the pooled
+  median)                                                -> "ok" with rank_normalized_rhat_folded = null
+                                                            and rank_normalized_rhat = bulk alone
+otherwise                                                -> "ok" with all three numeric values
+```
+
+The folded-collapse rule (`folded = null`, report bulk alone) numerically matches arviz,
+whose `max(rhat_bulk, rhat_tail)` returns `rhat_bulk` when the tail component is NaN;
+Gibbsiq makes that silent NaN-drop explicit and auditable. In every non-ok status the
+combined `rank_normalized_rhat` is null; `rank_normalized_rhat_bulk` stays numeric in the
+folded-infinite row (the bulk component alone is well defined there) and is null otherwise.
+
+Threshold: the 1.01 threshold of EVAL-EQ-007 applies; Vehtari et al. state the 1.01
+recommendation for exactly this rank-normalized diagnostic. Flag wiring: `chain_disagreement`
+fires when EITHER the plain split R-hat path (EVAL-EQ-007) or this variant exceeds 1.01 or
+hits the zero-within-variance status, on either the energy or the magnetization trace.
+
+Cross-validation: agrees with `arviz.rhat(method="rank")` to 1e-8 on every fixture and
+seeded sweep where both are defined (the tolerance is 1e-8 rather than 1e-9 because the
+stdlib normal quantile `statistics.NormalDist.inv_cdf` (Wichura AS 241) and scipy's Cephes
+`ndtri` differ at the 1e-9 to 1e-15 level in the tails; both are far more accurate than the
+estimator's statistical noise).
+
+Use: chain-disagreement warnings alongside EVAL-EQ-007, on energy and magnetization traces.
+Same caveat as EVAL-EQ-007: a disagreement flag, never a convergence or optimality proof.
 

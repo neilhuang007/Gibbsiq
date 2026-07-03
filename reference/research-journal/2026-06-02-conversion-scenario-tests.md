@@ -16,9 +16,9 @@ s_i in {-1,+1}
 Production code was changed only to reject non-finite numeric coefficients and offsets at
 the canonical IR boundary. Test coverage was added in `test_suite/tests/test_conversion_scenarios.py`.
 
-## Tavily Source Search
+## Sources Consulted
 
-Searches used:
+Search queries used:
 
 - `D-Wave dimod BinaryQuadraticModel to_ising from_qubo offset diagonal QUBO documentation`
 - `dimod qubo_to_ising source code diagonal offset QUBO coefficient duplicate upper triangular`

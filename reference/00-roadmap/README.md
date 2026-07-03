@@ -16,7 +16,7 @@ changing the THRML-first execution target. The 2026-07-01 positioning decision i
 | 0 | [Research and framing](stage-00-research-and-framing.md) | Complete — research pack, evaluator, strict benchmark oracle, ground-truth corpus |
 | 1 | [Core model compatibility](stage-01-core-model-compatibility.md) | Complete (2026-06-01) — `compile_qubo`/`compile_ising`/`compile_bqm`, Ising IR, `SampleResult`; 55 tests passed at completion; current suite has 149 tests |
 | 2 | [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Complete (2026-07-01) — `THRMLSampler`, audited lowering, deterministic DSATUR graph-coloring blocks, schedule/seed/init control, vmapped multi-chain traces, independent energy recomputation, exhaustive small-instance validation; remaining: parallel-tempering execution |
-| 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Complete (2026-07-02) — `src/gibbsiq/diagnostics.py` (pure stdlib): Geyer ESS/tau and split R-hat cross-validated against arviz (486 cases, `1e-9`) and an R-`posterior` reference (`4.9e-15` worst rel. err.), diversity/energy/chain sections, family-scoped failure flags, thresholds echo, magnetization and distance-to-best traces, every `sample()` call embeds the payload; 4 new golden fixtures with a mutation-kill matrix |
+| 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Complete (2026-07-02; SOTA-aligned 2026-07-03) — `src/gibbsiq/diagnostics.py` (pure stdlib): Geyer ESS/tau and split R-hat cross-validated against arviz (486 cases, `1e-9`) and an R-`posterior` reference (`4.9e-15` worst rel. err.), rank-normalized + folded split R-hat under separate keys (EVAL-EQ-013, arviz `method="rank"` parity at machine precision), magnetization chain-disagreement wiring closing the equal-energy double-well blind spot, diversity/energy/chain sections, family-scoped failure flags, thresholds echo, magnetization and distance-to-best traces, every `sample()` call embeds the payload; 4 new golden fixtures with a mutation-kill matrix |
 | 4 | [Inspector and reporting](stage-04-inspector-and-reporting.md) | Pending |
 | 5 | [Baselines and benchmarks](stage-05-baselines-and-benchmarks.md) | Pending |
 | 6 | [Adaptive hardware-aware runtime](stage-06-adaptive-hardware-runtime.md) | Pending |
@@ -24,7 +24,11 @@ changing the THRML-first execution target. The 2026-07-01 positioning decision i
 Progress follows the staged order. Stages 0–3 are complete. Stage 3 (diagnostics) landed on
 2026-07-02: every THRML run emits the full telemetry payload, synthetic failure fixtures
 trigger their expected flags, and the ESS/R-hat implementations are anchored to external
-references (journal: `2026-07-02-stage-03-diagnostics-pipeline.md`). Stage 4 (inspector and
+references (journal: `2026-07-02-stage-03-diagnostics-pipeline.md`). The 2026-07-03
+validation sweep characterized and same-day closed two blind spots — variance-only chain
+disagreement (rank-normalized + folded split R-hat, EVAL-EQ-013) and equal-energy
+double-well trapping (magnetization chain-disagreement wiring) — with all frozen goldens
+bit-identical (journal: `2026-07-03-stage-03-sota-alignment.md`). Stage 4 (inspector and
 reporting) is the current target. Parallel-tempering execution remains the open Stage 2 exit
 criterion; when it lands, diagnostics move to per-constant-beta segments per the EVAL-EQ-007
 stationarity contract.

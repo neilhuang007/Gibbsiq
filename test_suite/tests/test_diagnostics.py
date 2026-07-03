@@ -253,5 +253,56 @@ class ReadsPerSecondTests(unittest.TestCase):
         self.assertEqual(payload["runtime"]["reads_per_second"], 5.0)
 
 
+class NonFiniteInputRejectionTests(unittest.TestCase):
+    """EVAL-EQ-007 non-finite input rule: NaN/Inf energy values raise
+    ValueError at the boundary instead of leaking into serialized output
+    (NaN rhat under an "ok" status) or silently terminating the Geyer scan
+    into a finite-but-meaningless ESS. The THRML runtime cannot produce
+    non-finite energies; this guards the baseline-adapter path.
+    """
+
+    NAN_CHAINS = [[1.0, 2.0, float("nan"), 4.0, 5.0, 6.0], [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]]
+    INF_CHAINS = [[1.0, 2.0, float("inf"), 4.0, 5.0, 6.0], [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]]
+
+    def test_ess_mean_rejects_nan(self) -> None:
+        with self.assertRaises(ValueError):
+            ess_mean(self.NAN_CHAINS)
+
+    def test_split_rhat_rejects_inf(self) -> None:
+        with self.assertRaises(ValueError):
+            diagnostics.split_rhat(self.INF_CHAINS)
+
+    def test_energy_section_rejects_nan(self) -> None:
+        with self.assertRaises(ValueError):
+            energy_section(self.NAN_CHAINS)
+
+    def test_compute_diagnostics_rejects_negative_inf(self) -> None:
+        chains = [[1.0, 2.0, float("-inf"), 4.0, 5.0, 6.0]]
+        with self.assertRaises(ValueError):
+            compute_diagnostics(energy_chains=chains)
+
+
+class OneStuckChainAmongVaryingChainsTests(unittest.TestCase):
+    """One frozen chain among varying chains: W stays positive so rhat is
+    numeric (no zero-within-variance status), and the frozen chain's
+    diverging mean drives rhat above the threshold, so chain_disagreement
+    fires through the numeric path rather than the degenerate-status path.
+    """
+
+    def test_numeric_rhat_path_flags_disagreement_without_zero_variance(self) -> None:
+        chains = [
+            [3.0] * 20,
+            [1.0, 2.0] * 10,
+            [1.5, 2.5] * 10,
+            [1.2, 2.2] * 10,
+        ]
+        section = chain_section(chains)
+        self.assertEqual(section["rhat_status"], "ok")
+        self.assertGreater(section["rhat"], 1.01)
+        flags = chain_flags(section)
+        self.assertIn("chain_disagreement", flags)
+        self.assertNotIn("zero_within_chain_variance", flags)
+
+
 if __name__ == "__main__":
     unittest.main()
