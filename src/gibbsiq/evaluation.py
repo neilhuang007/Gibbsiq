@@ -9,16 +9,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from gibbsiq.benchmark_oracle import verify_benchmark_fixture
+from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE, close_within, verify_benchmark_fixture
 
 
-DEFAULT_TOLERANCE = 1e-9
 UNORDERED_LIST_KEYS = {
     "energy_table",
     "best_binary_samples",
@@ -145,37 +143,28 @@ def comparable(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
+def _mismatch(path: str, expected: Any, actual: Any, message: str = "value does not match") -> list[Difference]:
+    return [
+        Difference(
+            path=path,
+            code="value_mismatch",
+            message=message,
+            expected=expected,
+            actual=actual,
+        )
+    ]
+
+
 def compare_values(expected: Any, actual: Any, path: str, tolerance: float) -> list[Difference]:
     if isinstance(expected, bool) or expected is None or isinstance(expected, str):
-        if expected == actual:
-            return []
-        return [
-            Difference(
-                path=path,
-                code="value_mismatch",
-                message="value does not match",
-                expected=expected,
-                actual=actual,
-            )
-        ]
+        return [] if expected == actual else _mismatch(path, expected, actual)
 
     if isinstance(expected, int) and not isinstance(expected, bool):
-        if expected == actual:
-            return []
-        return [
-            Difference(
-                path=path,
-                code="value_mismatch",
-                message="integer value does not match",
-                expected=expected,
-                actual=actual,
-            )
-        ]
+        return [] if expected == actual else _mismatch(path, expected, actual, "integer value does not match")
 
     if isinstance(expected, float):
-        if isinstance(actual, (int, float)) and not isinstance(actual, bool):
-            if math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=tolerance):
-                return []
+        if close_within(actual, expected, tolerance):
+            return []
         return [
             Difference(
                 path=path,
@@ -229,17 +218,7 @@ def compare_values(expected: Any, actual: Any, path: str, tolerance: float) -> l
             return compare_unordered_lists(expected, actual, path)
         return compare_ordered_lists(expected, actual, path, tolerance)
 
-    if expected == actual:
-        return []
-    return [
-        Difference(
-            path=path,
-            code="value_mismatch",
-            message="value does not match",
-            expected=expected,
-            actual=actual,
-        )
-    ]
+    return [] if expected == actual else _mismatch(path, expected, actual)
 
 
 def compare_ordered_lists(

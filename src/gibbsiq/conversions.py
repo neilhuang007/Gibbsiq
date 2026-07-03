@@ -5,7 +5,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from gibbsiq.model import IsingModel, Variable, normalize_vartype, variable_sort_key
+from gibbsiq.model import (
+    IsingModel,
+    Variable,
+    normalize_vartype,
+    variable_index,
+    variable_sort_key,
+)
 
 
 def compile_qubo(
@@ -110,7 +116,7 @@ def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> Ising
         variables = _variables_from_bqm(bqm) or _variables_from_terms(h, _normalize_pairs(J, None))
         model_metadata.update(
             {
-                "bqm_vartype": str(getattr(getattr(bqm, "vartype", None), "name", getattr(bqm, "vartype", "unknown"))),
+                "bqm_vartype": _vartype_name(bqm),
                 "input_offset": float(getattr(bqm, "offset", ising_offset)),
                 "conversion_offset": float(ising_offset),
                 "variable_order": list(variables),
@@ -167,6 +173,7 @@ def _parse_qubo(
 
     # Binary diagonal entries (u == u) are linear terms; off-diagonal entries are
     # accumulated onto their canonically-ordered pair.
+    index = variable_index(raw_variables) if raw_variables is not None else None
     quadratic: dict[tuple[Variable, Variable], float] = {}
     for key, value in term_items:
         left, right = _parse_pair_key(key)
@@ -174,12 +181,10 @@ def _parse_qubo(
         if left == right:
             linear[left] = linear.get(left, 0.0) + coefficient
         else:
-            pair = _ordered_pair(left, right, raw_variables)
+            pair = _ordered_pair(left, right, index)
             quadratic[pair] = quadratic.get(pair, 0.0) + coefficient
 
-    order = _resolve_variables(raw_variables, linear, quadratic)
-    quadratic = _normalize_pairs(quadratic, order)
-    return {"variables": order, "linear": _complete_linear(order, linear), "quadratic": quadratic, "offset": float(raw_offset)}
+    return _finish(raw_variables, linear, quadratic, float(raw_offset))
 
 
 def _parse_ising(
@@ -200,6 +205,7 @@ def _parse_ising(
         linear = {key: float(value) for key, value in dict(h).items()}
         quadratic_input = {} if J is None else dict(J)
 
+    index = variable_index(raw_variables) if raw_variables is not None else None
     quadratic: dict[tuple[Variable, Variable], float] = {}
     folded_offset = float(raw_offset)
     for key, value in quadratic_input.items():
@@ -208,12 +214,10 @@ def _parse_ising(
         if left == right:
             folded_offset += coefficient
             continue
-        pair = _ordered_pair(left, right, raw_variables)
+        pair = _ordered_pair(left, right, index)
         quadratic[pair] = quadratic.get(pair, 0.0) + coefficient
 
-    order = _resolve_variables(raw_variables, linear, quadratic)
-    quadratic = _normalize_pairs(quadratic, order)
-    return {"variables": order, "linear": _complete_linear(order, linear), "quadratic": quadratic, "offset": folded_offset}
+    return _finish(raw_variables, linear, quadratic, folded_offset)
 
 
 def _is_structured_model(value: Mapping[Any, Any]) -> bool:
@@ -222,6 +226,26 @@ def _is_structured_model(value: Mapping[Any, Any]) -> bool:
 
 def _complete_linear(variables: tuple[Variable, ...], linear: Mapping[Variable, float]) -> dict[Variable, float]:
     return {variable: float(linear.get(variable, 0.0)) for variable in variables}
+
+
+def _finish(
+    raw_variables: list[Variable] | tuple[Variable, ...] | None,
+    linear: Mapping[Variable, float],
+    quadratic: Mapping[tuple[Variable, Variable], float],
+    offset: float,
+) -> dict[str, Any]:
+    """Resolve variable order and normalize the parsed terms into the parse result.
+
+    Shared tail of ``_parse_qubo`` and ``_parse_ising``; the two parsers differ
+    only in how each routes diagonal terms (QUBO -> linear, Ising -> offset).
+    """
+    order = _resolve_variables(raw_variables, linear, quadratic)
+    return {
+        "variables": order,
+        "linear": _complete_linear(order, linear),
+        "quadratic": _normalize_pairs(quadratic, order),
+        "offset": offset,
+    }
 
 
 def _resolve_variables(
@@ -262,21 +286,27 @@ def _variables_from_bqm(bqm: Any) -> tuple[Variable, ...] | None:
     return tuple(variables)
 
 
+def _vartype_name(bqm: Any) -> str:
+    """Human-readable vartype label from a dimod-style object (its enum ``.name``)."""
+    vartype = getattr(bqm, "vartype", None)
+    return str(getattr(vartype, "name", getattr(bqm, "vartype", "unknown")))
+
+
 def _normalize_pairs(
     terms: Mapping[Any, Any],
     variables: list[Variable] | tuple[Variable, ...] | None,
 ) -> dict[tuple[Variable, Variable], float]:
+    index = variable_index(variables) if variables is not None else None
     normalized: dict[tuple[Variable, Variable], float] = {}
     for key, value in terms.items():
         left, right = _parse_pair_key(key)
         if left == right:
             normalized[(left, right)] = normalized.get((left, right), 0.0) + float(value)
             continue
-        pair = _ordered_pair(left, right, variables)
+        pair = _ordered_pair(left, right, index)
         normalized[pair] = normalized.get(pair, 0.0) + float(value)
-    if variables is None:
+    if index is None:
         return dict(sorted(normalized.items(), key=lambda item: (variable_sort_key(item[0][0]), variable_sort_key(item[0][1]))))
-    index = {variable: position for position, variable in enumerate(variables)}
     return dict(sorted(normalized.items(), key=lambda item: (index.get(item[0][0], 10**9), index.get(item[0][1], 10**9))))
 
 
@@ -292,11 +322,11 @@ def _parse_pair_key(key: Any) -> tuple[Variable, Variable]:
 def _ordered_pair(
     left: Variable,
     right: Variable,
-    variables: list[Variable] | tuple[Variable, ...] | None,
+    index: Mapping[Variable, int] | None,
 ) -> tuple[Variable, Variable]:
-    if variables is None:
+    """Order a pair by ``index`` position, or by ``variable_sort_key`` when unindexed."""
+    if index is None:
         return (left, right) if variable_sort_key(left) <= variable_sort_key(right) else (right, left)
-    index = {variable: position for position, variable in enumerate(variables)}
     if left not in index or right not in index:
         return left, right
     return (left, right) if index[left] < index[right] else (right, left)

@@ -31,15 +31,13 @@ that Gibbsiq does not lower yet. :func:`compile_fixture` raises
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
-from gibbsiq.benchmark_oracle import FAMILY_SPECS
+from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE, _score_candidate
 from gibbsiq.conversions import compile_ising
 from gibbsiq.model import IsingModel
 from gibbsiq.result import SampleResult
 
-DEFAULT_TOLERANCE = 1e-9
 # Proven quantities a sampler cannot honestly claim: they require exhaustive
 # enumeration of the optimum set, which sampling can only lower-bound.
 ENUMERATION_ONLY_KEYS = frozenset(
@@ -172,35 +170,10 @@ def candidate_from_result(fixture: dict[str, Any], result: SampleResult) -> dict
 
 
 def _partition_witness(numbers: list[int], witness: dict[str, int]) -> dict[str, list[int]]:
-    set_plus = [numbers[int(var)] for var, spin in sorted(witness.items(), key=lambda kv: int(kv[0])) if spin == 1]
-    set_minus = [numbers[int(var)] for var, spin in sorted(witness.items(), key=lambda kv: int(kv[0])) if spin == -1]
+    ordered = sorted(witness.items(), key=lambda item: int(item[0]))
+    set_plus = [numbers[int(var)] for var, spin in ordered if spin == 1]
+    set_minus = [numbers[int(var)] for var, spin in ordered if spin == -1]
     return {"set_plus": set_plus, "set_minus": set_minus}
-
-
-def _claim_diff(path: str, code: str, message: str, **extra: Any) -> dict[str, Any]:
-    record = {"path": path, "code": code, "message": message}
-    record.update({key: value for key, value in extra.items() if value is not None})
-    return record
-
-
-def _claim_scalar_diffs(
-    expected: Any, actual: Any, path: str, tolerance: float
-) -> list[dict[str, Any]]:
-    """Scalar comparison matching the oracle's semantics (floats within tolerance)."""
-    if isinstance(expected, float):
-        if isinstance(actual, (int, float)) and not isinstance(actual, bool):
-            if math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=tolerance):
-                return []
-        return [_claim_diff(path, "float_mismatch", f"float differs by more than {tolerance}",
-                            expected=expected, actual=actual)]
-    if expected == actual and type(expected) is type(actual):
-        return []
-    if (isinstance(expected, (int, float)) and not isinstance(expected, bool)
-            and isinstance(actual, (int, float)) and not isinstance(actual, bool)
-            and float(expected) == float(actual)):
-        return []
-    return [_claim_diff(path, "value_mismatch", "value does not match",
-                        expected=expected, actual=actual)]
 
 
 def verify_optimum_claim(
@@ -215,48 +188,4 @@ def verify_optimum_claim(
     recomputed from the input model. Returns a list of difference dicts
     (empty == pass).
     """
-    fixture_id = fixture["id"]
-    family = fixture.get("family")
-    spec = FAMILY_SPECS.get(family)
-    if spec is None:
-        return [_claim_diff(fixture_id, "unknown_family",
-                            f"no verification oracle for family {family!r}")]
-    if not isinstance(actual, dict):
-        return [_claim_diff(fixture_id, "type_mismatch",
-                            "expected an object of solver outputs",
-                            expected="object", actual=type(actual).__name__)]
-
-    expected = fixture["expected"]
-    model = fixture["input"]
-    differences: list[dict[str, Any]] = []
-
-    for key in spec["scalar_keys"]:
-        path = f"{fixture_id}.{key}"
-        if key not in actual:
-            if key in ENUMERATION_ONLY_KEYS:
-                continue
-            differences.append(_claim_diff(path, "missing_key", "required key is missing",
-                                           expected=expected[key]))
-            continue
-        differences.extend(_claim_scalar_diffs(expected[key], actual[key], path, tolerance))
-
-    witness_key = spec["witness_key"]
-    verify = spec["verify"]
-    optimum = expected[spec["optimum_key"]]
-    witnesses = actual.get(witness_key)
-    path = f"{fixture_id}.{witness_key}"
-    if not isinstance(witnesses, list) or not witnesses:
-        differences.append(_claim_diff(path, "missing_witness",
-                                       "candidate must supply at least one optimal witness state"))
-        return differences
-    for index, witness in enumerate(witnesses):
-        witness_path = f"{path}[{index}]"
-        try:
-            ok, message, computed = verify(model, witness, optimum, tolerance)
-        except (ValueError, KeyError, TypeError, IndexError) as error:
-            differences.append(_claim_diff(witness_path, "invalid_witness", str(error)))
-            continue
-        if not ok:
-            differences.append(_claim_diff(witness_path, "witness_not_optimal", message,
-                                           expected=optimum, actual=computed))
-    return differences
+    return _score_candidate(fixture, actual, tolerance, optional_keys=ENUMERATION_ONLY_KEYS)
