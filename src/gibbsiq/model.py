@@ -7,7 +7,7 @@ to the project Ising convention before any sampler or diagnostic layer sees it.
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal, TypeAlias
 
@@ -20,6 +20,11 @@ def variable_sort_key(variable: Variable) -> tuple[str, str, str]:
     """Return a deterministic key that can sort mixed Python label types."""
     cls = type(variable)
     return (cls.__module__, cls.__qualname__, repr(variable))
+
+
+def variable_index(variables: Sequence[Variable]) -> dict[Variable, int]:
+    """Map each variable to its position in ``variables`` (canonical-order lookup)."""
+    return {variable: position for position, variable in enumerate(variables)}
 
 
 def normalize_vartype(vartype: Any) -> Vartype:
@@ -95,7 +100,7 @@ class IsingModel:
         if order != variables:
             raise ValueError("variable_order must match variables exactly")
 
-        index = {variable: position for position, variable in enumerate(variables)}
+        index = variable_index(variables)
         linear = {variable: finite_float(self.linear.get(variable, 0.0), name=f"linear bias for {variable!r}") for variable in variables}
         quadratic: dict[tuple[Variable, Variable], float] = {}
         for pair, coefficient in self.quadratic.items():
@@ -108,6 +113,9 @@ class IsingModel:
                 raise ValueError(f"quadratic pair {pair!r} references unknown variable")
             ordered = (left, right) if index[left] < index[right] else (right, left)
             quadratic[ordered] = quadratic.get(ordered, 0.0) + finite_float(coefficient, name=f"quadratic bias for {pair!r}")
+        # Re-check the accumulated coefficients: summing finite duplicates can
+        # still overflow to +/-inf (e.g. 1e308 + 1e308), which the per-term
+        # guard above cannot catch.
         quadratic = {pair: finite_float(coefficient, name=f"quadratic bias for {pair!r}") for pair, coefficient in quadratic.items()}
 
         object.__setattr__(self, "variables", variables)

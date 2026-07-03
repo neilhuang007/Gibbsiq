@@ -27,6 +27,19 @@ from __future__ import annotations
 import math
 from typing import Any, Callable
 
+# Canonical absolute tolerance for scoring candidates against proven values;
+# shared by benchmark_bridge and evaluation so there is one source of truth.
+DEFAULT_TOLERANCE = 1e-9
+
+
+def close_within(actual: Any, expected: float, tolerance: float) -> bool:
+    """True when ``actual`` is a non-bool real number within ``tolerance`` of ``expected``."""
+    return (
+        isinstance(actual, (int, float))
+        and not isinstance(actual, bool)
+        and math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=tolerance)
+    )
+
 
 def _diff(path: str, code: str, message: str, **extra: Any) -> dict[str, Any]:
     record = {"path": path, "code": code, "message": message}
@@ -37,9 +50,8 @@ def _diff(path: str, code: str, message: str, **extra: Any) -> dict[str, Any]:
 def _scalar_diffs(expected: Any, actual: Any, path: str, tolerance: float) -> list[dict[str, Any]]:
     """Exact comparison for a single scalar (floats within ``tolerance``)."""
     if isinstance(expected, float):
-        if isinstance(actual, (int, float)) and not isinstance(actual, bool):
-            if math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=tolerance):
-                return []
+        if close_within(actual, expected, tolerance):
+            return []
         return [_diff(path, "float_mismatch", f"float differs by more than {tolerance}",
                       expected=expected, actual=actual)]
     if expected == actual and type(expected) is type(actual):
@@ -196,12 +208,18 @@ FAMILY_SPECS: dict[str, dict[str, Any]] = {
 }
 
 
-def verify_benchmark_fixture(
-    fixture: dict[str, Any], actual: Any, tolerance: float
+def _score_candidate(
+    fixture: dict[str, Any],
+    actual: Any,
+    tolerance: float,
+    *,
+    optional_keys: frozenset[str] = frozenset(),
 ) -> list[dict[str, Any]]:
-    """Strictly score a candidate against one ground-truth benchmark fixture.
+    """Score a candidate against a fixture; shared by the two pass criteria.
 
-    Returns a list of difference dicts (empty == pass).
+    ``optional_keys`` names scalar keys the candidate may omit without failing
+    (still checked when volunteered). Full characterization passes an empty set;
+    the optimization-claim criterion passes the enumeration-only keys.
     """
     fixture_id = fixture["id"]
     family = fixture.get("family")
@@ -218,10 +236,12 @@ def verify_benchmark_fixture(
     model = fixture["input"]
     differences: list[dict[str, Any]] = []
 
-    # 1. Every scalar field must match the proven value exactly.
+    # 1. Every required scalar field must match the proven value exactly.
     for key in spec["scalar_keys"]:
         path = f"{fixture_id}.{key}"
         if key not in actual:
+            if key in optional_keys:
+                continue
             differences.append(_diff(path, "missing_key", "required key is missing",
                                      expected=expected[key]))
             continue
@@ -236,16 +256,26 @@ def verify_benchmark_fixture(
     if not isinstance(witnesses, list) or not witnesses:
         differences.append(_diff(path, "missing_witness",
                                  "candidate must supply at least one optimal witness state"))
-    else:
-        for index, witness in enumerate(witnesses):
-            witness_path = f"{path}[{index}]"
-            try:
-                ok, message, computed = verify(model, witness, optimum, tolerance)
-            except (ValueError, KeyError, TypeError, IndexError) as error:
-                differences.append(_diff(witness_path, "invalid_witness", str(error)))
-                continue
-            if not ok:
-                differences.append(_diff(witness_path, "witness_not_optimal", message,
-                                         expected=optimum, actual=computed))
-
+        return differences
+    for index, witness in enumerate(witnesses):
+        witness_path = f"{path}[{index}]"
+        try:
+            ok, message, computed = verify(model, witness, optimum, tolerance)
+        except (ValueError, KeyError, TypeError, IndexError) as error:
+            differences.append(_diff(witness_path, "invalid_witness", str(error)))
+            continue
+        if not ok:
+            differences.append(_diff(witness_path, "witness_not_optimal", message,
+                                     expected=optimum, actual=computed))
     return differences
+
+
+def verify_benchmark_fixture(
+    fixture: dict[str, Any], actual: Any, tolerance: float
+) -> list[dict[str, Any]]:
+    """Strictly score a candidate under the full-characterization criterion.
+
+    Every scalar field (including enumeration-only quantities) is required.
+    Returns a list of difference dicts (empty == pass).
+    """
+    return _score_candidate(fixture, actual, tolerance)

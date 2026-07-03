@@ -121,17 +121,25 @@ def _rectangularize(chains: Sequence[Sequence[float]]) -> list[list[float]]:
     return [row[:shortest] for row in rows]
 
 
-def split_chains(chains: Sequence[Sequence[float]]) -> list[list[float]]:
-    """Half-split each chain per EVAL-EQ-007: first halves then last halves.
+def _split_rows(rows: list[list[float]]) -> list[list[float]]:
+    """Half-split already-rectangular rows: first halves then last halves.
 
     The middle draw of an odd-length chain is dropped, matching arviz
-    ``_split_chains``. Ragged input is rectangularized first.
+    ``_split_chains``. Internal callers that already hold rectangular rows use
+    this directly, avoiding a redundant ``_rectangularize`` pass.
     """
-    rows = _rectangularize(chains)
     if not rows:
         return []
     half = len(rows[0]) // 2
     return [row[:half] for row in rows] + [row[-half:] for row in rows]
+
+
+def split_chains(chains: Sequence[Sequence[float]]) -> list[list[float]]:
+    """Half-split each chain per EVAL-EQ-007: first halves then last halves.
+
+    Ragged input is rectangularized first; ``_split_rows`` holds the core.
+    """
+    return _split_rows(_rectangularize(chains))
 
 
 def _geyer_ess(split_rows: list[list[float]]) -> tuple[float, float]:
@@ -208,7 +216,7 @@ def ess_mean(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
             "ess_status": STATUS_INSUFFICIENT_DATA,
             "ess": None,
         }
-    split_rows = split_chains(rows)
+    split_rows = _split_rows(rows)
     flat = [value for row in split_rows for value in row]
     if max(flat) - min(flat) < _CONSTANT_RESOLUTION:
         return {
@@ -241,7 +249,7 @@ def split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     rows = _rectangularize(chains)
     if len(rows) < MIN_CHAINS_FOR_RHAT or len(rows[0]) < MIN_DRAWS_FOR_RHAT:
         return {"rhat_status": STATUS_INSUFFICIENT_DATA, "rhat": None, "split_within_chain_variance": None}
-    within, between, rhat = _rhat_core(split_chains(rows))
+    within, between, rhat = _rhat_core(_split_rows(rows))
     if rhat is None:
         status = STATUS_UNDEFINED_CONSTANT_TRACE if between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
         return {"rhat_status": status, "rhat": None, "split_within_chain_variance": within}
@@ -310,24 +318,37 @@ def rank_normalized_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, A
         "rank_normalized_rhat_bulk",
         "rank_normalized_rhat_folded",
     )
+
+    def result(status: str, combined=None, bulk=None, folded=None) -> dict[str, Any]:
+        return dict(zip(keys, (status, combined, bulk, folded)))
+
     rows = _rectangularize(chains)
     if len(rows) < MIN_CHAINS_FOR_RHAT or len(rows[0]) < MIN_DRAWS_FOR_RHAT:
-        return dict(zip(keys, (STATUS_INSUFFICIENT_DATA, None, None, None)))
-    split_rows = split_chains(rows)
+        return result(STATUS_INSUFFICIENT_DATA)
+    split_rows = _split_rows(rows)
     _, bulk_between, bulk = _rhat_core(_rank_normalize(split_rows))
     if bulk is None:
         status = (
             STATUS_UNDEFINED_CONSTANT_TRACE if bulk_between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
         )
-        return dict(zip(keys, (status, None, None, None)))
+        return result(status)
     pooled_median = median(value for row in split_rows for value in row)
     folded_rows = [[abs(value - pooled_median) for value in row] for row in split_rows]
     _, folded_between, folded = _rhat_core(_rank_normalize(folded_rows))
     if folded is None:
         if folded_between > 0.0:
-            return dict(zip(keys, (STATUS_ZERO_WITHIN_VARIANCE, None, bulk, None)))
-        return dict(zip(keys, (STATUS_OK, bulk, bulk, None)))
-    return dict(zip(keys, (STATUS_OK, max(bulk, folded), bulk, folded)))
+            return result(STATUS_ZERO_WITHIN_VARIANCE, bulk=bulk)
+        return result(STATUS_OK, combined=bulk, bulk=bulk)
+    return result(STATUS_OK, combined=max(bulk, folded), bulk=bulk, folded=folded)
+
+
+def _combined_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
+    """Plain (EVAL-EQ-007) and rank-normalized/folded (EVAL-EQ-013) split R-hat.
+
+    Both variants are always emitted together because ``_disagreement_signals``
+    reads keys from each; a producer must never emit only one half.
+    """
+    return {**split_rhat(chains), **rank_normalized_split_rhat(chains)}
 
 
 def energy_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
@@ -368,12 +389,21 @@ def energy_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     return section
 
 
-def chain_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
+def chain_section(
+    energy_chains: Sequence[Sequence[float]],
+    *,
+    ess: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Per-chain statistics, unsplit between-chain variance, and split R-hat.
 
     ``within_chain_variances`` is the population variance per chain and
     ``between_chain_variance`` is the UNSPLIT B of EVAL-EQ-007; both are
     distinct from the ddof=1 split-chain quantities inside ``rhat``.
+
+    ``ess`` optionally supplies a precomputed ``ess_mean`` summary (any mapping
+    with ``ess_status``/``ess``/``tau_hat``); a caller that already ran the
+    Geyer scan on the same chains — ``compute_diagnostics`` via the energy
+    section — passes it so the scan is not paid for twice.
     """
     rows = _rectangularize(energy_chains)
     section: dict[str, Any] = {
@@ -391,9 +421,10 @@ def chain_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
         section["between_chain_variance"] = len(rows[0]) * _variance(section["chain_means"], ddof=1)
     else:
         section["between_chain_variance"] = None
-    section.update(split_rhat(energy_chains))
-    section.update(rank_normalized_split_rhat(energy_chains))
-    ess_keys = ess_mean(energy_chains)
+    section.update(_combined_split_rhat(energy_chains))
+    # The chain section exposes only these three ESS keys; autocorrelation_status
+    # stays energy-section-scoped (frozen fixture schema), so do not blanket-copy.
+    ess_keys = ess if ess is not None else ess_mean(energy_chains)
     section["ess_status"] = ess_keys["ess_status"]
     section["ess"] = ess_keys["ess"]
     section["tau_hat"] = ess_keys["tau_hat"]
@@ -584,11 +615,9 @@ def compute_diagnostics(
     ``not_available`` until the penalty/encoding layer exists.
     """
     energy = energy_section(energy_chains)
-    chains = chain_section(energy_chains)
+    chains = chain_section(energy_chains, ess=energy)
     if magnetization_chains is not None:
-        magnetization_section = dict(split_rhat(magnetization_chains))
-        magnetization_section.update(rank_normalized_split_rhat(magnetization_chains))
-        chains["magnetization"] = magnetization_section
+        chains["magnetization"] = _combined_split_rhat(magnetization_chains)
     flags = set(energy_flags(energy)) | set(chain_flags(chains))
     if samples is not None and variables is not None:
         diversity = diversity_section(state_counts(samples, variables), len(variables))

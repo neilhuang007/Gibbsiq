@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from gibbsiq.model import IsingModel, Variable
+from gibbsiq.model import IsingModel, Variable, variable_index
 
 
 @dataclass(frozen=True)
@@ -66,7 +66,7 @@ def color_blocks(model: IsingModel) -> BlockPartition:
     degree and then by canonical variable order, so the partition is a pure
     function of the model. Every block lists its variables in canonical order.
     """
-    index = {variable: position for position, variable in enumerate(model.variables)}
+    index = variable_index(model.variables)
     neighbors: dict[Variable, set[Variable]] = {variable: set() for variable in model.variables}
     for left, right in model.quadratic:
         neighbors[left].add(right)
