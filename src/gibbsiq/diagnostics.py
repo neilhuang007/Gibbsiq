@@ -1,12 +1,16 @@
 """Sampler-health diagnostics for THRML-backed optimization runs (Stage 3).
 
 Every metric here is audited in ``reference/08-evaluation/equation-audit.md``
-(EVAL-EQ-007, EVAL-EQ-008, EVAL-EQ-011, EVAL-EQ-012) and computed with the
-standard library only. The ESS and split R-hat internals are algorithm-step
-ports of arviz v0.21.0 ``_ess`` / ``_rhat`` / ``_split_chains`` (Vehtari et al.
-2021 semantics) so golden fixtures cross-check against arviz to 1e-9, with one
-audited deviation: degenerate inputs (constant traces, insufficient draws)
-return explicit status strings instead of arviz's NaN or array-size returns.
+(EVAL-EQ-007, EVAL-EQ-008, EVAL-EQ-011, EVAL-EQ-012, EVAL-EQ-013) and computed
+with the standard library only. The ESS and split R-hat internals are
+algorithm-step ports of arviz v0.21.0 ``_ess`` / ``_rhat`` / ``_split_chains``
+/ ``_rhat_rank`` (Vehtari et al. 2021 semantics) so golden fixtures cross-check
+against arviz to 1e-9 (1e-8 for the rank-normalized variant, whose stdlib
+normal quantile differs from scipy's below that), with one audited deviation:
+degenerate inputs (constant traces, insufficient draws) return explicit status
+strings instead of arviz's NaN or array-size returns.
+Non-finite energy values raise ``ValueError`` at the input boundary
+(EVAL-EQ-007 non-finite input rule); statuses cover finite inputs only.
 
 Stationarity contract: these estimators assume the recorded draws target a
 fixed distribution. The THRML runtime guarantees this by construction — beta
@@ -25,6 +29,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from operator import mul
+from statistics import NormalDist, median
 from typing import Any
 
 from gibbsiq.model import Variable
@@ -93,8 +98,23 @@ def _rectangularize(chains: Sequence[Sequence[float]]) -> list[list[float]]:
     The runtime distributes reads across chains with lengths differing by at
     most one, so truncation loses at most ``num_chains - 1`` draws while
     keeping every chain (dropping short chains instead would discard far more).
+
+    Non-finite values raise ``ValueError`` per the EVAL-EQ-007 non-finite
+    input rule: NaN would either leak into serialized output or silently
+    terminate the Geyer scan into a finite-but-meaningless ESS. The THRML
+    runtime cannot produce them; this guards external baseline adapters.
     """
-    rows = [[float(value) for value in chain] for chain in chains if len(chain) > 0]
+    rows = []
+    for chain_index, chain in enumerate(chains):
+        row = [float(value) for value in chain]
+        for value in row:
+            if not math.isfinite(value):
+                raise ValueError(
+                    f"energy chains must contain only finite values; "
+                    f"chain {chain_index} contains {value!r}"
+                )
+        if row:
+            rows.append(row)
     if not rows:
         return []
     shortest = min(len(row) for row in rows)
@@ -206,20 +226,108 @@ def ess_mean(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     }
 
 
+def _rhat_core(split_rows: list[list[float]]) -> tuple[float, float, float | None]:
+    """EVAL-EQ-007 core on already-split chains: (W, B, rhat-or-None-if-W-zero)."""
+    num_draws = len(split_rows[0])
+    within = _mean([_variance(row, ddof=1) for row in split_rows])
+    between = num_draws * _variance([_mean(row) for row in split_rows], ddof=1)
+    if within == 0.0:
+        return within, between, None
+    return within, between, math.sqrt((between / within + num_draws - 1.0) / num_draws)
+
+
 def split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     """Plain split R-hat per EVAL-EQ-007 (not rank-normalized, not folded)."""
     rows = _rectangularize(chains)
     if len(rows) < MIN_CHAINS_FOR_RHAT or len(rows[0]) < MIN_DRAWS_FOR_RHAT:
         return {"rhat_status": STATUS_INSUFFICIENT_DATA, "rhat": None, "split_within_chain_variance": None}
-    split_rows = split_chains(rows)
-    num_draws = len(split_rows[0])
-    within = _mean([_variance(row, ddof=1) for row in split_rows])
-    between = num_draws * _variance([_mean(row) for row in split_rows], ddof=1)
-    if within == 0.0:
+    within, between, rhat = _rhat_core(split_chains(rows))
+    if rhat is None:
         status = STATUS_UNDEFINED_CONSTANT_TRACE if between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
         return {"rhat_status": status, "rhat": None, "split_within_chain_variance": within}
-    rhat = math.sqrt((between / within + num_draws - 1.0) / num_draws)
     return {"rhat_status": STATUS_OK, "rhat": rhat, "split_within_chain_variance": within}
+
+
+_STANDARD_NORMAL = NormalDist()
+# Blom (1958) fractional offset, matching arviz _backtransform_ranks(c=3/8).
+_RANK_OFFSET = 3.0 / 8.0
+
+
+def _average_tie_ranks(values: Sequence[float]) -> list[float]:
+    """1-based ranks with ties sharing the mean rank (scipy rankdata "average").
+
+    Ties require EXACT float equality, mirroring arviz semantics and the
+    plain variant's ``W == 0.0`` checks (EVAL-EQ-013 ties rule).
+    """
+    order = sorted(range(len(values)), key=values.__getitem__)
+    ranks = [0.0] * len(values)
+    start = 0
+    while start < len(order):
+        stop = start
+        while stop + 1 < len(order) and values[order[stop + 1]] == values[order[start]]:
+            stop += 1
+        shared_rank = (start + stop) / 2.0 + 1.0
+        for position in range(start, stop + 1):
+            ranks[order[position]] = shared_rank
+        start = stop + 1
+    return ranks
+
+
+def _rank_normalize(split_rows: list[list[float]]) -> list[list[float]]:
+    """Pooled ranks -> Blom backtransform -> normal quantile (EVAL-EQ-013).
+
+    Ranking pools ALL split chains together — per-chain ranking would erase
+    exactly the between-chain location signal R-hat measures.
+    """
+    flat = [value for row in split_rows for value in row]
+    size = len(flat)
+    z_values = [
+        _STANDARD_NORMAL.inv_cdf((rank - _RANK_OFFSET) / (size - 2.0 * _RANK_OFFSET + 1.0))
+        for rank in _average_tie_ranks(flat)
+    ]
+    num_draws = len(split_rows[0])
+    return [
+        z_values[row_index * num_draws : (row_index + 1) * num_draws]
+        for row_index in range(len(split_rows))
+    ]
+
+
+def rank_normalized_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
+    """Rank-normalized + folded split R-hat per EVAL-EQ-013.
+
+    Algorithm-step port of arviz v0.21.0 ``_rhat_rank``: half-split first,
+    rank-normalize the pooled split draws for the bulk component, fold around
+    the pooled median and re-rank-normalize for the folded component, report
+    the max. The plain ``rhat`` key (EVAL-EQ-007) is deliberately untouched;
+    this variant additionally catches chains that agree in mean but disagree
+    in spread. When folding collapses to a constant (balanced two-valued
+    trace symmetric around the median), the folded key is None and the
+    combined value is the bulk alone, matching arviz's max-with-NaN result.
+    """
+    keys = (
+        "rank_normalized_rhat_status",
+        "rank_normalized_rhat",
+        "rank_normalized_rhat_bulk",
+        "rank_normalized_rhat_folded",
+    )
+    rows = _rectangularize(chains)
+    if len(rows) < MIN_CHAINS_FOR_RHAT or len(rows[0]) < MIN_DRAWS_FOR_RHAT:
+        return dict(zip(keys, (STATUS_INSUFFICIENT_DATA, None, None, None)))
+    split_rows = split_chains(rows)
+    _, bulk_between, bulk = _rhat_core(_rank_normalize(split_rows))
+    if bulk is None:
+        status = (
+            STATUS_UNDEFINED_CONSTANT_TRACE if bulk_between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
+        )
+        return dict(zip(keys, (status, None, None, None)))
+    pooled_median = median(value for row in split_rows for value in row)
+    folded_rows = [[abs(value - pooled_median) for value in row] for row in split_rows]
+    _, folded_between, folded = _rhat_core(_rank_normalize(folded_rows))
+    if folded is None:
+        if folded_between > 0.0:
+            return dict(zip(keys, (STATUS_ZERO_WITHIN_VARIANCE, None, bulk, None)))
+        return dict(zip(keys, (STATUS_OK, bulk, bulk, None)))
+    return dict(zip(keys, (STATUS_OK, max(bulk, folded), bulk, folded)))
 
 
 def energy_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
@@ -284,6 +392,7 @@ def chain_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     else:
         section["between_chain_variance"] = None
     section.update(split_rhat(energy_chains))
+    section.update(rank_normalized_split_rhat(energy_chains))
     ess_keys = ess_mean(energy_chains)
     section["ess_status"] = ess_keys["ess_status"]
     section["ess"] = ess_keys["ess"]
@@ -367,17 +476,44 @@ def energy_flags(energy: Mapping[str, Any]) -> list[str]:
     return _canonical_order(flags)
 
 
+def _disagreement_signals(section: Mapping[str, Any]) -> bool:
+    """True when either R-hat variant reports chain disagreement.
+
+    Fires on the zero-within-variance status (infinite R-hat: chains constant
+    at distinct values) or a numeric value above ``RHAT_THRESHOLD``, for both
+    the plain (EVAL-EQ-007) and rank-normalized (EVAL-EQ-013) keys.
+    """
+    for status_key, value_key in (
+        ("rhat_status", "rhat"),
+        ("rank_normalized_rhat_status", "rank_normalized_rhat"),
+    ):
+        status = section.get(status_key)
+        if status == STATUS_ZERO_WITHIN_VARIANCE:
+            return True
+        if (
+            status == STATUS_OK
+            and section.get(value_key) is not None
+            and section[value_key] > RHAT_THRESHOLD
+        ):
+            return True
+    return False
+
+
 def chain_flags(chains: Mapping[str, Any]) -> list[str]:
-    """Chain-family flags; evaluated only against the chain section."""
+    """Chain-family flags; evaluated only against the chain section.
+
+    ``chain_disagreement`` fires from the energy-trace R-hat variants or, when
+    the ``magnetization`` subsection is present (EVAL-EQ-007 magnetization
+    wiring), from the same estimators on the magnetization trace — the only
+    flag that subsection contributes. ``zero_within_chain_variance`` and
+    ``insufficient_diagnostic_data`` stay energy-trace-scoped.
+    """
     flags = []
-    status = chains.get("rhat_status")
-    if status == STATUS_ZERO_WITHIN_VARIANCE:
-        flags.append("chain_disagreement")
-    elif status == STATUS_OK and chains.get("rhat") is not None and chains["rhat"] > RHAT_THRESHOLD:
+    if _disagreement_signals(chains) or _disagreement_signals(chains.get("magnetization") or {}):
         flags.append("chain_disagreement")
     if chains.get("split_within_chain_variance") == 0.0:
         flags.append("zero_within_chain_variance")
-    if status == STATUS_INSUFFICIENT_DATA:
+    if chains.get("rhat_status") == STATUS_INSUFFICIENT_DATA:
         flags.append("insufficient_diagnostic_data")
     return _canonical_order(flags)
 
@@ -435,16 +571,24 @@ def compute_diagnostics(
     energy_chains: Sequence[Sequence[float]],
     samples: Sequence[Mapping[Variable, int]] | None = None,
     variables: Sequence[Variable] | None = None,
+    magnetization_chains: Sequence[Sequence[float]] | None = None,
     timings: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble the full diagnostics payload for one sampler run.
 
     Unlike the fixture adapter, the runtime path unions the flags of every
-    family. ``constraints`` stays ``not_available`` until the penalty/encoding
-    layer exists.
+    family. ``magnetization_chains`` (the EVAL-EQ-012 trace, per chain) adds
+    the ``chains.magnetization`` disagreement subsection: degenerate optima of
+    EQUAL energy are invisible to every energy-trace statistic, while the
+    magnetization trace separates the wells. ``constraints`` stays
+    ``not_available`` until the penalty/encoding layer exists.
     """
     energy = energy_section(energy_chains)
     chains = chain_section(energy_chains)
+    if magnetization_chains is not None:
+        magnetization_section = dict(split_rhat(magnetization_chains))
+        magnetization_section.update(rank_normalized_split_rhat(magnetization_chains))
+        chains["magnetization"] = magnetization_section
     flags = set(energy_flags(energy)) | set(chain_flags(chains))
     if samples is not None and variables is not None:
         diversity = diversity_section(state_counts(samples, variables), len(variables))

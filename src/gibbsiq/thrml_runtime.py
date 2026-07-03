@@ -332,6 +332,7 @@ class THRMLSampler:
             energy_chains=energy_trace,
             samples=samples,
             variables=model.variables,
+            magnetization_chains=traces["magnetization"],
             timings={
                 "lower_seconds": lower_seconds,
                 "sample_seconds": sample_seconds,

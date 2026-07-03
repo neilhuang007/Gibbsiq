@@ -404,11 +404,15 @@ class DiagnosticsWiringTests(unittest.TestCase):
             positions[chain_id] += 1
 
     def test_embedded_diagnostics_equal_recomputation_from_result(self) -> None:
+        # The recomputation mirrors the runtime call exactly, including the
+        # magnetization trace (EVAL-EQ-007 magnetization wiring): everything
+        # the payload contains must be reproducible from the result alone.
         result = self._sample()
         recomputed = compute_diagnostics(
             energy_chains=result.traces["energy"],
             samples=list(result.samples),
             variables=result.variables,
+            magnetization_chains=result.traces["magnetization"],
         )
         for section in ("energy", "diversity", "chains", "flags", "thresholds"):
             self.assertEqual(result.diagnostics[section], recomputed[section], msg=section)
