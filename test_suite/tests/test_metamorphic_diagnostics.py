@@ -143,9 +143,13 @@ class VariableRelabelTests(unittest.TestCase):
         renamed_variables = [relabel[variable] for variable in original_variables]
 
         samples = [{variable: rng.choice((1, -1)) for variable in original_variables} for _ in range(60)]
-        renamed_samples = [{relabel[variable]: spin for variable, spin in sample.items()} for sample in samples]
+        renamed_samples = [
+            {relabel[variable]: spin for variable, spin in sample.items()} for sample in samples
+        ]
 
-        original_section = diversity_section(state_counts(samples, original_variables), len(original_variables))
+        original_section = diversity_section(
+            state_counts(samples, original_variables), len(original_variables)
+        )
         renamed_section = diversity_section(
             state_counts(renamed_samples, renamed_variables), len(renamed_variables)
         )

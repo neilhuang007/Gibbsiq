@@ -25,7 +25,8 @@ report) so this module has no dependency on ``gibbsiq.evaluation``.
 from __future__ import annotations
 
 import math
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any, TypeAlias
 
 # Canonical absolute tolerance for scoring candidates against proven values;
 # shared by benchmark_bridge and evaluation so there is one source of truth.
@@ -52,14 +53,25 @@ def _scalar_diffs(expected: Any, actual: Any, path: str, tolerance: float) -> li
     if isinstance(expected, float):
         if close_within(actual, expected, tolerance):
             return []
-        return [_diff(path, "float_mismatch", f"float differs by more than {tolerance}",
-                      expected=expected, actual=actual)]
+        return [
+            _diff(
+                path,
+                "float_mismatch",
+                f"float differs by more than {tolerance}",
+                expected=expected,
+                actual=actual,
+            )
+        ]
     if expected == actual and type(expected) is type(actual):
         return []
     # Allow int/float numeric equality (e.g. expected 12 == actual 12.0).
-    if (isinstance(expected, (int, float)) and not isinstance(expected, bool)
-            and isinstance(actual, (int, float)) and not isinstance(actual, bool)
-            and float(expected) == float(actual)):
+    if (
+        isinstance(expected, (int, float))
+        and not isinstance(expected, bool)
+        and isinstance(actual, (int, float))
+        and not isinstance(actual, bool)
+        and float(expected) == float(actual)
+    ):
         return []
     return [_diff(path, "value_mismatch", "value does not match", expected=expected, actual=actual)]
 
@@ -95,6 +107,9 @@ def maxcut_cut_value(model: dict[str, Any], spins: dict[str, int]) -> int:
 
 
 def ising_energy(model: dict[str, Any], spins: dict[str, int]) -> float:
+    # Deliberately independent of IsingModel.energy: the oracle must not share
+    # energy code with the lowering path it verifies, or an IR sign/offset bug
+    # would self-consistently pass. Do not consolidate.
     energy = float(model.get("offset", 0.0))
     for var, field in model.get("linear", {}).items():
         energy += float(field) * spins[str(var)]
@@ -104,7 +119,10 @@ def ising_energy(model: dict[str, Any], spins: dict[str, int]) -> float:
     return energy
 
 
-VerifyResult = tuple[bool, str | None, int | float | None]
+# (passed, failure message, recomputed objective) from one witness check.
+VerifyResult: TypeAlias = tuple[bool, str | None, int | float | None]
+# Family verifier: (fixture input model, witness, proven optimum, tolerance).
+VerifyFn: TypeAlias = Callable[[dict[str, Any], Any, Any, float], VerifyResult]
 
 
 def _verify_maxcut(model: dict[str, Any], witness: Any, optimum: Any, tolerance: float) -> VerifyResult:
@@ -123,7 +141,9 @@ def _verify_ising(model: dict[str, Any], witness: Any, optimum: Any, tolerance: 
     return True, None, energy
 
 
-def _verify_number_partition(model: dict[str, Any], witness: Any, optimum: Any, tolerance: float) -> VerifyResult:
+def _verify_number_partition(
+    model: dict[str, Any], witness: Any, optimum: Any, tolerance: float
+) -> VerifyResult:
     if not isinstance(witness, dict) or "set_plus" not in witness or "set_minus" not in witness:
         return False, "partition witness needs 'set_plus' and 'set_minus' lists", None
     plus = list(witness["set_plus"])
@@ -173,22 +193,30 @@ def _verify_tsp(model: dict[str, Any], witness: Any, optimum: Any, tolerance: fl
 # (sk_spin_glass uses format "ising").
 FAMILY_SPECS: dict[str, dict[str, Any]] = {
     "maxcut": {
-        "scalar_keys": ["num_nodes", "num_edges", "best_cut_value",
-                        "best_ising_energy", "ground_state_degeneracy"],
+        "scalar_keys": [
+            "num_nodes",
+            "num_edges",
+            "best_cut_value",
+            "best_ising_energy",
+            "ground_state_degeneracy",
+        ],
         "optimum_key": "best_cut_value",
         "witness_key": "witness_spin_samples",
         "verify": _verify_maxcut,
     },
     "number_partition": {
-        "scalar_keys": ["min_subset_sum_difference", "best_ising_energy",
-                        "ground_state_degeneracy", "is_perfect_partition"],
+        "scalar_keys": [
+            "min_subset_sum_difference",
+            "best_ising_energy",
+            "ground_state_degeneracy",
+            "is_perfect_partition",
+        ],
         "optimum_key": "min_subset_sum_difference",
         "witness_key": "witness_partitions",
         "verify": _verify_number_partition,
     },
     "knapsack": {
-        "scalar_keys": ["max_value", "weight_at_optimum", "capacity",
-                        "num_optimal_selections"],
+        "scalar_keys": ["max_value", "weight_at_optimum", "capacity", "num_optimal_selections"],
         "optimum_key": "max_value",
         "witness_key": "witness_selections",
         "verify": _verify_knapsack,
@@ -208,7 +236,7 @@ FAMILY_SPECS: dict[str, dict[str, Any]] = {
 }
 
 
-def _score_candidate(
+def score_candidate(
     fixture: dict[str, Any],
     actual: Any,
     tolerance: float,
@@ -223,14 +251,22 @@ def _score_candidate(
     """
     fixture_id = fixture["id"]
     family = fixture.get("family")
+    if not isinstance(family, str):
+        return [_diff(fixture_id, "unknown_family", f"no verification oracle for family {family!r}")]
     spec = FAMILY_SPECS.get(family)
     if spec is None:
-        return [_diff(fixture_id, "unknown_family",
-                      f"no verification oracle for family {family!r}")]
+        return [_diff(fixture_id, "unknown_family", f"no verification oracle for family {family!r}")]
 
     if not isinstance(actual, dict):
-        return [_diff(fixture_id, "type_mismatch", "expected an object of solver outputs",
-                      expected="object", actual=type(actual).__name__)]
+        return [
+            _diff(
+                fixture_id,
+                "type_mismatch",
+                "expected an object of solver outputs",
+                expected="object",
+                actual=type(actual).__name__,
+            )
+        ]
 
     expected = fixture["expected"]
     model = fixture["input"]
@@ -242,20 +278,20 @@ def _score_candidate(
         if key not in actual:
             if key in optional_keys:
                 continue
-            differences.append(_diff(path, "missing_key", "required key is missing",
-                                     expected=expected[key]))
+            differences.append(_diff(path, "missing_key", "required key is missing", expected=expected[key]))
             continue
         differences.extend(_scalar_diffs(expected[key], actual[key], path, tolerance))
 
     # 2. Independently re-verify candidate witnesses.
     witness_key = spec["witness_key"]
-    verify: Callable = spec["verify"]
+    verify: VerifyFn = spec["verify"]
     optimum = expected[spec["optimum_key"]]
     witnesses = actual.get(witness_key)
     path = f"{fixture_id}.{witness_key}"
     if not isinstance(witnesses, list) or not witnesses:
-        differences.append(_diff(path, "missing_witness",
-                                 "candidate must supply at least one optimal witness state"))
+        differences.append(
+            _diff(path, "missing_witness", "candidate must supply at least one optimal witness state")
+        )
         return differences
     for index, witness in enumerate(witnesses):
         witness_path = f"{path}[{index}]"
@@ -265,17 +301,22 @@ def _score_candidate(
             differences.append(_diff(witness_path, "invalid_witness", str(error)))
             continue
         if not ok:
-            differences.append(_diff(witness_path, "witness_not_optimal", message,
-                                     expected=optimum, actual=computed))
+            differences.append(
+                _diff(
+                    witness_path,
+                    "witness_not_optimal",
+                    message or "witness did not attain optimum",
+                    expected=optimum,
+                    actual=computed,
+                )
+            )
     return differences
 
 
-def verify_benchmark_fixture(
-    fixture: dict[str, Any], actual: Any, tolerance: float
-) -> list[dict[str, Any]]:
+def verify_benchmark_fixture(fixture: dict[str, Any], actual: Any, tolerance: float) -> list[dict[str, Any]]:
     """Strictly score a candidate under the full-characterization criterion.
 
     Every scalar field (including enumeration-only quantities) is required.
     Returns a list of difference dicts (empty == pass).
     """
-    return _score_candidate(fixture, actual, tolerance)
+    return score_candidate(fixture, actual, tolerance)

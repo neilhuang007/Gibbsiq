@@ -27,12 +27,13 @@ worst case.
 from __future__ import annotations
 
 import math
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from operator import mul
 from statistics import NormalDist, median
 from typing import Any
 
-from gibbsiq.model import Variable
+from gibbsiq.model import Variable, finite_float
 
 STATUS_OK = "ok"
 STATUS_CONSTANT_TRACE = "constant_trace"
@@ -106,13 +107,7 @@ def _rectangularize(chains: Sequence[Sequence[float]]) -> list[list[float]]:
     """
     rows = []
     for chain_index, chain in enumerate(chains):
-        row = [float(value) for value in chain]
-        for value in row:
-            if not math.isfinite(value):
-                raise ValueError(
-                    f"energy chains must contain only finite values; "
-                    f"chain {chain_index} contains {value!r}"
-                )
+        row = [finite_float(value, name=f"chain {chain_index} energy value") for value in chain]
         if row:
             rows.append(row)
     if not rows:
@@ -152,9 +147,7 @@ def _geyer_ess(split_rows: list[list[float]]) -> tuple[float, float]:
     num_chains = len(split_rows)
     num_draws = len(split_rows[0])
     chain_means = [_mean(row) for row in split_rows]
-    demeaned = [
-        [value - center for value in row] for row, center in zip(split_rows, chain_means)
-    ]
+    demeaned = [[value - center for value in row] for row, center in zip(split_rows, chain_means)]
 
     def mean_autocovariance(lag: int) -> float:
         total = 0.0
@@ -207,8 +200,13 @@ def ess_mean(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     statuses are ``insufficient_data``; a constant (post-split) trace reports
     ``constant_trace`` / ``undefined_constant_trace`` instead of arviz's
     healthy array-size ESS (audited deviation).
+
+    Ragged input is rectangularized first; ``_ess_mean_rows`` holds the core.
     """
-    rows = _rectangularize(chains)
+    return _ess_mean_rows(_rectangularize(chains))
+
+
+def _ess_mean_rows(rows: list[list[float]]) -> dict[str, Any]:
     if not rows or len(rows[0]) < MIN_DRAWS_FOR_ESS:
         return {
             "autocorrelation_status": STATUS_INSUFFICIENT_DATA,
@@ -244,15 +242,35 @@ def _rhat_core(split_rows: list[list[float]]) -> tuple[float, float, float | Non
     return within, between, math.sqrt((between / within + num_draws - 1.0) / num_draws)
 
 
-def split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
-    """Plain split R-hat per EVAL-EQ-007 (not rank-normalized, not folded)."""
+def _split_rows_for_rhat(chains: Sequence[Sequence[float]]) -> list[list[float]] | None:
+    """Rectangularize and half-split chains for R-hat, or None below the
+    EVAL-EQ-007 minimums (``MIN_CHAINS_FOR_RHAT`` chains, ``MIN_DRAWS_FOR_RHAT``
+    raw draws); shared prep of both R-hat variants."""
     rows = _rectangularize(chains)
     if len(rows) < MIN_CHAINS_FOR_RHAT or len(rows[0]) < MIN_DRAWS_FOR_RHAT:
+        return None
+    return _split_rows(rows)
+
+
+def _zero_within_status(between: float) -> str:
+    """Status when W == 0: every chain constant at one shared value is a
+    constant trace (B == 0); chains constant at distinct values make R-hat
+    infinite (zero-within-variance)."""
+    return STATUS_UNDEFINED_CONSTANT_TRACE if between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
+
+
+def split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
+    """Plain split R-hat per EVAL-EQ-007 (not rank-normalized, not folded)."""
+    split_rows = _split_rows_for_rhat(chains)
+    if split_rows is None:
         return {"rhat_status": STATUS_INSUFFICIENT_DATA, "rhat": None, "split_within_chain_variance": None}
-    within, between, rhat = _rhat_core(_split_rows(rows))
+    within, between, rhat = _rhat_core(split_rows)
     if rhat is None:
-        status = STATUS_UNDEFINED_CONSTANT_TRACE if between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
-        return {"rhat_status": status, "rhat": None, "split_within_chain_variance": within}
+        return {
+            "rhat_status": _zero_within_status(between),
+            "rhat": None,
+            "split_within_chain_variance": within,
+        }
     return {"rhat_status": STATUS_OK, "rhat": rhat, "split_within_chain_variance": within}
 
 
@@ -295,8 +313,7 @@ def _rank_normalize(split_rows: list[list[float]]) -> list[list[float]]:
     ]
     num_draws = len(split_rows[0])
     return [
-        z_values[row_index * num_draws : (row_index + 1) * num_draws]
-        for row_index in range(len(split_rows))
+        z_values[row_index * num_draws : (row_index + 1) * num_draws] for row_index in range(len(split_rows))
     ]
 
 
@@ -319,19 +336,20 @@ def rank_normalized_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, A
         "rank_normalized_rhat_folded",
     )
 
-    def result(status: str, combined=None, bulk=None, folded=None) -> dict[str, Any]:
+    def result(
+        status: str,
+        combined: float | None = None,
+        bulk: float | None = None,
+        folded: float | None = None,
+    ) -> dict[str, Any]:
         return dict(zip(keys, (status, combined, bulk, folded)))
 
-    rows = _rectangularize(chains)
-    if len(rows) < MIN_CHAINS_FOR_RHAT or len(rows[0]) < MIN_DRAWS_FOR_RHAT:
+    split_rows = _split_rows_for_rhat(chains)
+    if split_rows is None:
         return result(STATUS_INSUFFICIENT_DATA)
-    split_rows = _split_rows(rows)
     _, bulk_between, bulk = _rhat_core(_rank_normalize(split_rows))
     if bulk is None:
-        status = (
-            STATUS_UNDEFINED_CONSTANT_TRACE if bulk_between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
-        )
-        return result(status)
+        return result(_zero_within_status(bulk_between))
     pooled_median = median(value for row in split_rows for value in row)
     folded_rows = [[abs(value - pooled_median) for value in row] for row in split_rows]
     _, folded_between, folded = _rhat_core(_rank_normalize(folded_rows))
@@ -357,11 +375,12 @@ def energy_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     pooled = [value for chain in chains for value in chain]
     section: dict[str, Any] = {"count": len(pooled)}
     if pooled:
-        section["min"] = min(pooled)
+        best = min(pooled)
+        section["min"] = best
         section["max"] = max(pooled)
         section["mean"] = _mean(pooled)
         section["variance"] = _variance(pooled)
-        section["best_energy"] = min(pooled)
+        section["best_energy"] = best
     else:
         section.update({"min": None, "max": None, "mean": None, "variance": None, "best_energy": None})
 
@@ -385,7 +404,7 @@ def energy_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
 
     rows = _rectangularize(chains)
     section["draws_per_chain"] = len(rows[0]) if rows else 0
-    section.update(ess_mean(chains))
+    section.update(_ess_mean_rows(rows))
     return section
 
 
@@ -435,11 +454,7 @@ def state_counts(
     samples: Sequence[Mapping[Variable, int]], variables: Sequence[Variable]
 ) -> dict[tuple[int, ...], int]:
     """Count reads per distinct state, keyed by the fixed variable order."""
-    counts: dict[tuple[int, ...], int] = {}
-    for sample in samples:
-        state = tuple(int(sample[variable]) for variable in variables)
-        counts[state] = counts.get(state, 0) + 1
-    return counts
+    return Counter(tuple(int(sample[variable]) for variable in variables) for sample in samples)
 
 
 def diversity_section(
@@ -458,19 +473,22 @@ def diversity_section(
     masses = [count / total for _, count in ordered] if total else []
     for k in top_k:
         section[f"top{k}_mass"] = math.fsum(masses[:k]) if masses else None
-    section["entropy_nats"] = (
-        -math.fsum(mass * math.log(mass) for mass in masses) if masses else None
-    )
+    section["entropy_nats"] = -math.fsum(mass * math.log(mass) for mass in masses) if masses else None
     if total >= 2:
-        states = [state for state, _ in ordered]
-        weights = [count for _, count in ordered]
+        # Weighted pairwise Hamming via per-position value grouping: at each
+        # position the read pairs that differ number (total^2 - sum_v W_v^2)/2,
+        # with W_v the read weight of value v there. Same-state pairs share
+        # every value and contribute zero, so this equals the explicit
+        # O(states^2) pairwise sum exactly — integer arithmetic throughout,
+        # in O(states * variables).
         weighted_distance = 0
-        for first in range(len(states)):
-            for second in range(first + 1, len(states)):
-                differing = sum(
-                    1 for a, b in zip(states[first], states[second]) if a != b
-                )
-                weighted_distance += weights[first] * weights[second] * differing
+        for position in range(len(ordered[0][0])):
+            value_weights: Counter[int] = Counter()
+            for state, count in ordered:
+                value_weights[state[position]] += count
+            weighted_distance += (
+                total * total - sum(weight * weight for weight in value_weights.values())
+            ) // 2
         pair_count = total * (total - 1) // 2
         mean_hamming = weighted_distance / pair_count
         section["mean_pairwise_hamming_distance"] = mean_hamming
@@ -521,11 +539,7 @@ def _disagreement_signals(section: Mapping[str, Any]) -> bool:
         status = section.get(status_key)
         if status == STATUS_ZERO_WITHIN_VARIANCE:
             return True
-        if (
-            status == STATUS_OK
-            and section.get(value_key) is not None
-            and section[value_key] > RHAT_THRESHOLD
-        ):
+        if status == STATUS_OK and section.get(value_key) is not None and section[value_key] > RHAT_THRESHOLD:
             return True
     return False
 
@@ -589,10 +603,7 @@ def distance_to_best_trace(
     (``SampleResult.best_index``) so degenerate optima stay deterministic.
     """
     return [
-        [
-            sum(1 for variable in variables if sample[variable] != best_sample[variable])
-            for sample in chain
-        ]
+        [sum(1 for variable in variables if sample[variable] != best_sample[variable]) for sample in chain]
         for chain in sample_chains
     ]
 
@@ -664,9 +675,7 @@ def diagnostic_candidate_from_input(fixture_input: Mapping[str, Any]) -> dict[st
         section = energy_section([fixture_input["energy_trace"]])
         flags = energy_flags(section)
     else:
-        raise ValueError(
-            "fixture input must contain one of 'sample_counts', 'chains', or 'energy_trace'"
-        )
+        raise ValueError("fixture input must contain one of 'sample_counts', 'chains', or 'energy_trace'")
     candidate = dict(section)
     candidate["required_flags"] = flags
     return candidate

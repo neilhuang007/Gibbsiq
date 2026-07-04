@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 from gibbsiq.model import (
@@ -47,7 +47,7 @@ def compile_qubo(
         linear_spin[right] += coupling
         ising_offset += coupling
 
-    conversion_metadata = {
+    conversion_metadata: dict[str, Any] = {
         "source_format": source_format,
         "input_offset": parsed["offset"],
         "conversion_offset": ising_offset,
@@ -81,7 +81,7 @@ def compile_ising(
 ) -> IsingModel:
     """Normalize Ising fields and couplings into canonical variable order."""
     parsed = _parse_ising(h, J, offset=offset, variables=variables)
-    model_metadata = {
+    model_metadata: dict[str, Any] = {
         "source_format": source_format,
         "input_offset": parsed["offset"],
         "conversion_offset": parsed["offset"],
@@ -107,7 +107,7 @@ def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> Ising
     ``to_ising()``, that method is used. Otherwise, a duck-typed object with
     ``linear``, ``quadratic``, ``offset``, and ``vartype`` attributes is accepted.
     """
-    model_metadata = {"source_format": "bqm"}
+    model_metadata: dict[str, Any] = {"source_format": "bqm"}
     if metadata:
         model_metadata.update(metadata)
 
@@ -132,8 +132,8 @@ def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> Ising
         )
 
     vartype = normalize_vartype(getattr(bqm, "vartype", None))
-    linear = dict(getattr(bqm, "linear"))
-    quadratic = dict(getattr(bqm, "quadratic"))
+    linear = dict(bqm.linear)
+    quadratic = dict(bqm.quadratic)
     input_offset = float(getattr(bqm, "offset", 0.0))
     variables = _variables_from_bqm(bqm) or _variables_from_terms(linear, _normalize_pairs(quadratic, None))
     model_metadata.update({"bqm_vartype": vartype, "input_offset": input_offset})
@@ -160,6 +160,7 @@ def _parse_qubo(
     offset: float | None,
     variables: list[Variable] | tuple[Variable, ...] | None,
 ) -> dict[str, Any]:
+    term_items: Iterable[tuple[Any, Any]]
     if _is_structured_model(qubo):
         raw_variables = variables if variables is not None else qubo.get("variables")
         raw_offset = qubo.get("offset", 0.0) if offset is None else offset
@@ -172,8 +173,7 @@ def _parse_qubo(
         term_items = qubo.items()
 
     # Binary diagonal entries (u == u) are linear terms; off-diagonal entries are
-    # accumulated onto their canonically-ordered pair.
-    index = variable_index(raw_variables) if raw_variables is not None else None
+    # accumulated as-is and canonicalized once in _finish -> _normalize_pairs.
     quadratic: dict[tuple[Variable, Variable], float] = {}
     for key, value in term_items:
         left, right = _parse_pair_key(key)
@@ -181,8 +181,7 @@ def _parse_qubo(
         if left == right:
             linear[left] = linear.get(left, 0.0) + coefficient
         else:
-            pair = _ordered_pair(left, right, index)
-            quadratic[pair] = quadratic.get(pair, 0.0) + coefficient
+            quadratic[(left, right)] = quadratic.get((left, right), 0.0) + coefficient
 
     return _finish(raw_variables, linear, quadratic, float(raw_offset))
 
@@ -205,7 +204,6 @@ def _parse_ising(
         linear = {key: float(value) for key, value in dict(h).items()}
         quadratic_input = {} if J is None else dict(J)
 
-    index = variable_index(raw_variables) if raw_variables is not None else None
     quadratic: dict[tuple[Variable, Variable], float] = {}
     folded_offset = float(raw_offset)
     for key, value in quadratic_input.items():
@@ -214,18 +212,13 @@ def _parse_ising(
         if left == right:
             folded_offset += coefficient
             continue
-        pair = _ordered_pair(left, right, index)
-        quadratic[pair] = quadratic.get(pair, 0.0) + coefficient
+        quadratic[(left, right)] = quadratic.get((left, right), 0.0) + coefficient
 
     return _finish(raw_variables, linear, quadratic, folded_offset)
 
 
 def _is_structured_model(value: Mapping[Any, Any]) -> bool:
     return any(key in value for key in ("linear", "quadratic", "variables", "offset"))
-
-
-def _complete_linear(variables: tuple[Variable, ...], linear: Mapping[Variable, float]) -> dict[Variable, float]:
-    return {variable: float(linear.get(variable, 0.0)) for variable in variables}
 
 
 def _finish(
@@ -240,9 +233,11 @@ def _finish(
     only in how each routes diagonal terms (QUBO -> linear, Ising -> offset).
     """
     order = _resolve_variables(raw_variables, linear, quadratic)
+    # Linear stays sparse here: consumers read it with .get(variable, 0.0) and
+    # IsingModel.__post_init__ owns densification plus the finite check.
     return {
         "variables": order,
-        "linear": _complete_linear(order, linear),
+        "linear": dict(linear),
         "quadratic": _normalize_pairs(quadratic, order),
         "offset": offset,
     }
@@ -268,7 +263,9 @@ def _resolve_variables(
     referenced = set(linear) | {variable for pair in quadratic for variable in pair}
     unknown = referenced - known
     if unknown:
-        raise ValueError(f"terms reference variables not present in variable order: {sorted(unknown, key=variable_sort_key)!r}")
+        raise ValueError(
+            f"terms reference variables not present in variable order: {sorted(unknown, key=variable_sort_key)!r}"
+        )
     return order
 
 
@@ -288,8 +285,8 @@ def _variables_from_bqm(bqm: Any) -> tuple[Variable, ...] | None:
 
 def _vartype_name(bqm: Any) -> str:
     """Human-readable vartype label from a dimod-style object (its enum ``.name``)."""
-    vartype = getattr(bqm, "vartype", None)
-    return str(getattr(vartype, "name", getattr(bqm, "vartype", "unknown")))
+    vartype = getattr(bqm, "vartype", "unknown")
+    return str(getattr(vartype, "name", vartype))
 
 
 def _normalize_pairs(
@@ -306,8 +303,15 @@ def _normalize_pairs(
         pair = _ordered_pair(left, right, index)
         normalized[pair] = normalized.get(pair, 0.0) + float(value)
     if index is None:
-        return dict(sorted(normalized.items(), key=lambda item: (variable_sort_key(item[0][0]), variable_sort_key(item[0][1]))))
-    return dict(sorted(normalized.items(), key=lambda item: (index.get(item[0][0], 10**9), index.get(item[0][1], 10**9))))
+        return dict(
+            sorted(
+                normalized.items(),
+                key=lambda item: (variable_sort_key(item[0][0]), variable_sort_key(item[0][1])),
+            )
+        )
+    # _resolve_variables has already validated every pair member, so the index
+    # lookup cannot miss here.
+    return dict(sorted(normalized.items(), key=lambda item: (index[item[0][0]], index[item[0][1]])))
 
 
 def _parse_pair_key(key: Any) -> tuple[Variable, Variable]:
@@ -327,6 +331,4 @@ def _ordered_pair(
     """Order a pair by ``index`` position, or by ``variable_sort_key`` when unindexed."""
     if index is None:
         return (left, right) if variable_sort_key(left) <= variable_sort_key(right) else (right, left)
-    if left not in index or right not in index:
-        return left, right
     return (left, right) if index[left] < index[right] else (right, left)

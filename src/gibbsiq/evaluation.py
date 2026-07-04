@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -25,8 +25,16 @@ UNORDERED_LIST_KEYS = {
     "sample_counts",
 }
 
+# Per-row aliases accepted in list-shaped candidates (forms 1/2 in
+# ``normalize_candidate``): the fixture id and the payload may each arrive under
+# any of these keys, in priority order.
+_ROW_ID_KEYS = ("id", "fixture_id")
+_ROW_ACTUAL_KEYS = ("actual", "output", "result")
+# Top-level bookkeeping keys ignored when a candidate is a flat id -> output map.
+_CANDIDATE_METADATA_KEYS = frozenset({"schema_version", "metadata", "generated_by", "created_at"})
 
-@dataclass(frozen=True)
+
+@dataclass(frozen=True, slots=True)
 class Difference:
     path: str
     code: str
@@ -34,7 +42,7 @@ class Difference:
     expected: Any = None
     actual: Any = None
 
-    def to_json(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = {
             "path": self.path,
             "code": self.code,
@@ -56,13 +64,7 @@ def default_fixture_dir() -> Path:
 
 
 def default_benchmark_fixture() -> Path:
-    return (
-        repository_root()
-        / "reference"
-        / "06-benchmarks"
-        / "fixtures"
-        / "ground-truth-small.json"
-    )
+    return repository_root() / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
 
 
 def load_json(path: Path) -> Any:
@@ -70,9 +72,7 @@ def load_json(path: Path) -> Any:
         return json.load(handle)
 
 
-def load_fixture_sets(
-    fixture_dir: Path, benchmark_path: Path | None = None
-) -> dict[str, Any]:
+def load_fixture_sets(fixture_dir: Path, benchmark_path: Path | None = None) -> dict[str, Any]:
     exact = load_json(fixture_dir / "exact-small-instances.json")
     diagnostics = load_json(fixture_dir / "diagnostic-fixtures.json")
 
@@ -106,6 +106,24 @@ def load_fixture_sets(
     }
 
 
+def _extract_row(index: int, row: Any) -> tuple[str, Any]:
+    """Pull ``(fixture_id, actual)`` from one list-shaped candidate row.
+
+    The id is the first truthy value among ``_ROW_ID_KEYS``; the payload is the
+    first present key among ``_ROW_ACTUAL_KEYS``, falling back to the row minus
+    its id keys.
+    """
+    if not isinstance(row, dict):
+        raise ValueError(f"candidate row {index} must be an object")
+    fixture_id = next((row[key] for key in _ROW_ID_KEYS if row.get(key)), None)
+    if not isinstance(fixture_id, str) or not fixture_id:
+        raise ValueError(f"candidate row {index} is missing id/fixture_id")
+    actual = next((row[key] for key in _ROW_ACTUAL_KEYS if key in row), None)
+    if actual is None:
+        actual = {key: value for key, value in row.items() if key not in _ROW_ID_KEYS}
+    return fixture_id, actual
+
+
 def normalize_candidate(candidate: Any) -> dict[str, Any]:
     """Return a mapping of fixture id to actual output.
 
@@ -114,6 +132,10 @@ def normalize_candidate(candidate: Any) -> dict[str, Any]:
     1. ``{"results": [{"id": "fixture_id", "actual": {...}}]}``
     2. ``{"fixtures": [{"id": "fixture_id", "actual": {...}}]}``
     3. ``{"fixture_id": {...}, "another_fixture": {...}}``
+
+    In the list forms each row's id may use any key in ``_ROW_ID_KEYS`` and its
+    payload any key in ``_ROW_ACTUAL_KEYS``; in form 3 the top-level
+    ``_CANDIDATE_METADATA_KEYS`` are ignored.
     """
     if not isinstance(candidate, dict):
         raise ValueError("candidate JSON must be an object")
@@ -122,28 +144,22 @@ def normalize_candidate(candidate: Any) -> dict[str, Any]:
     if isinstance(rows, list):
         normalized: dict[str, Any] = {}
         for index, row in enumerate(rows):
-            if not isinstance(row, dict):
-                raise ValueError(f"candidate row {index} must be an object")
-            fixture_id = row.get("id") or row.get("fixture_id")
-            if not isinstance(fixture_id, str) or not fixture_id:
-                raise ValueError(f"candidate row {index} is missing id/fixture_id")
+            fixture_id, actual = _extract_row(index, row)
             if fixture_id in normalized:
                 raise ValueError(f"candidate row {index} duplicates fixture id {fixture_id!r}")
-            actual = row.get("actual", row.get("output", row.get("result")))
-            if actual is None:
-                actual = {key: value for key, value in row.items() if key not in {"id", "fixture_id"}}
             normalized[fixture_id] = actual
         return normalized
 
-    metadata_keys = {"schema_version", "metadata", "generated_by", "created_at"}
-    return {key: value for key, value in candidate.items() if key not in metadata_keys}
+    return {key: value for key, value in candidate.items() if key not in _CANDIDATE_METADATA_KEYS}
 
 
 def comparable(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
-def _mismatch(path: str, expected: Any, actual: Any, message: str = "value does not match") -> list[Difference]:
+def _mismatch(
+    path: str, expected: Any, actual: Any, message: str = "value does not match"
+) -> list[Difference]:
     return [
         Difference(
             path=path,
@@ -155,12 +171,25 @@ def _mismatch(path: str, expected: Any, actual: Any, message: str = "value does 
     ]
 
 
-def compare_values(expected: Any, actual: Any, path: str, tolerance: float) -> list[Difference]:
-    if isinstance(expected, bool) or expected is None or isinstance(expected, str):
+def compare_values(
+    expected: Any, actual: Any, path: str, tolerance: float, *, key: str | None = None
+) -> list[Difference]:
+    """Deep-compare ``actual`` against ``expected``.
+
+    ``key`` is the mapping key under which this value was found (None at the
+    root and for list elements); it decides multiset vs ordered list comparison
+    via ``UNORDERED_LIST_KEYS``.
+    """
+    if isinstance(expected, bool):
+        return [] if isinstance(actual, bool) and expected == actual else _mismatch(path, expected, actual)
+
+    if expected is None or isinstance(expected, str):
         return [] if expected == actual else _mismatch(path, expected, actual)
 
-    if isinstance(expected, int) and not isinstance(expected, bool):
-        return [] if expected == actual else _mismatch(path, expected, actual, "integer value does not match")
+    if isinstance(expected, int):
+        if not isinstance(actual, bool) and expected == actual:
+            return []
+        return _mismatch(path, expected, actual, "integer value does not match")
 
     if isinstance(expected, float):
         if close_within(actual, expected, tolerance):
@@ -187,9 +216,9 @@ def compare_values(expected: Any, actual: Any, path: str, tolerance: float) -> l
                 )
             ]
         differences: list[Difference] = []
-        for key, expected_value in expected.items():
-            child_path = f"{path}.{key}" if path else key
-            if key not in actual:
+        for child_key, expected_value in expected.items():
+            child_path = f"{path}.{child_key}" if path else child_key
+            if child_key not in actual:
                 differences.append(
                     Difference(
                         path=child_path,
@@ -199,7 +228,9 @@ def compare_values(expected: Any, actual: Any, path: str, tolerance: float) -> l
                     )
                 )
                 continue
-            differences.extend(compare_values(expected_value, actual[key], child_path, tolerance))
+            differences.extend(
+                compare_values(expected_value, actual[child_key], child_path, tolerance, key=child_key)
+            )
         return differences
 
     if isinstance(expected, list):
@@ -213,7 +244,6 @@ def compare_values(expected: Any, actual: Any, path: str, tolerance: float) -> l
                     actual=type(actual).__name__,
                 )
             ]
-        key = path.rsplit(".", 1)[-1]
         if key in UNORDERED_LIST_KEYS:
             return compare_unordered_lists(expected, actual, path)
         return compare_ordered_lists(expected, actual, path, tolerance)
@@ -241,15 +271,8 @@ def compare_ordered_lists(
 
 
 def compare_unordered_lists(expected: list[Any], actual: list[Any], path: str) -> list[Difference]:
-    expected_counts: dict[str, int] = {}
-    actual_counts: dict[str, int] = {}
-    for value in expected:
-        key = comparable(value)
-        expected_counts[key] = expected_counts.get(key, 0) + 1
-    for value in actual:
-        key = comparable(value)
-        actual_counts[key] = actual_counts.get(key, 0) + 1
-
+    expected_counts = Counter(comparable(value) for value in expected)
+    actual_counts = Counter(comparable(value) for value in actual)
     if expected_counts == actual_counts:
         return []
     return [
@@ -303,7 +326,7 @@ def evaluate_candidate(
             difference_dicts = verify_benchmark_fixture(fixture, actual, tolerance)
         else:
             differences = compare_values(fixture["expected"], actual, fixture_id, tolerance)
-            difference_dicts = [difference.to_json() for difference in differences]
+            difference_dicts = [difference.to_dict() for difference in differences]
         status = "passed" if not difference_dicts else "failed"
         passed += int(status == "passed")
         failed += int(status == "failed")

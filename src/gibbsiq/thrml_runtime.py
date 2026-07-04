@@ -21,6 +21,7 @@ works without the optional ``thrml`` extra, mirroring the ``dimod`` pattern.
 
 from __future__ import annotations
 
+import functools
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -30,7 +31,7 @@ from gibbsiq.blocks import BlockPartition, color_blocks, graph_density, validate
 from gibbsiq.conversions import compile_ising, compile_qubo
 from gibbsiq.diagnostics import compute_diagnostics, distance_to_best_trace, magnetization_trace
 from gibbsiq.model import IsingModel, Variable, finite_float
-from gibbsiq.result import SampleResult
+from gibbsiq.result import SampleResult, best_index
 
 INIT_POLICIES = ("hinton", "random", "all_up", "all_down")
 
@@ -49,7 +50,7 @@ def _require_thrml() -> tuple[Any, Any, Any, Any]:
     return jax, jnp, thrml, thrml_models
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SamplerConfig:
     """Controls for one THRML block-Gibbs run.
 
@@ -88,7 +89,9 @@ class SamplerConfig:
         if self.init not in INIT_POLICIES:
             raise ValueError(f"init must be one of {INIT_POLICIES}, got {self.init!r}")
         if self.warmup_beta_ladder is not None:
-            ladder = tuple(finite_float(value, name="warmup_beta_ladder entry") for value in self.warmup_beta_ladder)
+            ladder = tuple(
+                finite_float(value, name="warmup_beta_ladder entry") for value in self.warmup_beta_ladder
+            )
             if not ladder:
                 raise ValueError("warmup_beta_ladder must contain at least one beta")
             if any(value <= 0.0 for value in ladder):
@@ -112,24 +115,19 @@ class SamplerConfig:
         return tuple(segments)
 
 
-_EDGELESS_EBM_CLASS: Any = None
-
-
+@functools.lru_cache(maxsize=1)
 def _edgeless_ising_ebm_class() -> Any:
     """THRML's ``IsingEBM.factors`` indexes ``edges[0]`` and cannot represent a
     model with no couplings; this subclass drops the empty coupling factor so
     isolated-spin models (h only) still lower cleanly."""
-    global _EDGELESS_EBM_CLASS
-    if _EDGELESS_EBM_CLASS is None:
-        _, _, thrml, thrml_models = _require_thrml()
+    _, _, thrml, thrml_models = _require_thrml()
 
-        class _EdgelessIsingEBM(thrml_models.IsingEBM):
-            @property
-            def factors(self) -> list[Any]:
-                return [thrml_models.SpinEBMFactor([thrml.Block(self.nodes)], self.beta * self.biases)]
+    class _EdgelessIsingEBM(thrml_models.IsingEBM):  # type: ignore[name-defined]
+        @property
+        def factors(self) -> list[Any]:
+            return [thrml_models.SpinEBMFactor([thrml.Block(self.nodes)], self.beta * self.biases)]
 
-        _EDGELESS_EBM_CLASS = _EdgelessIsingEBM
-    return _EDGELESS_EBM_CLASS
+    return _EdgelessIsingEBM
 
 
 class _Lowering:
@@ -137,16 +135,18 @@ class _Lowering:
 
     def __init__(self, model: IsingModel, partition: BlockPartition):
         jax, jnp, thrml, thrml_models = _require_thrml()
-        self._thrml = thrml
-        self._thrml_models = thrml_models
+        self._jax = jax
         self._jnp = jnp
+        self._thrml_models = thrml_models
         self.nodes = [thrml.SpinNode() for _ in model.variables]
         node_of = dict(zip(model.variables, self.nodes))
         self.edges = [(node_of[left], node_of[right]) for left, right in model.quadratic]
         # THRML sign mapping (see module docstring): biases = -h, weights = -J.
         self.biases = jnp.asarray([-model.linear[variable] for variable in model.variables])
         self.weights = jnp.asarray([-coefficient for coefficient in model.quadratic.values()])
-        self.free_blocks = [thrml.Block([node_of[variable] for variable in block]) for block in partition.blocks]
+        self.free_blocks = [
+            thrml.Block([node_of[variable] for variable in block]) for block in partition.blocks
+        ]
         self.observed_blocks = [thrml.Block(self.nodes)]
 
     def program(self, beta: float) -> tuple[Any, Any]:
@@ -157,14 +157,97 @@ class _Lowering:
 
     def initial_state(self, key: Any, ebm: Any, policy: str) -> list[Any]:
         """Build per-block boolean initial states for one chain."""
-        jax, jnp, _, thrml_models = _require_thrml()
         if policy == "hinton":
-            return thrml_models.hinton_init(key, ebm, self.free_blocks, ())
+            return self._thrml_models.hinton_init(key, ebm, self.free_blocks, ())
         sizes = [len(block.nodes) for block in self.free_blocks]
         if policy == "random":
-            keys = jax.random.split(key, len(sizes))
-            return [jax.random.bernoulli(block_key, 0.5, (size,)) for block_key, size in zip(keys, sizes)]
-        return [jnp.full((size,), policy == "all_up", dtype=bool) for size in sizes]
+            keys = self._jax.random.split(key, len(sizes))
+            return [
+                self._jax.random.bernoulli(block_key, 0.5, (size,)) for block_key, size in zip(keys, sizes)
+            ]
+        return [self._jnp.full((size,), policy == "all_up", dtype=bool) for size in sizes]
+
+
+@dataclass(frozen=True, slots=True)
+class _DecodedChains:
+    """Decoded samples and per-chain traces from THRML boolean states."""
+
+    samples: list[dict[Variable, int]]
+    chain_ids: list[int]
+    energy_trace: list[list[float]]
+    best_trace: list[list[float]]
+    sample_chains: list[list[dict[Variable, int]]]
+
+
+def _decode_sample_chains(
+    spins: Any,
+    model: IsingModel,
+    *,
+    num_reads: int,
+    num_chains: int,
+) -> _DecodedChains:
+    """Convert THRML spin arrays into Gibbsiq samples and aligned traces."""
+    samples: list[dict[Variable, int]] = []
+    chain_ids: list[int] = []
+    energy_trace: list[list[float]] = []
+    best_trace: list[list[float]] = []
+    sample_chains: list[list[dict[Variable, int]]] = []
+    for chain_index in range(num_chains):
+        remaining = num_reads - len(samples)
+        chain_energies: list[float] = []
+        chain_best: list[float] = []
+        chain_samples: list[dict[Variable, int]] = []
+        for row in spins[chain_index][:remaining]:
+            sample = {variable: int(value) for variable, value in zip(model.variables, row)}
+            energy = model.energy(sample)
+            samples.append(sample)
+            chain_ids.append(chain_index)
+            chain_energies.append(energy)
+            chain_best.append(energy if not chain_best else min(chain_best[-1], energy))
+            chain_samples.append(sample)
+        energy_trace.append(chain_energies)
+        best_trace.append(chain_best)
+        sample_chains.append(chain_samples)
+    return _DecodedChains(samples, chain_ids, energy_trace, best_trace, sample_chains)
+
+
+def _build_metadata(
+    config: SamplerConfig,
+    model: IsingModel,
+    partition: BlockPartition,
+    thrml: Any,
+    jax: Any,
+    device: Any,
+    *,
+    num_reads: int,
+    reads_per_chain: int,
+    lower_seconds: float,
+    sample_seconds: float,
+) -> dict[str, Any]:
+    """Assemble runtime provenance for a ``SampleResult``."""
+    metadata = {
+        "sampler": "gibbsiq.THRMLSampler",
+        "thrml_version": getattr(thrml, "__version__", "unknown"),
+        "jax_version": jax.__version__,
+        "device_platform": device.platform,
+        "device_kind": device.device_kind,
+        "seed": config.seed,
+        "beta": config.beta,
+        "warmup_beta_ladder": None if config.warmup_beta_ladder is None else list(config.warmup_beta_ladder),
+        "n_warmup": config.n_warmup,
+        "steps_per_sample": config.steps_per_sample,
+        "num_chains": config.num_chains,
+        "num_reads": num_reads,
+        "reads_per_chain": reads_per_chain,
+        "init": config.init,
+        "graph_density": graph_density(model),
+        "energy_convention": "E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j",
+        "thrml_sign_mapping": "biases = -h, weights = -J; boolean True state = +1",
+        "lower_seconds": lower_seconds,
+        "sample_seconds": sample_seconds,
+    }
+    metadata.update(partition.to_metadata())
+    return metadata
 
 
 class THRMLSampler:
@@ -174,7 +257,9 @@ class THRMLSampler:
         self.config = SamplerConfig() if config is None else config
         _require_thrml()
 
-    def sample_qubo(self, qubo: Mapping[Any, Any], *, num_reads: int = 1, **compile_kwargs: Any) -> SampleResult:
+    def sample_qubo(
+        self, qubo: Mapping[Any, Any], *, num_reads: int = 1, **compile_kwargs: Any
+    ) -> SampleResult:
         """Compile a QUBO through ``compile_qubo`` and sample it."""
         return self.sample(compile_qubo(qubo, **compile_kwargs), num_reads=num_reads)
 
@@ -218,10 +303,17 @@ class THRMLSampler:
         lowering = _Lowering(model, partition)
 
         segments = config.warmup_segments()
-        segment_programs = [(lowering.program(beta)[1], beta, sweeps) for beta, sweeps in segments]
         sampling_ebm, sampling_program = lowering.program(config.beta)
-        init_beta = segments[0][0] if segments else config.beta
-        init_ebm = lowering.program(init_beta)[0] if segments else sampling_ebm
+        # The chain initializes at the first warmup beta (or the sampling beta
+        # when there is no ladder), so the first segment's EBM doubles as the
+        # init EBM.
+        init_ebm = sampling_ebm
+        segment_programs: list[tuple[Any, int]] = []
+        for beta, sweeps in segments:
+            ebm, program = lowering.program(beta)
+            if not segment_programs:
+                init_ebm = ebm
+            segment_programs.append((program, sweeps))
         reads_per_chain = -(-num_reads // config.num_chains)
         final_warmup = 0 if segments else config.n_warmup
         sampling_schedule = thrml.SamplingSchedule(
@@ -234,10 +326,12 @@ class THRMLSampler:
         def run_chain(chain_key: Any) -> Any:
             keys = jax.random.split(chain_key, len(segment_programs) + 2)
             state = lowering.initial_state(keys[0], init_ebm, config.init)
-            for (program, _, sweeps), segment_key in zip(segment_programs, keys[1:-1]):
+            for (program, sweeps), segment_key in zip(segment_programs, keys[1:-1]):
                 # One segment = `sweeps` full sweeps at that beta; the last
                 # sweep doubles as the observation that carries the state out.
-                segment_schedule = thrml.SamplingSchedule(n_warmup=sweeps - 1, n_samples=1, steps_per_sample=1)
+                segment_schedule = thrml.SamplingSchedule(
+                    n_warmup=sweeps - 1, n_samples=1, steps_per_sample=1
+                )
                 observed = thrml.sample_states(
                     segment_key, program, segment_schedule, state, [], lowering.free_blocks
                 )
@@ -256,33 +350,18 @@ class THRMLSampler:
         spins = jax.device_get(jnp.where(stacked, 1, -1))
         sample_seconds = time.perf_counter() - sample_started
 
-        samples: list[dict[Variable, int]] = []
-        chain_ids: list[int] = []
-        energy_trace: list[list[float]] = []
-        best_trace: list[list[float]] = []
-        sample_chains: list[list[dict[Variable, int]]] = []
-        for chain_index in range(config.num_chains):
-            remaining = num_reads - len(samples)
-            chain_energies: list[float] = []
-            chain_best: list[float] = []
-            chain_samples: list[dict[Variable, int]] = []
-            for row in spins[chain_index][:remaining]:
-                sample = {variable: int(value) for variable, value in zip(model.variables, row)}
-                energy = model.energy(sample)
-                samples.append(sample)
-                chain_ids.append(chain_index)
-                chain_energies.append(energy)
-                chain_best.append(energy if not chain_best else min(chain_best[-1], energy))
-                chain_samples.append(sample)
-            energy_trace.append(chain_energies)
-            best_trace.append(chain_best)
-            sample_chains.append(chain_samples)
+        decoded = _decode_sample_chains(
+            spins,
+            model,
+            num_reads=num_reads,
+            num_chains=config.num_chains,
+        )
 
         # Trace post-processing and diagnostics share one timing bucket
         # (EVAL-EQ-010 resource split): everything after decode is telemetry.
         diagnostics_started = time.perf_counter()
-        flat_energies = [energy for chain in energy_trace for energy in chain]
-        best_sample = samples[min(range(len(flat_energies)), key=flat_energies.__getitem__)]
+        flat_energies = [energy for chain in decoded.energy_trace for energy in chain]
+        best_sample = decoded.samples[best_index(flat_energies)]
 
         beta_schedule = [
             {"phase": "warmup", "beta": beta, "sweeps": sweeps} for beta, sweeps in segments
@@ -295,44 +374,36 @@ class THRMLSampler:
                 "steps_per_sample": config.steps_per_sample,
             }
         )
-        traces = {
-            "energy": energy_trace,
-            "best_energy_so_far": best_trace,
-            "sample_chain_ids": chain_ids,
+        magnetization_chains = magnetization_trace(decoded.sample_chains, model.variables)
+        distance_chains = distance_to_best_trace(decoded.sample_chains, best_sample, model.variables)
+        traces: dict[str, Any] = {
+            "energy": decoded.energy_trace,
+            "best_energy_so_far": decoded.best_trace,
+            "sample_chain_ids": decoded.chain_ids,
             "beta_schedule": beta_schedule,
-            "magnetization": magnetization_trace(sample_chains, model.variables),
-            "distance_to_best": distance_to_best_trace(sample_chains, best_sample, model.variables),
+            "magnetization": magnetization_chains,
+            "distance_to_best": distance_chains,
         }
 
         device = jax.devices()[0]
-        metadata = {
-            "sampler": "gibbsiq.THRMLSampler",
-            "thrml_version": getattr(thrml, "__version__", "unknown"),
-            "jax_version": jax.__version__,
-            "device_platform": device.platform,
-            "device_kind": device.device_kind,
-            "seed": config.seed,
-            "beta": config.beta,
-            "warmup_beta_ladder": None if config.warmup_beta_ladder is None else list(config.warmup_beta_ladder),
-            "n_warmup": config.n_warmup,
-            "steps_per_sample": config.steps_per_sample,
-            "num_chains": config.num_chains,
-            "num_reads": num_reads,
-            "reads_per_chain": reads_per_chain,
-            "init": config.init,
-            "graph_density": graph_density(model),
-            "energy_convention": "E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j",
-            "thrml_sign_mapping": "biases = -h, weights = -J; boolean True state = +1",
-            "lower_seconds": lower_seconds,
-            "sample_seconds": sample_seconds,
-        }
-        metadata.update(partition.to_metadata())
+        metadata = _build_metadata(
+            config,
+            model,
+            partition,
+            thrml,
+            jax,
+            device,
+            num_reads=num_reads,
+            reads_per_chain=reads_per_chain,
+            lower_seconds=lower_seconds,
+            sample_seconds=sample_seconds,
+        )
 
         diagnostics = compute_diagnostics(
-            energy_chains=energy_trace,
-            samples=samples,
+            energy_chains=decoded.energy_trace,
+            samples=decoded.samples,
             variables=model.variables,
-            magnetization_chains=traces["magnetization"],
+            magnetization_chains=magnetization_chains,
             timings={
                 "lower_seconds": lower_seconds,
                 "sample_seconds": sample_seconds,
@@ -345,5 +416,5 @@ class THRMLSampler:
         metadata["diagnostics_seconds"] = diagnostics_seconds
 
         return SampleResult.from_model(
-            model, samples, traces=traces, diagnostics=diagnostics, metadata=metadata
+            model, decoded.samples, traces=traces, diagnostics=diagnostics, metadata=metadata
         )

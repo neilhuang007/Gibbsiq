@@ -224,7 +224,9 @@ class ComputeDiagnosticsPayloadTests(unittest.TestCase):
         energy = energy_section(energy_chains)
         chains_section = chain_section(energy_chains)
         diversity = diversity_section(state_counts(samples, variables), len(variables))
-        expected_flags = set(energy_flags(energy)) | set(chain_flags(chains_section)) | set(diversity_flags(diversity))
+        expected_flags = (
+            set(energy_flags(energy)) | set(chain_flags(chains_section)) | set(diversity_flags(diversity))
+        )
         expected_order = [flag for flag in diagnostics.FLAG_ORDER if flag in expected_flags]
         self.assertEqual(payload["flags"], expected_order)
 

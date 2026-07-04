@@ -23,7 +23,7 @@ from typing import Any
 from gibbsiq.model import IsingModel, Variable, variable_index
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class BlockPartition:
     """Deterministic partition of model variables into non-interacting blocks."""
 

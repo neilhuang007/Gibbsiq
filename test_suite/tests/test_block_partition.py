@@ -89,12 +89,7 @@ class DsaturEdgeCaseTests(unittest.TestCase):
         # variable order defeats naive sequential greedy (3 colors); DSATUR
         # must still find the optimal bipartition.
         variables = ("a0", "b0", "a1", "b1", "a2", "b2")
-        edges = {
-            (f"a{i}", f"b{j}"): 1.0
-            for i in range(3)
-            for j in range(3)
-            if i != j
-        }
+        edges = {(f"a{i}", f"b{j}"): 1.0 for i in range(3) for j in range(3) if i != j}
         model = compile_ising({variable: 0.0 for variable in variables}, edges, variables=variables)
         partition = color_blocks(model)
         self.assertEqual(partition.num_blocks, 2)
@@ -149,7 +144,9 @@ class ValidatePartitionTests(unittest.TestCase):
 
     def test_accepts_singleton_partition(self) -> None:
         model = random_model(SEEDS[0])
-        singletons = BlockPartition(blocks=tuple((variable,) for variable in model.variables), strategy="singleton")
+        singletons = BlockPartition(
+            blocks=tuple((variable,) for variable in model.variables), strategy="singleton"
+        )
         validate_partition(model, singletons)
 
 

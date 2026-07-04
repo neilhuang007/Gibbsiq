@@ -45,7 +45,9 @@ def finite_float(value: Any, *, name: str) -> float:
     return coerced
 
 
-def sample_to_spin(sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype) -> dict[Variable, int]:
+def sample_to_spin(
+    sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
+) -> dict[Variable, int]:
     """Validate a sample and return spin values keyed by model variable."""
     spins: dict[Variable, int] = {}
     for variable in variables:
@@ -65,20 +67,24 @@ def sample_to_spin(sample: Mapping[Variable, int], variables: tuple[Variable, ..
     return spins
 
 
-def spin_to_binary(sample: Mapping[Variable, int], variables: tuple[Variable, ...] | None = None) -> dict[Variable, int]:
+def spin_to_binary(
+    sample: Mapping[Variable, int], variables: tuple[Variable, ...] | None = None
+) -> dict[Variable, int]:
     """Convert a spin sample over ``{-1,+1}`` into a binary sample over ``{0,1}``."""
     ordered_variables = tuple(sample) if variables is None else variables
     spins = sample_to_spin(sample, ordered_variables, "SPIN")
     return {variable: (spins[variable] + 1) // 2 for variable in ordered_variables}
 
 
-def binary_to_spin(sample: Mapping[Variable, int], variables: tuple[Variable, ...] | None = None) -> dict[Variable, int]:
+def binary_to_spin(
+    sample: Mapping[Variable, int], variables: tuple[Variable, ...] | None = None
+) -> dict[Variable, int]:
     """Convert a binary sample over ``{0,1}`` into a spin sample over ``{-1,+1}``."""
     ordered_variables = tuple(sample) if variables is None else variables
     return sample_to_spin(sample, ordered_variables, "BINARY")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class IsingModel:
     """Backend-independent Ising IR using Gibbsiq's audited sign convention."""
 
@@ -101,7 +107,10 @@ class IsingModel:
             raise ValueError("variable_order must match variables exactly")
 
         index = variable_index(variables)
-        linear = {variable: finite_float(self.linear.get(variable, 0.0), name=f"linear bias for {variable!r}") for variable in variables}
+        linear = {
+            variable: finite_float(self.linear.get(variable, 0.0), name=f"linear bias for {variable!r}")
+            for variable in variables
+        }
         quadratic: dict[tuple[Variable, Variable], float] = {}
         for pair, coefficient in self.quadratic.items():
             if len(pair) != 2:
@@ -112,15 +121,22 @@ class IsingModel:
             if left not in index or right not in index:
                 raise ValueError(f"quadratic pair {pair!r} references unknown variable")
             ordered = (left, right) if index[left] < index[right] else (right, left)
-            quadratic[ordered] = quadratic.get(ordered, 0.0) + finite_float(coefficient, name=f"quadratic bias for {pair!r}")
-        # Re-check the accumulated coefficients: summing finite duplicates can
-        # still overflow to +/-inf (e.g. 1e308 + 1e308), which the per-term
-        # guard above cannot catch.
-        quadratic = {pair: finite_float(coefficient, name=f"quadratic bias for {pair!r}") for pair, coefficient in quadratic.items()}
+            quadratic[ordered] = quadratic.get(ordered, 0.0) + finite_float(
+                coefficient, name=f"quadratic bias for {pair!r}"
+            )
+        # Re-check the accumulated coefficients while sorting into canonical
+        # order: summing finite duplicates can still overflow to +/-inf (e.g.
+        # 1e308 + 1e308), which the per-term guard above cannot catch.
+        ordered_quadratic = {
+            pair: finite_float(coefficient, name=f"quadratic bias for {pair!r}")
+            for pair, coefficient in sorted(
+                quadratic.items(), key=lambda item: (index[item[0][0]], index[item[0][1]])
+            )
+        }
 
         object.__setattr__(self, "variables", variables)
         object.__setattr__(self, "linear", linear)
-        object.__setattr__(self, "quadratic", dict(sorted(quadratic.items(), key=lambda item: (index[item[0][0]], index[item[0][1]]))))
+        object.__setattr__(self, "quadratic", ordered_quadratic)
         object.__setattr__(self, "offset", finite_float(self.offset, name="offset"))
         object.__setattr__(self, "variable_order", variables)
         object.__setattr__(self, "metadata", dict(self.metadata))
@@ -140,7 +156,9 @@ class IsingModel:
             energy += coefficient * spins[left] * spins[right]
         return energy
 
-    def local_field(self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN") -> float:
+    def local_field(
+        self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
+    ) -> float:
         """Return ``gamma_i = h_i + sum_j J_ij s_j`` for one variable."""
         if variable not in self.variables:
             raise ValueError(f"unknown variable {variable!r}")
@@ -153,7 +171,14 @@ class IsingModel:
                 gamma += coefficient * spins[left]
         return gamma
 
-    def conditional_probability(self, variable: Variable, sample: Mapping[Variable, int], *, beta: float = 1.0, vartype: Vartype = "SPIN") -> float:
+    def conditional_probability(
+        self,
+        variable: Variable,
+        sample: Mapping[Variable, int],
+        *,
+        beta: float = 1.0,
+        vartype: Vartype = "SPIN",
+    ) -> float:
         """Return ``P(s_i=+1 | s_-i)`` under the audited Gibbs sign."""
         gamma = self.local_field(variable, sample, vartype=vartype)
         argument = -2.0 * float(beta) * gamma
@@ -167,12 +192,14 @@ class IsingModel:
         return {
             "variables": list(self.variables),
             "linear": {variable: self.linear[variable] for variable in self.variables},
-            "quadratic": {f"{left},{right}": coefficient for (left, right), coefficient in self.quadratic.items()},
+            "quadratic": {
+                f"{left},{right}": coefficient for (left, right), coefficient in self.quadratic.items()
+            },
             "offset": self.offset,
             "vartype": self.vartype,
             "graph": [[left, right] for left, right in self.graph],
             "source_format": self.source_format,
-            "variable_order": list(self.variable_order or self.variables),
+            "variable_order": list(self.variables),
             "metadata": dict(self.metadata),
         }
 

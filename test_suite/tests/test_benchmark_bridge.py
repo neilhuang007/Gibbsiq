@@ -96,7 +96,9 @@ class CompileFixtureFidelityTests(unittest.TestCase):
             without_expected = compile_fixture(strip_expected(fixture))
             self.assertEqual(with_expected.variables, without_expected.variables, msg=fixture["id"])
             self.assertEqual(dict(with_expected.linear), dict(without_expected.linear), msg=fixture["id"])
-            self.assertEqual(dict(with_expected.quadratic), dict(without_expected.quadratic), msg=fixture["id"])
+            self.assertEqual(
+                dict(with_expected.quadratic), dict(without_expected.quadratic), msg=fixture["id"]
+            )
             self.assertEqual(with_expected.offset, without_expected.offset, msg=fixture["id"])
 
     def test_expected_spin_witnesses_attain_expected_energy(self) -> None:
@@ -110,7 +112,9 @@ class CompileFixtureFidelityTests(unittest.TestCase):
             for witness in fixture["expected"]["witness_spin_samples"]:
                 spins = {variable: int(spin) for variable, spin in witness.items()}
                 self.assertAlmostEqual(
-                    model.energy(spins), optimum, delta=TOLERANCE,
+                    model.energy(spins),
+                    optimum,
+                    delta=TOLERANCE,
                     msg=f"{fixture['id']} witness does not attain the proven optimum",
                 )
 
@@ -124,8 +128,10 @@ class CompileFixtureFidelityTests(unittest.TestCase):
             if len(model.variables) > ENUMERATION_LIMIT:
                 continue
             self.assertAlmostEqual(
-                brute_force_minimum_energy(model), expected_optimum_energy(fixture),
-                delta=TOLERANCE, msg=fixture["id"],
+                brute_force_minimum_energy(model),
+                expected_optimum_energy(fixture),
+                delta=TOLERANCE,
+                msg=fixture["id"],
             )
             checked += 1
         self.assertGreaterEqual(checked, 10, "expected at least ten brute-forceable fixtures")
@@ -143,9 +149,7 @@ class VerifyOptimumClaimAntiCheatTests(unittest.TestCase):
     def setUp(self) -> None:
         self.fixture = FIXTURES["gt_maxcut_petersen"]
         self.honest = {
-            key: value
-            for key, value in self.fixture["expected"].items()
-            if key not in ENUMERATION_ONLY_KEYS
+            key: value for key, value in self.fixture["expected"].items() if key not in ENUMERATION_ONLY_KEYS
         }
 
     def test_honest_candidate_passes(self) -> None:
@@ -198,9 +202,7 @@ class VerifyOptimumClaimAntiCheatTests(unittest.TestCase):
     def test_partition_witness_must_use_every_number(self) -> None:
         fixture = FIXTURES["gt_partition_n10_v20_s5"]
         honest = {
-            key: value
-            for key, value in fixture["expected"].items()
-            if key not in ENUMERATION_ONLY_KEYS
+            key: value for key, value in fixture["expected"].items() if key not in ENUMERATION_ONLY_KEYS
         }
         cheat = dict(honest)
         witness = dict(honest["witness_partitions"][0])
@@ -262,10 +264,7 @@ class CandidateFromResultTests(unittest.TestCase):
         from gibbsiq import compile_ising
 
         model = compile_ising({str(i): 0.0 for i in range(4)})
-        samples = [
-            dict(zip(model.variables, spins))
-            for spins in itertools.product((-1, 1), repeat=4)
-        ]
+        samples = [dict(zip(model.variables, spins)) for spins in itertools.product((-1, 1), repeat=4)]
         result = SampleResult.from_model(model, samples)
         witnesses = optimal_spin_witnesses(result)
         self.assertEqual(len(witnesses), MAX_WITNESSES)
@@ -285,34 +284,46 @@ class ThrmlFamousInstanceTests(unittest.TestCase):
     def test_petersen_maxcut(self) -> None:
         # Petersen graph, published optimum cut 12 (Barahona 1983).
         config = SamplerConfig(
-            beta=3.0, n_warmup=400, steps_per_sample=3,
+            beta=3.0,
+            n_warmup=400,
+            steps_per_sample=3,
             warmup_beta_ladder=(0.3, 0.6, 1.2, 2.0, 3.0),
-            num_chains=2, seed=7,
+            num_chains=2,
+            seed=7,
         )
         fixture, candidate = self._solve("gt_maxcut_petersen", config, num_reads=64)
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
 
     def test_complete_bipartite_k33_maxcut(self) -> None:
         config = SamplerConfig(
-            beta=2.5, n_warmup=200, steps_per_sample=2,
-            warmup_beta_ladder=(0.5, 1.0, 2.5), seed=3,
+            beta=2.5,
+            n_warmup=200,
+            steps_per_sample=2,
+            warmup_beta_ladder=(0.5, 1.0, 2.5),
+            seed=3,
         )
         fixture, candidate = self._solve("gt_maxcut_bipartite_k33", config, num_reads=32)
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
 
     def test_odd_cycle_c7_maxcut(self) -> None:
         config = SamplerConfig(
-            beta=2.5, n_warmup=200, steps_per_sample=2,
-            warmup_beta_ladder=(0.5, 1.0, 2.5), seed=5,
+            beta=2.5,
+            n_warmup=200,
+            steps_per_sample=2,
+            warmup_beta_ladder=(0.5, 1.0, 2.5),
+            seed=5,
         )
         fixture, candidate = self._solve("gt_maxcut_cycle_c7", config, num_reads=32)
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
 
     def test_sk_spin_glass_n8(self) -> None:
         config = SamplerConfig(
-            beta=3.0, n_warmup=400, steps_per_sample=3,
+            beta=3.0,
+            n_warmup=400,
+            steps_per_sample=3,
             warmup_beta_ladder=(0.3, 0.75, 1.5, 3.0),
-            num_chains=2, seed=11,
+            num_chains=2,
+            seed=11,
         )
         fixture, candidate = self._solve("gt_sk_n8_s13", config, num_reads=64)
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
@@ -321,8 +332,11 @@ class ThrmlFamousInstanceTests(unittest.TestCase):
         # Even a candidate generated by the real sampler is rejected when its
         # witness is tampered with after the fact.
         config = SamplerConfig(
-            beta=2.5, n_warmup=200, steps_per_sample=2,
-            warmup_beta_ladder=(0.5, 1.0, 2.5), seed=3,
+            beta=2.5,
+            n_warmup=200,
+            steps_per_sample=2,
+            warmup_beta_ladder=(0.5, 1.0, 2.5),
+            seed=3,
         )
         fixture, candidate = self._solve("gt_maxcut_bipartite_k33", config, num_reads=32)
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])

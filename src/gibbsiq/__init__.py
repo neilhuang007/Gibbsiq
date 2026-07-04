@@ -29,6 +29,10 @@ from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
 from gibbsiq.result import ResultVartype, SampleResult
 from gibbsiq.thrml_runtime import SamplerConfig, THRMLSampler
 
+# Single source of truth for the package version; pyproject.toml reads it
+# through [tool.setuptools.dynamic].
+__version__ = "0.1.0"
+
 __all__ = [
     "BlockPartition",
     "IsingModel",
@@ -65,5 +69,3 @@ __all__ = [
     "validate_partition",
     "verify_optimum_claim",
 ]
-
-__version__ = "0.1.0"
