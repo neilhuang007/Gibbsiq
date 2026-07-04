@@ -68,6 +68,28 @@ class CategoricalSampleResultTests(unittest.TestCase):
                 num_states=3,
             )
 
+    def test_bool_sample_values_are_rejected(self) -> None:
+        cases = (
+            {"samples": ({"a": True},), "vartype": "SPIN", "message": "invalid spin value"},
+            {"samples": ({"a": False},), "vartype": "BINARY", "message": "invalid binary value"},
+            {
+                "samples": ({"a": True},),
+                "vartype": "CATEGORICAL",
+                "num_states": 2,
+                "message": "invalid categorical value",
+            },
+        )
+        for case in cases:
+            with self.subTest(vartype=case["vartype"]):
+                with self.assertRaisesRegex(ValueError, case["message"]):
+                    SampleResult(
+                        samples=case["samples"],
+                        variables=("a",),
+                        energies=(0.0,),
+                        vartype=case["vartype"],
+                        num_states=case.get("num_states"),
+                    )
+
     def test_categorical_requires_num_states(self) -> None:
         with self.assertRaisesRegex(ValueError, "require num_states"):
             SampleResult(

@@ -11,7 +11,6 @@ Stage 1 is not implemented yet, so this file has two layers:
 from __future__ import annotations
 
 import itertools
-import math
 import sys
 import unittest
 from collections.abc import Callable
@@ -145,7 +144,9 @@ def reference_compile_ising(
         key = pair_key(first, second)
         quadratic[key] = quadratic.get(key, 0.0) + float(raw_value)
 
-    ordered_variables = sorted(variables, key=lambda value: (type(value).__module__, type(value).__qualname__, repr(value)))
+    ordered_variables = sorted(
+        variables, key=lambda value: (type(value).__module__, type(value).__qualname__, repr(value))
+    )
     return {
         "variables": ordered_variables,
         "linear": {variable: float(h.get(variable, 0.0)) for variable in ordered_variables},

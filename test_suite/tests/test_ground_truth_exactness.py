@@ -167,7 +167,8 @@ class GroundTruthExactnessTest(unittest.TestCase):
             expected = fixture["expected"]
             witness_key = next(key for key in expected if key.startswith("witness_"))
             degeneracy_key = next(
-                key for key in (
+                key
+                for key in (
                     "ground_state_degeneracy",
                     "num_optimal_selections",
                     "num_optimal_tours",

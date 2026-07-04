@@ -148,9 +148,7 @@ class ExactFixtureMathTest(unittest.TestCase):
             self.assertEqual(actual["energy"], expected_row["energy"])
             self.assertAlmostEqual(actual["probability"], expected_row["probability"], places=12)
 
-        self.assertAlmostEqual(
-            sum(row["probability"] for row in rows_with_probabilities), 1.0, places=12
-        )
+        self.assertAlmostEqual(sum(row["probability"] for row in rows_with_probabilities), 1.0, places=12)
         best_energy = min(row["energy"] for row in rows_with_probabilities)
         self.assertEqual(best_energy, expected["best_energy"])
         self.assertEqual(
@@ -170,15 +168,11 @@ class ExactFixtureMathTest(unittest.TestCase):
 
         gamma, prob = probability(1)
         self.assertEqual(gamma, expected["when_neighbor_s1_is_plus_1"]["gamma"])
-        self.assertAlmostEqual(
-            prob, expected["when_neighbor_s1_is_plus_1"]["p_s0_plus_1"], places=12
-        )
+        self.assertAlmostEqual(prob, expected["when_neighbor_s1_is_plus_1"]["p_s0_plus_1"], places=12)
 
         gamma, prob = probability(-1)
         self.assertEqual(gamma, expected["when_neighbor_s1_is_minus_1"]["gamma"])
-        self.assertAlmostEqual(
-            prob, expected["when_neighbor_s1_is_minus_1"]["p_s0_plus_1"], places=12
-        )
+        self.assertAlmostEqual(prob, expected["when_neighbor_s1_is_minus_1"]["p_s0_plus_1"], places=12)
 
     def test_maxcut_tiny_graphs_are_exhaustively_correct(self) -> None:
         for fixture_id in ("maxcut_triangle_unweighted", "maxcut_cycle4_unweighted"):

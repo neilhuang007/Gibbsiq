@@ -82,7 +82,7 @@ def build() -> str:
         blocks.append(bibtex)
         blocks.append("")
         time.sleep(1)  # stay polite to Crossref / DataCite
-    for key, info in MANUAL.items():
+    for info in MANUAL.values():
         blocks.append(f"% {info['slug']}")
         blocks.append(info["bibtex"])
         blocks.append("")

@@ -77,9 +77,7 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertEqual(counts[0] / total, expected["top1_mass"])
         self.assertEqual(sum(counts[:3]) / total, expected["top3_mass"])
         self.assertAlmostEqual(entropy, expected["entropy_nats"], places=12)
-        self.assertAlmostEqual(
-            mean_hamming, expected["mean_pairwise_hamming_distance"], places=12
-        )
+        self.assertAlmostEqual(mean_hamming, expected["mean_pairwise_hamming_distance"], places=12)
         self.assertAlmostEqual(
             mean_hamming / len(fixture["input"]["variables"]),
             expected["normalized_mean_pairwise_hamming_distance"],
@@ -111,9 +109,7 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertEqual(best_so_far, trace)
         self.assertEqual(expected["autocorrelation_status"], "constant_trace")
         self.assertEqual(expected["ess_status"], "undefined_constant_trace")
-        self.assertCountEqual(
-            expected["required_flags"], ["no_recent_improvement", "zero_energy_variance"]
-        )
+        self.assertCountEqual(expected["required_flags"], ["no_recent_improvement", "zero_energy_variance"])
 
     def test_chain_disagreement_between_chain_variance(self) -> None:
         fixture = self.fixtures["chain_disagreement_zero_within_variance"]
@@ -124,9 +120,7 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         within = [variance(chain["energy_trace"]) for chain in chains]
         draws_per_chain = len(chains[0]["energy_trace"])
         grand_mean = sum(means) / len(means)
-        between = draws_per_chain / (len(chains) - 1) * sum(
-            (mean - grand_mean) ** 2 for mean in means
-        )
+        between = draws_per_chain / (len(chains) - 1) * sum((mean - grand_mean) ** 2 for mean in means)
 
         self.assertEqual(len(chains), expected["num_chains"])
         self.assertEqual(draws_per_chain, expected["draws_per_chain"])

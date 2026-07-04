@@ -56,17 +56,13 @@ def _check_file(path: Path) -> list[str]:
 
         if "$$" in line_without_code:
             if stripped != "$$":
-                errors.append(
-                    f"{path}:{line_number}: display math delimiter must be alone on its line"
-                )
+                errors.append(f"{path}:{line_number}: display math delimiter must be alone on its line")
                 continue
             in_display_math = not in_display_math
             continue
 
         if in_display_math and ("<" in line or ">" in line):
-            errors.append(
-                f"{path}:{line_number}: use \\lt or \\gt inside display math, not raw < or >"
-            )
+            errors.append(f"{path}:{line_number}: use \\lt or \\gt inside display math, not raw < or >")
 
     if in_display_math:
         errors.append(f"{path}: unclosed display math block")

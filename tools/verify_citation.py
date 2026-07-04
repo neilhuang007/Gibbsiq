@@ -83,10 +83,7 @@ def _clean_title(title: str | None) -> str | None:
 def resolve_doi(doi: str) -> dict:
     """Return a normalized record from Crossref for ``doi``."""
     data = json.loads(_get(CROSSREF + urllib.parse.quote(doi)))["message"]
-    authors = [
-        " ".join(p for p in (a.get("given"), a.get("family")) if p)
-        for a in data.get("author", [])
-    ]
+    authors = [" ".join(p for p in (a.get("given"), a.get("family")) if p) for a in data.get("author", [])]
     date = (data.get("issued") or data.get("published") or {}).get("date-parts", [[None]])
     container = (data.get("container-title") or [None])[0]
     return {
@@ -126,9 +123,9 @@ def resolve_arxiv(arxiv_id: str) -> dict:
     version. The arXiv Atom API is used only as a last-resort fallback.
     """
     try:
-        attrs = json.loads(
-            _get(DATACITE + urllib.parse.quote(f"10.48550/arXiv.{arxiv_id}"))
-        )["data"]["attributes"]
+        attrs = json.loads(_get(DATACITE + urllib.parse.quote(f"10.48550/arXiv.{arxiv_id}")))["data"][
+            "attributes"
+        ]
     except Exception:  # noqa: BLE001 -- fall back to the Atom API below
         return _resolve_arxiv_atom(arxiv_id)
 

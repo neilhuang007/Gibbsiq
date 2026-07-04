@@ -45,10 +45,7 @@ DISTRIBUTION_READS = 8000
 def analytic_boltzmann(model, beta: float) -> dict[tuple[int, ...], float]:
     """Exact Boltzmann probabilities by enumeration; the offset cancels in Z."""
     states = list(itertools.product((-1, 1), repeat=len(model.variables)))
-    weights = {
-        state: math.exp(-beta * model.energy(dict(zip(model.variables, state))))
-        for state in states
-    }
+    weights = {state: math.exp(-beta * model.energy(dict(zip(model.variables, state)))) for state in states}
     normalization = sum(weights.values())
     return {state: weight / normalization for state, weight in weights.items()}
 

@@ -31,9 +31,7 @@ from typing import Any, Iterable
 
 SCHEMA_VERSION = "2026-05-31"
 GENERATOR = "tools/generate_ground_truth.py"
-ENERGY_CONVENTION = (
-    "E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j, s_i in {-1,+1}"
-)
+ENERGY_CONVENTION = "E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j, s_i in {-1,+1}"
 # Cap on how many witness states we serialize per fixture. The full degeneracy
 # COUNT is always exact; the witness list is a representative sample and is
 # never used to assert completeness.
@@ -59,17 +57,13 @@ CITATIONS = {
         "DOI 10.4153/CJM-1973-048-x."
     ),
     "west2001": (
-        "West, D. B. (2001). Introduction to Graph Theory, 2nd ed. "
-        "Prentice Hall (cycle max-cut, p. 76)."
+        "West, D. B. (2001). Introduction to Graph Theory, 2nd ed. Prentice Hall (cycle max-cut, p. 76)."
     ),
     "diestel2017": (
         "Diestel, R. (2017). Graph Theory, 5th ed. Springer. "
         "DOI 10.1007/978-3-662-53622-3 (complete bipartite graphs)."
     ),
-    "harary1969": (
-        "Harary, F. (1969). Graph Theory. Addison-Wesley "
-        "(hypercube bipartiteness, ch. 13)."
-    ),
+    "harary1969": ("Harary, F. (1969). Graph Theory. Addison-Wesley (hypercube bipartiteness, ch. 13)."),
     "barahona1983": (
         "Barahona, F. (1983). The max-cut problem on graphs not contractible "
         "to K5. Operations Research Letters 2(3):107-111. "
@@ -243,9 +237,7 @@ def number_partition_fixture(
 # --------------------------------------------------------------------------- #
 # 0/1 Knapsack, exact optimum by enumeration
 # --------------------------------------------------------------------------- #
-def solve_knapsack(
-    weights: list[int], values: list[int], capacity: int
-) -> dict[str, Any]:
+def solve_knapsack(weights: list[int], values: list[int], capacity: int) -> dict[str, Any]:
     n = len(weights)
     best_value = 0
     best_weight = 0
@@ -277,9 +269,7 @@ def solve_knapsack(
     }
 
 
-def knapsack_fixture(
-    fixture_id: str, n: int, max_weight: int, max_value: int, seed: int
-) -> dict[str, Any]:
+def knapsack_fixture(fixture_id: str, n: int, max_weight: int, max_value: int, seed: int) -> dict[str, Any]:
     rng = random.Random(seed)
     weights = [rng.randint(1, max_weight) for _ in range(n)]
     values = [rng.randint(1, max_value) for _ in range(n)]
@@ -385,9 +375,7 @@ def tsp_fixture(fixture_id: str, n: int, grid: int, seed: int) -> dict[str, Any]
 # Sherrington-Kirkpatrick spin glass, exact ground state by enumeration
 # Fully connected, J_ij in {-1, +1}, h = 0.
 # --------------------------------------------------------------------------- #
-def solve_ising(
-    n: int, couplings: dict[tuple[int, int], float], fields: dict[int, float]
-) -> dict[str, Any]:
+def solve_ising(n: int, couplings: dict[tuple[int, int], float], fields: dict[int, float]) -> dict[str, Any]:
     best_energy = None
     degeneracy = 0
     witnesses: list[dict[str, int]] = []
@@ -480,9 +468,7 @@ def complete_bipartite_edges(m: int, n: int) -> list[tuple[int, int]]:
 
 def hypercube_edges(d: int) -> list[tuple[int, int]]:
     # Vertices are d-bit integers; edges join strings at Hamming distance 1.
-    return _normalize_edges(
-        (u, u ^ (1 << b)) for u in range(2 ** d) for b in range(d)
-    )
+    return _normalize_edges((u, u ^ (1 << b)) for u in range(2**d) for b in range(d))
 
 
 def petersen_edges() -> list[tuple[int, int]]:
@@ -552,10 +538,14 @@ def build_corpus() -> dict[str, Any]:
     fixtures.append(number_partition_fixture("gt_partition_n14_v99_s7", n=14, max_value=99, seed=7))
     # Frustrated (proven nonzero optimum) -- discriminates exact from near solvers.
     fixtures.append(
-        number_partition_fixture("gt_partition_frustrated_n11_v30_s16", n=11, max_value=30, seed=16, force_frustrated=True)
+        number_partition_fixture(
+            "gt_partition_frustrated_n11_v30_s16", n=11, max_value=30, seed=16, force_frustrated=True
+        )
     )
     fixtures.append(
-        number_partition_fixture("gt_partition_frustrated_n13_v7_s17", n=13, max_value=7, seed=17, force_frustrated=True)
+        number_partition_fixture(
+            "gt_partition_frustrated_n13_v7_s17", n=13, max_value=7, seed=17, force_frustrated=True
+        )
     )
 
     # Knapsack.
@@ -575,50 +565,120 @@ def build_corpus() -> dict[str, Any]:
     # Structured / named graphs: closed-form Max-Cut optima with primary-source
     # citations, each independently cross-checked against full enumeration.
     # Complete graphs K_n: max-cut = floor(n^2/4) (Edwards 1973).
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_complete_k4", n=4, edges=complete_graph_edges(4),
-        closed_form=4, citation_key="edwards1973",
-        graph_name="complete K4", formula="floor(4^2/4)"))
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_complete_k5", n=5, edges=complete_graph_edges(5),
-        closed_form=6, citation_key="edwards1973",
-        graph_name="complete K5", formula="floor(5^2/4)"))
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_complete_k6", n=6, edges=complete_graph_edges(6),
-        closed_form=9, citation_key="edwards1973",
-        graph_name="complete K6", formula="floor(6^2/4)"))
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_complete_k7", n=7, edges=complete_graph_edges(7),
-        closed_form=12, citation_key="edwards1973",
-        graph_name="complete K7", formula="floor(7^2/4)"))
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_complete_k4",
+            n=4,
+            edges=complete_graph_edges(4),
+            closed_form=4,
+            citation_key="edwards1973",
+            graph_name="complete K4",
+            formula="floor(4^2/4)",
+        )
+    )
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_complete_k5",
+            n=5,
+            edges=complete_graph_edges(5),
+            closed_form=6,
+            citation_key="edwards1973",
+            graph_name="complete K5",
+            formula="floor(5^2/4)",
+        )
+    )
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_complete_k6",
+            n=6,
+            edges=complete_graph_edges(6),
+            closed_form=9,
+            citation_key="edwards1973",
+            graph_name="complete K6",
+            formula="floor(6^2/4)",
+        )
+    )
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_complete_k7",
+            n=7,
+            edges=complete_graph_edges(7),
+            closed_form=12,
+            citation_key="edwards1973",
+            graph_name="complete K7",
+            formula="floor(7^2/4)",
+        )
+    )
     # Cycles C_n: max-cut = n (even) / n-1 (odd) (West 2001).
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_cycle_c6", n=6, edges=cycle_graph_edges(6),
-        closed_form=6, citation_key="west2001",
-        graph_name="cycle C6", formula="n (even)"))
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_cycle_c7", n=7, edges=cycle_graph_edges(7),
-        closed_form=6, citation_key="west2001",
-        graph_name="cycle C7", formula="n-1 (odd)"))
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_cycle_c6",
+            n=6,
+            edges=cycle_graph_edges(6),
+            closed_form=6,
+            citation_key="west2001",
+            graph_name="cycle C6",
+            formula="n (even)",
+        )
+    )
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_cycle_c7",
+            n=7,
+            edges=cycle_graph_edges(7),
+            closed_form=6,
+            citation_key="west2001",
+            graph_name="cycle C7",
+            formula="n-1 (odd)",
+        )
+    )
     # Complete bipartite K_{m,n}: max-cut = m*n (Diestel 2017).
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_bipartite_k33", n=6, edges=complete_bipartite_edges(3, 3),
-        closed_form=9, citation_key="diestel2017",
-        graph_name="complete bipartite K_{3,3}", formula="m*n = 3*3"))
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_bipartite_k24", n=6, edges=complete_bipartite_edges(2, 4),
-        closed_form=8, citation_key="diestel2017",
-        graph_name="complete bipartite K_{2,4}", formula="m*n = 2*4"))
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_bipartite_k33",
+            n=6,
+            edges=complete_bipartite_edges(3, 3),
+            closed_form=9,
+            citation_key="diestel2017",
+            graph_name="complete bipartite K_{3,3}",
+            formula="m*n = 3*3",
+        )
+    )
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_bipartite_k24",
+            n=6,
+            edges=complete_bipartite_edges(2, 4),
+            closed_form=8,
+            citation_key="diestel2017",
+            graph_name="complete bipartite K_{2,4}",
+            formula="m*n = 2*4",
+        )
+    )
     # Hypercube Q_3: max-cut = d*2^(d-1) (Harary 1969).
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_hypercube_q3", n=8, edges=hypercube_edges(3),
-        closed_form=12, citation_key="harary1969",
-        graph_name="hypercube Q3", formula="d*2^(d-1) = 3*4"))
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_hypercube_q3",
+            n=8,
+            edges=hypercube_edges(3),
+            closed_form=12,
+            citation_key="harary1969",
+            graph_name="hypercube Q3",
+            formula="d*2^(d-1) = 3*4",
+        )
+    )
     # Petersen graph: max-cut = 12 (Barahona 1983).
-    fixtures.append(structured_maxcut_fixture(
-        "gt_maxcut_petersen", n=10, edges=petersen_edges(),
-        closed_form=12, citation_key="barahona1983",
-        graph_name="Petersen", formula="12"))
+    fixtures.append(
+        structured_maxcut_fixture(
+            "gt_maxcut_petersen",
+            n=10,
+            edges=petersen_edges(),
+            closed_form=12,
+            citation_key="barahona1983",
+            graph_name="Petersen",
+            formula="12",
+        )
+    )
 
     document = {
         "schema_version": SCHEMA_VERSION,
@@ -651,9 +711,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     document = build_corpus()
-    document["content_sha256"] = checksum(
-        {k: v for k, v in document.items() if k != "content_sha256"}
-    )
+    document["content_sha256"] = checksum({k: v for k, v in document.items() if k != "content_sha256"})
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")

@@ -48,9 +48,7 @@ from gibbsiq.diagnostics import (  # noqa: E402
 )
 
 
-def generate_ar1_chains(
-    seed: int, phi: float, num_chains: int, num_draws: int
-) -> list[list[float]]:
+def generate_ar1_chains(seed: int, phi: float, num_chains: int, num_draws: int) -> list[list[float]]:
     """AR(1): x_t = phi * x_{t-1} + eps_t, eps ~ N(0, 1), initialized at the
     stationary marginal variance 1 / (1 - phi**2) so the chain starts "warm"
     and every draw targets the same fixed distribution.
@@ -109,9 +107,7 @@ class Ar1AutocorrelationTimeTheoryTests(unittest.TestCase):
         seeds = range(20260703_01, 20260703_01 + 7)
         mean_tau_hat = self._mean_tau_hat(phi, num_chains=4, num_draws=20000, seeds=seeds)
         relative_error = abs(mean_tau_hat - tau_theory) / tau_theory
-        self.assertLess(
-            relative_error, 0.15, msg=f"mean_tau_hat={mean_tau_hat} tau_theory={tau_theory}"
-        )
+        self.assertLess(relative_error, 0.15, msg=f"mean_tau_hat={mean_tau_hat} tau_theory={tau_theory}")
 
     def test_tau_hat_matches_ar1_theory_phi_05(self) -> None:
         phi = 0.5
@@ -119,9 +115,7 @@ class Ar1AutocorrelationTimeTheoryTests(unittest.TestCase):
         seeds = range(20260703_01, 20260703_01 + 7)
         mean_tau_hat = self._mean_tau_hat(phi, num_chains=4, num_draws=5000, seeds=seeds)
         relative_error = abs(mean_tau_hat - tau_theory) / tau_theory
-        self.assertLess(
-            relative_error, 0.15, msg=f"mean_tau_hat={mean_tau_hat} tau_theory={tau_theory}"
-        )
+        self.assertLess(relative_error, 0.15, msg=f"mean_tau_hat={mean_tau_hat} tau_theory={tau_theory}")
 
 
 class IidSampleSizeRecoveryTests(unittest.TestCase):
@@ -307,9 +301,7 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
         self.assertNotIn("mode_collapse", payload["flags"])
         self.assertEqual(payload["diversity"]["unique_states"], 2)
         self.assertEqual(payload["chains"]["rhat_status"], "undefined_constant_trace")
-        self.assertEqual(
-            payload["chains"]["rank_normalized_rhat_status"], "undefined_constant_trace"
-        )
+        self.assertEqual(payload["chains"]["rank_normalized_rhat_status"], "undefined_constant_trace")
         self.assertNotIn("magnetization", payload["chains"])
 
     def test_magnetization_wiring_closes_the_equal_energy_blind_spot(self) -> None:
@@ -330,9 +322,7 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
 
         self.assertIn("chain_disagreement", payload["flags"])
         magnetization = payload["chains"]["magnetization"]
-        self.assertEqual(
-            magnetization["rhat_status"], "undefined_or_infinite_zero_within_variance"
-        )
+        self.assertEqual(magnetization["rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertEqual(
             magnetization["rank_normalized_rhat_status"],
             "undefined_or_infinite_zero_within_variance",
@@ -356,9 +346,7 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
             magnetization_chains=[[1.0] * 50, [1.0] * 50],
         )
         self.assertNotIn("chain_disagreement", payload["flags"])
-        self.assertEqual(
-            payload["chains"]["magnetization"]["rhat_status"], "undefined_constant_trace"
-        )
+        self.assertEqual(payload["chains"]["magnetization"]["rhat_status"], "undefined_constant_trace")
 
 
 class RankNormalizedRhatHandComputedTests(unittest.TestCase):
@@ -394,10 +382,13 @@ class RankNormalizedRhatHandComputedTests(unittest.TestCase):
         from statistics import NormalDist
 
         inv_cdf = NormalDist().inv_cdf
-        z = {value: inv_cdf((rank - 0.375) / 8.25) for value, rank in ((1.0, 1.5), (2.0, 3.5), (3.0, 5.5), (4.0, 7.5))}
-        bulk_expected = split_rhat(
-            [[z[1.0], z[2.0], z[1.0], z[2.0]], [z[3.0], z[4.0], z[3.0], z[4.0]]]
-        )["rhat"]
+        z = {
+            value: inv_cdf((rank - 0.375) / 8.25)
+            for value, rank in ((1.0, 1.5), (2.0, 3.5), (3.0, 5.5), (4.0, 7.5))
+        }
+        bulk_expected = split_rhat([[z[1.0], z[2.0], z[1.0], z[2.0]], [z[3.0], z[4.0], z[3.0], z[4.0]]])[
+            "rhat"
+        ]
         # Fold around the pooled median 2.5: |x-2.5| gives 1.5 for values
         # {1,4} and 0.5 for values {2,3} -> folded ranks: 0.5s -> 2.5,
         # 1.5s -> 6.5 (four-way ties each).
@@ -413,9 +404,7 @@ class RankNormalizedRhatHandComputedTests(unittest.TestCase):
         self.assertEqual(result["rank_normalized_rhat_status"], "ok")
         self.assertAlmostEqual(result["rank_normalized_rhat_bulk"], bulk_expected, places=12)
         self.assertAlmostEqual(result["rank_normalized_rhat_folded"], folded_expected, places=12)
-        self.assertAlmostEqual(
-            result["rank_normalized_rhat"], max(bulk_expected, folded_expected), places=12
-        )
+        self.assertAlmostEqual(result["rank_normalized_rhat"], max(bulk_expected, folded_expected), places=12)
 
 
 class RankNormalizedRhatInvarianceTests(unittest.TestCase):
@@ -436,12 +425,8 @@ class RankNormalizedRhatInvarianceTests(unittest.TestCase):
 
         original = rank_normalized_split_rhat(chains)
         after = rank_normalized_split_rhat(transformed)
-        self.assertEqual(
-            original["rank_normalized_rhat_bulk"], after["rank_normalized_rhat_bulk"]
-        )
-        self.assertNotEqual(
-            original["rank_normalized_rhat_folded"], after["rank_normalized_rhat_folded"]
-        )
+        self.assertEqual(original["rank_normalized_rhat_bulk"], after["rank_normalized_rhat_bulk"])
+        self.assertNotEqual(original["rank_normalized_rhat_folded"], after["rank_normalized_rhat_folded"])
 
         plain_original = split_rhat(chains)["rhat"]
         plain_after = split_rhat(transformed)["rhat"]
@@ -462,9 +447,7 @@ class RankNormalizedRhatInvarianceTests(unittest.TestCase):
         rng = random.Random(20260703_15)
         chains = [[float(rng.choice((0, 1, 2, 3, 5))) for _ in range(200)] for _ in range(4)]
         transformed = [[2.0 * value + 7.0 for value in chain] for chain in chains]
-        self.assertEqual(
-            rank_normalized_split_rhat(chains), rank_normalized_split_rhat(transformed)
-        )
+        self.assertEqual(rank_normalized_split_rhat(chains), rank_normalized_split_rhat(transformed))
 
 
 class RankNormalizedRhatDegenerateStatusTests(unittest.TestCase):
@@ -481,9 +464,7 @@ class RankNormalizedRhatDegenerateStatusTests(unittest.TestCase):
 
     def test_chains_constant_at_distinct_values_report_zero_within_variance(self) -> None:
         result = rank_normalized_split_rhat([[1.0] * 10, [2.0] * 10])
-        self.assertEqual(
-            result["rank_normalized_rhat_status"], "undefined_or_infinite_zero_within_variance"
-        )
+        self.assertEqual(result["rank_normalized_rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertIsNone(result["rank_normalized_rhat"])
 
     def test_folded_infinite_scale_disagreement_reports_zero_within_variance(self) -> None:
@@ -497,9 +478,7 @@ class RankNormalizedRhatDegenerateStatusTests(unittest.TestCase):
         # chain_disagreement fires.
         chains = [[-1.0, 1.0] * 10, [-3.0, 3.0] * 10]
         result = rank_normalized_split_rhat(chains)
-        self.assertEqual(
-            result["rank_normalized_rhat_status"], "undefined_or_infinite_zero_within_variance"
-        )
+        self.assertEqual(result["rank_normalized_rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertIsNone(result["rank_normalized_rhat"])
         self.assertIsNotNone(result["rank_normalized_rhat_bulk"])
         self.assertIsNone(result["rank_normalized_rhat_folded"])
@@ -572,9 +551,7 @@ class DiversityBruteForcePairEnumerationTests(unittest.TestCase):
         distance_sum = 0
         for first in range(len(flat_states)):
             for second in range(first + 1, len(flat_states)):
-                differing = sum(
-                    1 for a, b in zip(flat_states[first], flat_states[second]) if a != b
-                )
+                differing = sum(1 for a, b in zip(flat_states[first], flat_states[second]) if a != b)
                 distance_sum += differing
                 pair_count += 1
         expected_pair_count = total * (total - 1) // 2
@@ -586,9 +563,7 @@ class DiversityBruteForcePairEnumerationTests(unittest.TestCase):
         self.assertAlmostEqual(section["top1_mass"], expected_top1_mass, places=12)
         self.assertAlmostEqual(section["top3_mass"], expected_top3_mass, places=12)
         self.assertAlmostEqual(section["unique_fraction"], expected_unique_fraction, places=12)
-        self.assertAlmostEqual(
-            section["mean_pairwise_hamming_distance"], expected_mean_hamming, places=12
-        )
+        self.assertAlmostEqual(section["mean_pairwise_hamming_distance"], expected_mean_hamming, places=12)
 
 
 class TraceBruteForceCrossCheckTests(unittest.TestCase):
@@ -626,9 +601,7 @@ class TraceBruteForceCrossCheckTests(unittest.TestCase):
         actual_magnetization = magnetization_trace(chains, variables)
         for chain_index, chain in enumerate(actual_magnetization):
             for read_index, value in enumerate(chain):
-                self.assertAlmostEqual(
-                    value, expected_magnetization[chain_index][read_index], places=12
-                )
+                self.assertAlmostEqual(value, expected_magnetization[chain_index][read_index], places=12)
         self.assertEqual(distance_to_best_trace(chains, best_sample, variables), expected_distance)
 
         # Independent inline brute-force recomputation, structurally
@@ -667,15 +640,11 @@ class FlagThresholdBoundaryTests(unittest.TestCase):
 
     def test_mode_collapse_boundary_is_inclusive(self) -> None:
         self.assertIn("mode_collapse", diversity_flags({"top1_mass": 0.9, "unique_fraction": 0.5}))
-        self.assertNotIn(
-            "mode_collapse", diversity_flags({"top1_mass": 0.8999999, "unique_fraction": 0.5})
-        )
+        self.assertNotIn("mode_collapse", diversity_flags({"top1_mass": 0.8999999, "unique_fraction": 0.5}))
 
     def test_low_diversity_boundary_is_inclusive(self) -> None:
         self.assertIn("low_diversity", diversity_flags({"top1_mass": 0.1, "unique_fraction": 0.05}))
-        self.assertNotIn(
-            "low_diversity", diversity_flags({"top1_mass": 0.1, "unique_fraction": 0.0500001})
-        )
+        self.assertNotIn("low_diversity", diversity_flags({"top1_mass": 0.1, "unique_fraction": 0.0500001}))
 
     def test_poor_mixing_boundary(self) -> None:
         fires = {"autocorrelation_status": "ok", "tau_hat": 10.0, "draws_per_chain": 499}

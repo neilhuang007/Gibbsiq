@@ -118,7 +118,10 @@ class ConversionScenarioTest(unittest.TestCase):
         self.assertEqual(model.quadratic, {("z", "a"): -1.0, ("z", "m"): -0.125, ("a", "m"): 1.125})
         for spins in spin_assignments(model.variables):
             bits = bits_from_spins(spins)
-            expected = sum(float(value) * bits[left] * bits[right] for (left, right), value in flat_qubo.items()) - 2.25
+            expected = (
+                sum(float(value) * bits[left] * bits[right] for (left, right), value in flat_qubo.items())
+                - 2.25
+            )
             self.assertAlmostEqual(model.energy(spins), expected, places=12)
 
     def test_structured_qubo_keeps_isolated_variables_and_string_pair_keys(self) -> None:
@@ -235,7 +238,9 @@ class ConversionScenarioTest(unittest.TestCase):
                 variables=source["variables"],
             )
             for witness in fixture["expected"]["witness_spin_samples"]:
-                self.assertAlmostEqual(model.energy(witness), fixture["expected"]["ground_state_energy"], places=12)
+                self.assertAlmostEqual(
+                    model.energy(witness), fixture["expected"]["ground_state_energy"], places=12
+                )
 
     def test_benchmark_maxcut_inputs_lower_to_project_ising_convention(self) -> None:
         maxcut_fixtures = [fixture for fixture in benchmark_fixtures() if fixture["family"] == "maxcut"]

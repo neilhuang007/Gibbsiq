@@ -46,9 +46,7 @@ TRIANGLE_TV_TOLERANCE = 0.03
 
 def enumerate_energies(model) -> dict[tuple[int, ...], float]:
     states = itertools.product((-1, 1), repeat=len(model.variables))
-    return {
-        state: model.energy(dict(zip(model.variables, state))) for state in states
-    }
+    return {state: model.energy(dict(zip(model.variables, state))) for state in states}
 
 
 def boltzmann_probabilities(
@@ -75,9 +73,7 @@ class FrustratedTriangleGroundTruthTests(unittest.TestCase):
         )
         cls.energies = enumerate_energies(cls.model)
         cls.probabilities = boltzmann_probabilities(cls.energies, cls.BETA)
-        config = SamplerConfig(
-            beta=cls.BETA, n_warmup=500, steps_per_sample=2, num_chains=4, seed=7
-        )
+        config = SamplerConfig(beta=cls.BETA, n_warmup=500, steps_per_sample=2, num_chains=4, seed=7)
         cls.result = THRMLSampler(config).sample(cls.model, num_reads=TRIANGLE_READS)
 
     def test_empirical_distribution_matches_enumeration(self) -> None:
@@ -94,9 +90,7 @@ class FrustratedTriangleGroundTruthTests(unittest.TestCase):
     def test_best_energy_equals_enumerated_optimum_with_offset(self) -> None:
         exact_optimum = min(self.energies.values())
         self.assertAlmostEqual(self.result.best_energy, exact_optimum, places=9)
-        self.assertAlmostEqual(
-            self.model.energy(self.result.best_sample), self.result.best_energy, places=9
-        )
+        self.assertAlmostEqual(self.model.energy(self.result.best_sample), self.result.best_energy, places=9)
 
     def test_healthy_run_reports_healthy_core_metrics(self) -> None:
         diagnostics = self.result.diagnostics
@@ -148,9 +142,7 @@ class FrozenSamplerTests(unittest.TestCase):
 
     def test_frozen_run_finds_exact_optimum(self) -> None:
         self.assertAlmostEqual(self.result.best_energy, -2.5, places=9)
-        self.assertEqual(
-            self.result.best_sample, {"a": -1, "b": -1, "c": -1}
-        )
+        self.assertEqual(self.result.best_sample, {"a": -1, "b": -1, "c": -1})
 
     def test_frozen_run_flags_collapse_and_reports_constant_statuses(self) -> None:
         diagnostics = self.result.diagnostics
@@ -165,9 +157,7 @@ class FrozenSamplerTests(unittest.TestCase):
             ],
         )
         self.assertEqual(diagnostics["energy"]["ess_status"], "undefined_constant_trace")
-        self.assertEqual(
-            diagnostics["energy"]["autocorrelation_status"], "constant_trace"
-        )
+        self.assertEqual(diagnostics["energy"]["autocorrelation_status"], "constant_trace")
         self.assertEqual(diagnostics["chains"]["rhat_status"], "undefined_constant_trace")
         self.assertEqual(diagnostics["diversity"]["unique_states"], 1)
         self.assertEqual(diagnostics["diversity"]["top1_mass"], 1.0)
@@ -182,9 +172,7 @@ class DegenerateDoubleWellBlindSpotTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.model = compile_ising({}, {("a", "b"): -1.0})
-        config = SamplerConfig(
-            beta=15.0, n_warmup=300, num_chains=2, seed=0, init="random"
-        )
+        config = SamplerConfig(beta=15.0, n_warmup=300, num_chains=2, seed=0, init="random")
         cls.result = THRMLSampler(config).sample(cls.model, num_reads=100)
         cls.magnetization = cls.result.traces["magnetization"]
 
@@ -209,15 +197,11 @@ class DegenerateDoubleWellBlindSpotTests(unittest.TestCase):
         # subsection where constant +1 vs constant -1 chains hit the
         # zero-within-variance (infinite R-hat) path.
         diagnostics = self.result.diagnostics
-        self.assertTrue(
-            all(energy == -1.0 for chain in self.result.traces["energy"] for energy in chain)
-        )
+        self.assertTrue(all(energy == -1.0 for chain in self.result.traces["energy"] for energy in chain))
         self.assertEqual(diagnostics["chains"]["rhat_status"], "undefined_constant_trace")
         self.assertIn("chain_disagreement", diagnostics["flags"])
         magnetization = diagnostics["chains"]["magnetization"]
-        self.assertEqual(
-            magnetization["rhat_status"], "undefined_or_infinite_zero_within_variance"
-        )
+        self.assertEqual(magnetization["rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertEqual(
             magnetization["rank_normalized_rhat_status"],
             "undefined_or_infinite_zero_within_variance",
@@ -233,9 +217,7 @@ class DegenerateDoubleWellBlindSpotTests(unittest.TestCase):
         # chain-disagreement estimators applied directly to the captured
         # magnetization trace expose the trap with zero new estimator code.
         section = chain_section(self.magnetization)
-        self.assertEqual(
-            section["rhat_status"], "undefined_or_infinite_zero_within_variance"
-        )
+        self.assertEqual(section["rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertIn("chain_disagreement", chain_flags(section))
 
 

@@ -33,16 +33,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE, _score_candidate
+from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE, score_candidate
 from gibbsiq.conversions import compile_ising
 from gibbsiq.model import IsingModel
 from gibbsiq.result import SampleResult
 
 # Proven quantities a sampler cannot honestly claim: they require exhaustive
 # enumeration of the optimum set, which sampling can only lower-bound.
-ENUMERATION_ONLY_KEYS = frozenset(
-    {"ground_state_degeneracy", "num_optimal_selections", "num_optimal_tours"}
-)
+ENUMERATION_ONLY_KEYS = frozenset({"ground_state_degeneracy", "num_optimal_selections", "num_optimal_tours"})
 MAX_WITNESSES = 8
 SUPPORTED_FAMILIES = ("maxcut", "number_partition", "sk_spin_glass")
 
@@ -62,17 +60,18 @@ def compile_fixture(fixture: dict[str, Any]) -> IsingModel:
     if family == "maxcut":
         variables = tuple(str(v) for v in model_input["variables"])
         h = {variable: 0.0 for variable in variables}
-        J = {(str(u), str(v)): 1.0 for u, v in model_input["edges"]}
-        return compile_ising(h, J, variables=variables, metadata=metadata)
+        maxcut_quadratic = {(str(u), str(v)): 1.0 for u, v in model_input["edges"]}
+        return compile_ising(h, maxcut_quadratic, variables=variables, metadata=metadata)
     if family == "sk_spin_glass":
         variables = tuple(str(v) for v in model_input["variables"])
         h = {str(var): float(field) for var, field in model_input.get("linear", {}).items()}
-        J: dict[tuple[str, str], float] = {}
+        spin_glass_quadratic: dict[tuple[str, str], float] = {}
         for pair, coupling in model_input.get("quadratic", {}).items():
             left, right = pair.split(",")
-            J[(left, right)] = float(coupling)
+            spin_glass_quadratic[(left, right)] = float(coupling)
         return compile_ising(
-            h, J,
+            h,
+            spin_glass_quadratic,
             offset=float(model_input.get("offset", 0.0)),
             variables=variables,
             metadata=metadata,
@@ -83,13 +82,13 @@ def compile_fixture(fixture: dict[str, Any]) -> IsingModel:
         numbers = [int(value) for value in model_input["numbers"]]
         variables = tuple(str(i) for i in range(len(numbers)))
         h = {variable: 0.0 for variable in variables}
-        J = {
+        partition_quadratic = {
             (str(i), str(j)): 2.0 * numbers[i] * numbers[j]
             for i in range(len(numbers))
             for j in range(i + 1, len(numbers))
         }
         offset = float(sum(value * value for value in numbers))
-        return compile_ising(h, J, offset=offset, variables=variables, metadata=metadata)
+        return compile_ising(h, partition_quadratic, offset=offset, variables=variables, metadata=metadata)
     raise NotImplementedError(
         f"family {family!r} requires a penalty/one-hot encoding layer that "
         f"Gibbsiq does not lower yet; supported families: {SUPPORTED_FAMILIES}"
@@ -135,8 +134,7 @@ def candidate_from_result(fixture: dict[str, Any], result: SampleResult) -> dict
         cut_value = (num_edges - best_energy) / 2.0
         if abs(cut_value - round(cut_value)) > DEFAULT_TOLERANCE:
             raise ValueError(
-                f"best energy {best_energy} does not correspond to an integer cut "
-                f"on {num_edges} edges"
+                f"best energy {best_energy} does not correspond to an integer cut on {num_edges} edges"
             )
         return {
             "num_nodes": len(model_input["variables"]),
@@ -154,9 +152,7 @@ def candidate_from_result(fixture: dict[str, Any], result: SampleResult) -> dict
     if family == "number_partition":
         numbers = [int(value) for value in model_input["numbers"]]
         best_sample = result.best_sample
-        signed_sum = sum(
-            numbers[int(str(variable))] * spin for variable, spin in best_sample.items()
-        )
+        signed_sum = sum(numbers[int(str(variable))] * spin for variable, spin in best_sample.items())
         difference = abs(signed_sum)
         return {
             "min_subset_sum_difference": difference,
@@ -188,4 +184,4 @@ def verify_optimum_claim(
     recomputed from the input model. Returns a list of difference dicts
     (empty == pass).
     """
-    return _score_candidate(fixture, actual, tolerance, optional_keys=ENUMERATION_ONLY_KEYS)
+    return score_candidate(fixture, actual, tolerance, optional_keys=ENUMERATION_ONLY_KEYS)

@@ -77,6 +77,13 @@ class EvaluationHarnessTest(unittest.TestCase):
 
         self.assertEqual(compare_values(expected, actual, "fixture", 1e-9), [])
 
+    def test_bool_and_int_are_not_interchangeable(self) -> None:
+        for expected, actual in ((True, 1), (False, 0), (1, True), (0, False)):
+            with self.subTest(expected=expected, actual=actual):
+                differences = compare_values(expected, actual, "fixture.scalar", 1e-9)
+                self.assertEqual(len(differences), 1)
+                self.assertEqual(differences[0].code, "value_mismatch")
+
     def test_example_candidate_matches_public_exact_and_diagnostic_fixtures(self) -> None:
         candidate = normalize_candidate(load_json("test_suite/examples/evaluation-candidate.example.json"))
 
@@ -94,9 +101,7 @@ class EvaluationHarnessTest(unittest.TestCase):
         for group in ("exact", "diagnostic"):
             for fixture_id in fixture_sets["groups"][group]:
                 fixture = fixture_sets["fixtures"][fixture_id]
-                differences = compare_values(
-                    fixture["expected"], candidate[fixture_id], fixture_id, 1e-9
-                )
+                differences = compare_values(fixture["expected"], candidate[fixture_id], fixture_id, 1e-9)
                 self.assertEqual(differences, [], fixture_id)
 
     def test_default_evaluator_reports_missing_benchmark_fixtures(self) -> None:

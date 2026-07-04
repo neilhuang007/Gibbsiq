@@ -23,6 +23,17 @@ def normalize_result_vartype(vartype: Any) -> ResultVartype:
     return normalize_vartype(vartype)
 
 
+def best_index(energies: Sequence[float]) -> int:
+    """Index of the minimal energy, resolving ties to the first occurrence.
+
+    The first-minimal rule keeps ``best_sample`` / ``best_energy`` and the
+    diagnostics ``distance_to_best`` trace deterministic on degenerate optima.
+    The runtime and :class:`SampleResult` share this one definition so their
+    reported best state can never disagree.
+    """
+    return min(range(len(energies)), key=energies.__getitem__)
+
+
 def _resolve_num_states(
     num_states: Mapping[Variable, int] | int | None,
     vartype: ResultVartype,
@@ -48,7 +59,7 @@ def _resolve_num_states(
     return counts
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SampleResult:
     """Container for sampler outputs under a fixed variable order.
 
@@ -57,7 +68,7 @@ class SampleResult:
     state counts are recorded in ``num_states``.
     """
 
-    samples: tuple[dict[Variable, int], ...]
+    samples: tuple[Mapping[Variable, int], ...]
     variables: tuple[Variable, ...]
     energies: tuple[float, ...]
     vartype: ResultVartype = "SPIN"
@@ -80,7 +91,10 @@ class SampleResult:
             raise ValueError("variables must be unique")
         num_states = _resolve_num_states(self.num_states, vartype, variables)
         if vartype == "CATEGORICAL":
-            domains: Mapping[Variable, Any] = {variable: range(num_states[variable]) for variable in variables}
+            assert num_states is not None
+            domains: Mapping[Variable, Any] = {
+                variable: range(num_states[variable]) for variable in variables
+            }
         else:
             shared = (-1, 1) if vartype == "SPIN" else (0, 1)
             domains = {variable: shared for variable in variables}
@@ -91,7 +105,7 @@ class SampleResult:
                 raise ValueError(f"sample {index} is missing variables {missing!r}")
             for variable in variables:
                 value = sample[variable]
-                if value not in domains[variable]:
+                if isinstance(value, bool) or value not in domains[variable]:
                     raise ValueError(f"sample {index} has invalid {kind} value {value!r} for {variable!r}")
 
         object.__setattr__(self, "samples", samples)
@@ -116,7 +130,8 @@ class SampleResult:
     ) -> "SampleResult":
         """Build a result and compute energies from the canonical model."""
         normalized_vartype = normalize_vartype(vartype)
-        sample_rows = tuple(dict(sample) for sample in samples)
+        # __post_init__ copies each sample defensively, so only materialize here.
+        sample_rows = tuple(samples)
         energies = tuple(model.energy(sample, vartype=normalized_vartype) for sample in sample_rows)
         result_metadata = {
             "source_model_format": model.source_format,
@@ -138,7 +153,7 @@ class SampleResult:
 
     @property
     def best_index(self) -> int:
-        return min(range(len(self.energies)), key=self.energies.__getitem__)
+        return best_index(self.energies)
 
     @property
     def best_sample(self) -> dict[Variable, int]:
@@ -150,6 +165,7 @@ class SampleResult:
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the schema without requiring optional dependencies."""
+        num_states = self.num_states if isinstance(self.num_states, Mapping) else None
         return {
             "samples": [dict(sample) for sample in self.samples],
             "variables": list(self.variables),
@@ -157,7 +173,7 @@ class SampleResult:
             "best_sample": self.best_sample,
             "best_energy": self.best_energy,
             "vartype": self.vartype,
-            "num_states": None if self.num_states is None else dict(self.num_states),
+            "num_states": None if num_states is None else dict(num_states),
             "traces": dict(self.traces),
             "diagnostics": dict(self.diagnostics),
             "metadata": dict(self.metadata),

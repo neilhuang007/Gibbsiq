@@ -21,7 +21,9 @@ from gibbsiq.benchmark_oracle import FAMILY_SPECS, verify_benchmark_fixture  # n
 
 def load_fixtures() -> dict[str, dict]:
     path = REPO_ROOT / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
-    return {fixture["id"]: fixture for fixture in json.loads(path.read_text(encoding="utf-8-sig"))["fixtures"]}
+    return {
+        fixture["id"]: fixture for fixture in json.loads(path.read_text(encoding="utf-8-sig"))["fixtures"]
+    }
 
 
 def correct_actual(fixture: dict) -> dict:
@@ -58,9 +60,7 @@ class MetamorphicRewardTest(unittest.TestCase):
         fixture = self.fixtures["gt_partition_frustrated_n13_v7_s17"]
         actual = correct_actual(fixture)
         witness = actual["witness_partitions"][0]
-        actual["witness_partitions"] = [
-            {"set_plus": witness["set_minus"], "set_minus": witness["set_plus"]}
-        ]
+        actual["witness_partitions"] = [{"set_plus": witness["set_minus"], "set_minus": witness["set_plus"]}]
 
         self.assertEqual(verify_benchmark_fixture(fixture, actual, 1e-9), [])
 

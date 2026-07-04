@@ -28,11 +28,7 @@ def random_ising_fields(seed: int, variables: tuple[str, ...]) -> tuple[dict, di
     """Return seeded (h, J, offset) with a dense-ish random coupling graph."""
     rng = random.Random(seed)
     h = {variable: rng.uniform(-2.0, 2.0) for variable in variables}
-    J = {
-        pair: rng.uniform(-2.0, 2.0)
-        for pair in itertools.combinations(variables, 2)
-        if rng.random() < 0.7
-    }
+    J = {pair: rng.uniform(-2.0, 2.0) for pair in itertools.combinations(variables, 2) if rng.random() < 0.7}
     return h, J, rng.uniform(-3.0, 3.0)
 
 
@@ -120,9 +116,7 @@ class SpinGaugeTests(unittest.TestCase):
         flip_sets = ({"x0"}, {"x1", "x3"}, set(variables))
         for seed, flipped in itertools.product(SEEDS, flip_sets):
             h, J, offset = random_ising_fields(seed, variables)
-            gauged_h = {
-                variable: -bias if variable in flipped else bias for variable, bias in h.items()
-            }
+            gauged_h = {variable: -bias if variable in flipped else bias for variable, bias in h.items()}
             gauged_J = {
                 (u, v): -coupling if (u in flipped) != (v in flipped) else coupling
                 for (u, v), coupling in J.items()
@@ -131,8 +125,7 @@ class SpinGaugeTests(unittest.TestCase):
             gauged_model = compile_ising(gauged_h, gauged_J, offset=offset)
             for sample in all_spin_assignments(variables):
                 gauged_sample = {
-                    variable: -spin if variable in flipped else spin
-                    for variable, spin in sample.items()
+                    variable: -spin if variable in flipped else spin for variable, spin in sample.items()
                 }
                 self.assertTrue(
                     math.isclose(

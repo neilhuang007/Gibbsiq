@@ -70,9 +70,7 @@ def citation_block(key: str, fields: dict[str, str], slug: str) -> str:
     """Render the citation blockquote for one paper."""
     ids = []
     doi = fields.get("doi")
-    eprint = fields.get("eprint") or (
-        fields.get("howpublished", "").replace("arXiv:", "") or None
-    )
+    eprint = fields.get("eprint") or (fields.get("howpublished", "").replace("arXiv:", "") or None)
     if doi:
         ids.append(f"DOI [{doi}](https://doi.org/{doi})")
     if eprint:
