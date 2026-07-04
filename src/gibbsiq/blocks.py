@@ -181,8 +181,7 @@ def _blocks_from_colors(
 ) -> tuple[tuple[Variable, ...], ...]:
     num_colors = max(colors.values()) + 1 if colors else 0
     return tuple(
-        tuple(variable for variable in variables if colors[variable] == color)
-        for color in range(num_colors)
+        tuple(variable for variable in variables if colors[variable] == color) for color in range(num_colors)
     )
 
 

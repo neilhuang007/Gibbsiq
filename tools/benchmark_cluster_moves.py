@@ -392,8 +392,7 @@ def summarize_runs(runs: list[RunStats], target_margin_fraction: float) -> dict[
             best_values = [run.best_energy for run in algorithm_runs]
             wall_values = [run.wall_seconds for run in algorithm_runs]
             best_gaps = [
-                run.best_energy
-                - case_targets[(run.size, run.instance_seed)]["best_observed_energy"]
+                run.best_energy - case_targets[(run.size, run.instance_seed)]["best_observed_energy"]
                 for run in algorithm_runs
             ]
             target_times: list[float] = []
@@ -427,13 +426,9 @@ def summarize_runs(runs: list[RunStats], target_margin_fraction: float) -> dict[
                 "best_gap_to_case_best_mean": statistics.fmean(best_gaps),
                 "wall_seconds_median": statistics.median(wall_values),
                 "hit_target_runs": len(target_times),
-                "target_time_median_seconds": statistics.median(target_times)
-                if target_times
-                else None,
+                "target_time_median_seconds": statistics.median(target_times) if target_times else None,
                 "target_time_q80_seconds": quantile(target_times, 0.8),
-                "target_sweep_median": statistics.median(target_sweeps)
-                if target_sweeps
-                else None,
+                "target_sweep_median": statistics.median(target_sweeps) if target_sweeps else None,
                 "target_sweep_q80": quantile([float(value) for value in target_sweeps], 0.8),
                 "cluster_acceptance": cluster_acceptance,
                 "cluster_mean_fraction": cluster_mean_fraction,
@@ -461,9 +456,7 @@ def summarize_runs(runs: list[RunStats], target_margin_fraction: float) -> dict[
         for (case_size, instance_seed), target_info in sorted(case_targets.items()):
             if case_size != size:
                 continue
-            case_runs = [
-                run for run in size_runs if run.instance_seed == instance_seed
-            ]
+            case_runs = [run for run in size_runs if run.instance_seed == instance_seed]
             pt_runs = [run for run in case_runs if run.algorithm == "pt"]
             icm_runs = [run for run in case_runs if run.algorithm == "pt_icm"]
             if not pt_runs or not icm_runs:
@@ -476,18 +469,12 @@ def summarize_runs(runs: list[RunStats], target_margin_fraction: float) -> dict[
             pt_target_sweep = sweep_to_target(pt_run, target)
             icm_target_sweep = sweep_to_target(icm_run, target)
             case_best = target_info["best_observed_energy"]
-            paired_gap_deltas.append(
-                (pt_run.best_energy - case_best) - (icm_run.best_energy - case_best)
-            )
+            paired_gap_deltas.append((pt_run.best_energy - case_best) - (icm_run.best_energy - case_best))
             if pt_target_time is not None and icm_target_time is not None:
                 paired_both_hit += 1
                 if icm_target_time > 0:
                     paired_speedups.append(pt_target_time / icm_target_time)
-                if (
-                    pt_target_sweep is not None
-                    and icm_target_sweep is not None
-                    and icm_target_sweep > 0
-                ):
+                if pt_target_sweep is not None and icm_target_sweep is not None and icm_target_sweep > 0:
                     paired_sweep_speedups.append(pt_target_sweep / icm_target_sweep)
             elif pt_target_time is not None:
                 paired_pt_only_hit += 1
@@ -511,9 +498,7 @@ def summarize_runs(runs: list[RunStats], target_margin_fraction: float) -> dict[
             "median_time_to_target_speedup_pt_over_pt_icm": speedup,
             "median_sweeps_to_target_speedup_pt_over_pt_icm": sweep_speedup,
             "paired_speedup_values": paired_speedups,
-            "paired_speedup_median": statistics.median(paired_speedups)
-            if paired_speedups
-            else None,
+            "paired_speedup_median": statistics.median(paired_speedups) if paired_speedups else None,
             "paired_speedup_bootstrap_ci_90": paired_speedup_ci,
             "paired_sweep_speedup_values": paired_sweep_speedups,
             "paired_sweep_speedup_median": statistics.median(paired_sweep_speedups)
@@ -560,7 +545,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-cluster-fraction", type=float, default=0.7)
     parser.add_argument("--target-margin-fraction", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=20260704)
-    parser.add_argument("--out", type=Path, default=Path("reference/06-benchmarks/artifacts/cluster-move-benchmark.json"))
+    parser.add_argument(
+        "--out", type=Path, default=Path("reference/06-benchmarks/artifacts/cluster-move-benchmark.json")
+    )
     return parser
 
 

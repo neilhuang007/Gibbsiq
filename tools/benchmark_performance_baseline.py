@@ -40,11 +40,10 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from gibbsiq.benchmark_oracle import verify_benchmark_fixture
-from gibbsiq.blocks import color_blocks
-from gibbsiq.conversions import compile_ising, compile_qubo
-from gibbsiq.diagnostics import compute_diagnostics
-from gibbsiq.model import IsingModel
+from gibbsiq.benchmark_oracle import verify_benchmark_fixture  # noqa: E402
+from gibbsiq.blocks import color_blocks  # noqa: E402
+from gibbsiq.conversions import compile_ising, compile_qubo  # noqa: E402
+from gibbsiq.diagnostics import compute_diagnostics  # noqa: E402
 
 
 def timed(call: Callable[[], Any], repeat: int) -> dict[str, Any]:
@@ -204,7 +203,7 @@ def benchmark_compile_ising(repeat: int) -> dict[str, Any]:
         variables = tuple(str(index) for index in range(n))
         h, quadratic = random_sparse_terms(variables=variables, edge_probability=probability, seed=seed)
 
-        def run() -> dict[str, Any]:
+        def run(h=h, quadratic=quadratic, variables=variables) -> dict[str, Any]:
             model = compile_ising(h, quadratic, variables=variables)
             return {"variables": len(model.variables), "edges": len(model.quadratic)}
 
@@ -223,7 +222,7 @@ def benchmark_compile_qubo(repeat: int) -> dict[str, Any]:
             qubo[(variable, variable)] = coefficient
         qubo.update(quadratic)
 
-        def run() -> dict[str, Any]:
+        def run(qubo=qubo, variables=variables) -> dict[str, Any]:
             model = compile_qubo(qubo, variables=variables)
             return {"variables": len(model.variables), "edges": len(model.quadratic)}
 
@@ -241,14 +240,14 @@ def benchmark_coloring(repeat: int) -> dict[str, Any]:
 
         # color_blocks itself is a wrapper; clear the private cached function by
         # rebuilding a fresh same-topology model for cold timing.
-        def cold_run() -> dict[str, Any]:
+        def cold_run(model=model) -> dict[str, Any]:
             from gibbsiq.blocks import _color_blocks_cached  # noqa: PLC0415
 
             _color_blocks_cached.cache_clear()
             partition = color_blocks(model)
             return {"blocks": partition.num_blocks, "max_block_size": max(partition.block_sizes)}
 
-        def cached_run() -> dict[str, Any]:
+        def cached_run(model=model) -> dict[str, Any]:
             partition = color_blocks(model)
             return {"blocks": partition.num_blocks, "max_block_size": max(partition.block_sizes)}
 
