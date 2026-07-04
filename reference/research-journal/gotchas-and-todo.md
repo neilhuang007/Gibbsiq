@@ -115,10 +115,11 @@ Benchmarks and scoring (`2026-05-31-ground-truth-test-set.md`):
 By stage (status source: `reference/00-roadmap/README.md` and the journal
 follow-up sections):
 
-- **Stage 2 exit criterion — parallel tempering execution.** Still open. When it
-  lands, move diagnostics to per-constant-beta segments (see the constant-beta
-  gotcha above). Upstream composition point: THRML PR #30 (beta-ladder /
-  sampler abstraction).
+- **Stage 2 exit criterion — parallel tempering execution.** Code for opt-in
+  PT landed on 2026-07-04, with cold-slot samples, swap traces, and per-beta
+  energy traces. The exit criterion remains open until the optional THRML
+  runtime tests run in an environment with `thrml` installed and pass. Upstream
+  composition point: THRML PR #30 (beta-ladder / sampler abstraction).
 - **Stage 1 bridge gap — penalty / one-hot encoding layer.** Knapsack and TSP
   fixtures raise `NotImplementedError` in `benchmark_bridge.py` until this exists;
   the diagnostics `constraints` section reports `{"status": "not_available"}`

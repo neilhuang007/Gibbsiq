@@ -93,6 +93,24 @@ class SamplerConfigValidationTests(unittest.TestCase):
         self.assertEqual(config.warmup_segments(), ((0.5, 3), (1.0, 3), (2.0, 4)))
         self.assertEqual(SamplerConfig().warmup_segments(), ())
 
+    def test_parallel_tempering_config_validation(self) -> None:
+        config = SamplerConfig(beta=2.0, parallel_tempering_betas=(0.5, 1.0, 2.0))
+        self.assertEqual(config.parallel_tempering_betas, (0.5, 1.0, 2.0))
+        with self.assertRaises(ValueError):
+            SamplerConfig(beta=2.0, parallel_tempering_betas=(2.0,))
+        with self.assertRaises(ValueError):
+            SamplerConfig(beta=2.0, parallel_tempering_betas=(0.5, 0.5, 2.0))
+        with self.assertRaises(ValueError):
+            SamplerConfig(beta=2.0, parallel_tempering_betas=(0.5, 1.0))
+        with self.assertRaises(ValueError):
+            SamplerConfig(
+                beta=2.0,
+                warmup_beta_ladder=(0.5, 2.0),
+                parallel_tempering_betas=(0.5, 1.0, 2.0),
+            )
+        with self.assertRaises(ValueError):
+            SamplerConfig(beta=2.0, parallel_tempering_betas=(0.5, 2.0), parallel_tempering_swap_interval=0)
+
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class TwoSpinDistributionTests(unittest.TestCase):
@@ -151,6 +169,61 @@ class ReproducibilityTests(unittest.TestCase):
         first = THRMLSampler(SamplerConfig(beta=1.0, n_warmup=50, seed=1)).sample(model, num_reads=50)
         second = THRMLSampler(SamplerConfig(beta=1.0, n_warmup=50, seed=2)).sample(model, num_reads=50)
         self.assertNotEqual(first.samples, second.samples)
+
+    def test_parallel_tempering_fixed_seed_reproduces_samples_and_swaps(self) -> None:
+        config = SamplerConfig(
+            beta=2.0,
+            n_warmup=8,
+            steps_per_sample=1,
+            seed=19,
+            num_chains=2,
+            init="random",
+            parallel_tempering_betas=(0.5, 1.0, 2.0),
+        )
+        first = THRMLSampler(config).sample(self._model(), num_reads=8)
+        second = THRMLSampler(config).sample(self._model(), num_reads=8)
+        self.assertEqual(first.samples, second.samples)
+        self.assertEqual(first.energies, second.energies)
+        self.assertEqual(
+            first.traces["parallel_tempering"]["swap_trace"],
+            second.traces["parallel_tempering"]["swap_trace"],
+        )
+
+
+@unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
+class ParallelTemperingRuntimeTests(unittest.TestCase):
+    def test_parallel_tempering_records_swap_and_per_beta_traces(self) -> None:
+        model = compile_ising({"a": 0.2, "b": -0.1}, {("a", "b"): 0.7})
+        config = SamplerConfig(
+            beta=2.0,
+            n_warmup=5,
+            steps_per_sample=1,
+            num_chains=2,
+            seed=23,
+            init="random",
+            parallel_tempering_betas=(0.5, 2.0),
+        )
+        result = THRMLSampler(config).sample(model, num_reads=5)
+        self.assertEqual(len(result.samples), 5)
+        self.assertEqual([len(chain) for chain in result.traces["energy"]], [3, 2])
+        self.assertTrue(result.metadata["parallel_tempering_enabled"])
+        self.assertEqual(result.metadata["parallel_tempering_betas"], [0.5, 2.0])
+
+        tempering = result.traces["parallel_tempering"]
+        self.assertEqual(tempering["target_beta_index"], 1)
+        self.assertEqual(tempering["swap_attempts"], 5)
+        self.assertEqual(len(tempering["swap_trace"]), 5)
+        self.assertEqual(len(tempering["per_beta_energy"]), 2)
+        self.assertEqual([len(beta_trace) for beta_trace in tempering["per_beta_energy"][0]], [3, 3])
+        self.assertEqual([len(beta_trace) for beta_trace in tempering["per_beta_energy"][1]], [2, 2])
+        for event in tempering["swap_trace"]:
+            self.assertEqual(event["right_beta_index"], event["left_beta_index"] + 1)
+            expected_accept = (
+                event["log_acceptance"] >= 0.0 or math.log(event["uniform"]) < event["log_acceptance"]
+            )
+            self.assertEqual(event["accepted"], expected_accept)
+        for sample, energy in zip(result.samples, result.energies):
+            self.assertAlmostEqual(model.energy(sample), energy, places=9)
 
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")

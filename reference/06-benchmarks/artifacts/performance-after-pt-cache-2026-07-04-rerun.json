@@ -1,0 +1,409 @@
+{
+  "benchmarks": {
+    "benchmark_oracle": {
+      "last_result": {
+        "differences": 0,
+        "failures": 0,
+        "fixtures": 27
+      },
+      "max_seconds": 0.0005799999998998828,
+      "median_seconds": 0.00040219999937107787,
+      "min_seconds": 0.0003539000026648864,
+      "repeat": 7,
+      "seconds": [
+        0.0004298999992897734,
+        0.0003539000026648864,
+        0.0005799999998998828,
+        0.0005082999996375293,
+        0.00040219999937107787,
+        0.00037880000309087336,
+        0.00036099999852012843
+      ]
+    },
+    "block_coloring": {
+      "cases": [
+        {
+          "cached": {
+            "last_result": {
+              "blocks": 4,
+              "max_block_size": 173
+            },
+            "max_seconds": 1.4200006262399256e-05,
+            "median_seconds": 1.1100004485342652e-05,
+            "min_seconds": 1.0600000678095967e-05,
+            "repeat": 7,
+            "seconds": [
+              1.4200006262399256e-05,
+              1.290000363951549e-05,
+              1.1500000255182385e-05,
+              1.0899995686486363e-05,
+              1.1000003723893315e-05,
+              1.1100004485342652e-05,
+              1.0600000678095967e-05
+            ]
+          },
+          "cold": {
+            "last_result": {
+              "blocks": 4,
+              "max_block_size": 173
+            },
+            "max_seconds": 0.0014502999983960763,
+            "median_seconds": 0.0012324999988777563,
+            "min_seconds": 0.0011884999985340983,
+            "repeat": 7,
+            "seconds": [
+              0.0014502999983960763,
+              0.001210700000228826,
+              0.0012782999983755872,
+              0.0012677999984589405,
+              0.0012324999988777563,
+              0.001197199999296572,
+              0.0011884999985340983
+            ]
+          },
+          "edge_probability": 0.01,
+          "edges": 1152,
+          "n": 500
+        },
+        {
+          "cached": {
+            "last_result": {
+              "blocks": 3,
+              "max_block_size": 399
+            },
+            "max_seconds": 1.8200000340584666e-05,
+            "median_seconds": 1.6400001186411828e-05,
+            "min_seconds": 1.599999814061448e-05,
+            "repeat": 7,
+            "seconds": [
+              1.8200000340584666e-05,
+              1.68999977177009e-05,
+              1.6500001947861165e-05,
+              1.599999814061448e-05,
+              1.599999814061448e-05,
+              1.630000042496249e-05,
+              1.6400001186411828e-05
+            ]
+          },
+          "cold": {
+            "last_result": {
+              "blocks": 3,
+              "max_block_size": 399
+            },
+            "max_seconds": 0.003439399995841086,
+            "median_seconds": 0.002344000000448432,
+            "min_seconds": 0.0021617000020341948,
+            "repeat": 7,
+            "seconds": [
+              0.0023421000005328096,
+              0.003439399995841086,
+              0.0027067000046372414,
+              0.002344000000448432,
+              0.0021617000020341948,
+              0.0024058999988483265,
+              0.002237300002889242
+            ]
+          },
+          "edge_probability": 0.004,
+          "edges": 1730,
+          "n": 1000
+        },
+        {
+          "cached": {
+            "last_result": {
+              "blocks": 3,
+              "max_block_size": 830
+            },
+            "max_seconds": 3.220000508008525e-05,
+            "median_seconds": 2.9299997549969703e-05,
+            "min_seconds": 2.7900001441594213e-05,
+            "repeat": 7,
+            "seconds": [
+              3.220000508008525e-05,
+              2.9999995604157448e-05,
+              2.8800001018680632e-05,
+              2.9299997549969703e-05,
+              2.920000406447798e-05,
+              2.970000059576705e-05,
+              2.7900001441594213e-05
+            ]
+          },
+          "cold": {
+            "last_result": {
+              "blocks": 3,
+              "max_block_size": 830
+            },
+            "max_seconds": 0.00476370000251336,
+            "median_seconds": 0.004517699999269098,
+            "min_seconds": 0.004242599999997765,
+            "repeat": 7,
+            "seconds": [
+              0.00476370000251336,
+              0.0047187000018311664,
+              0.004242599999997765,
+              0.004517699999269098,
+              0.0047225999951479025,
+              0.0042857000007643364,
+              0.004331100004492328
+            ]
+          },
+          "edge_probability": 0.002,
+          "edges": 3414,
+          "n": 2000
+        }
+      ]
+    },
+    "compile_ising": {
+      "cases": [
+        {
+          "edge_probability": 0.05,
+          "last_result": {
+            "edges": 87,
+            "variables": 64
+          },
+          "max_seconds": 0.000367199994798284,
+          "median_seconds": 0.00017449999722884968,
+          "min_seconds": 0.0001632999992580153,
+          "n": 64,
+          "repeat": 7,
+          "seconds": [
+            0.000367199994798284,
+            0.00019449999672360718,
+            0.00017780000052880496,
+            0.00017449999722884968,
+            0.00017300000035902485,
+            0.00016989999858196825,
+            0.0001632999992580153
+          ]
+        },
+        {
+          "edge_probability": 0.02,
+          "last_result": {
+            "edges": 597,
+            "variables": 256
+          },
+          "max_seconds": 0.0012593999999808148,
+          "median_seconds": 0.0010693000003811903,
+          "min_seconds": 0.001062100003764499,
+          "n": 256,
+          "repeat": 7,
+          "seconds": [
+            0.0012593999999808148,
+            0.001091500002075918,
+            0.0010742999947979115,
+            0.001062900002580136,
+            0.001068099998519756,
+            0.001062100003764499,
+            0.0010693000003811903
+          ]
+        },
+        {
+          "edge_probability": 0.01,
+          "last_result": {
+            "edges": 1150,
+            "variables": 512
+          },
+          "max_seconds": 0.0029647999981534667,
+          "median_seconds": 0.002404500002739951,
+          "min_seconds": 0.0021545000054175034,
+          "n": 512,
+          "repeat": 7,
+          "seconds": [
+            0.002565800001320895,
+            0.002321699997992255,
+            0.0021545000054175034,
+            0.0021917999983998016,
+            0.002440199998090975,
+            0.002404500002739951,
+            0.0029647999981534667
+          ]
+        }
+      ]
+    },
+    "compile_qubo": {
+      "cases": [
+        {
+          "edge_probability": 0.05,
+          "last_result": {
+            "edges": 77,
+            "variables": 64
+          },
+          "max_seconds": 0.00023569999757455662,
+          "median_seconds": 0.00018390000332146883,
+          "min_seconds": 0.00018230000569019467,
+          "n": 64,
+          "repeat": 7,
+          "seconds": [
+            0.00023569999757455662,
+            0.00019220000103814527,
+            0.00018389999604551122,
+            0.00021109999943291768,
+            0.00018390000332146883,
+            0.00018230000569019467,
+            0.000182400006451644
+          ]
+        },
+        {
+          "edge_probability": 0.02,
+          "last_result": {
+            "edges": 569,
+            "variables": 256
+          },
+          "max_seconds": 0.0012420999992173165,
+          "median_seconds": 0.0011909000022569671,
+          "min_seconds": 0.0011643000034382567,
+          "n": 256,
+          "repeat": 7,
+          "seconds": [
+            0.0012420999992173165,
+            0.001193800002511125,
+            0.0011969999977736734,
+            0.0011909000022569671,
+            0.0011817000049632043,
+            0.001179800005047582,
+            0.0011643000034382567
+          ]
+        },
+        {
+          "edge_probability": 0.01,
+          "last_result": {
+            "edges": 1119,
+            "variables": 512
+          },
+          "max_seconds": 0.003064299999095965,
+          "median_seconds": 0.002428799998597242,
+          "min_seconds": 0.0023806999961379915,
+          "n": 512,
+          "repeat": 7,
+          "seconds": [
+            0.0025045000002137385,
+            0.00240019999910146,
+            0.0023998000033316202,
+            0.0023806999961379915,
+            0.002428799998597242,
+            0.003064299999095965,
+            0.0024660999988554977
+          ]
+        }
+      ]
+    },
+    "diagnostics": {
+      "chains": 4,
+      "draws_per_chain": 512,
+      "last_result": {
+        "energy_count": 2048,
+        "flags": [
+          "low_ess",
+          "chain_disagreement"
+        ],
+        "unique_states": 2048
+      },
+      "max_seconds": 0.031240099997376092,
+      "median_seconds": 0.02918610000051558,
+      "min_seconds": 0.026625100006640423,
+      "repeat": 7,
+      "seconds": [
+        0.030368199993972667,
+        0.026625100006640423,
+        0.02963350000209175,
+        0.02918610000051558,
+        0.031240099997376092,
+        0.028708300000289455,
+        0.02899739999702433
+      ],
+      "variables": 64
+    },
+    "energy_and_local_field": {
+      "energy": {
+        "last_result": {
+          "checksum": 1476.0,
+          "evaluations": 2000
+        },
+        "max_seconds": 0.12188449999666773,
+        "median_seconds": 0.12097830000129761,
+        "min_seconds": 0.11794739999459125,
+        "repeat": 7,
+        "seconds": [
+          0.12188449999666773,
+          0.12124929999845335,
+          0.11794739999459125,
+          0.12067759999627015,
+          0.11954580000019632,
+          0.12097830000129761,
+          0.12115869999979623
+        ]
+      },
+      "local_field": {
+        "last_result": {
+          "checksum": 92.0,
+          "queries": 2000
+        },
+        "max_seconds": 0.0408672999983537,
+        "median_seconds": 0.040633999997226056,
+        "min_seconds": 0.03747829999338137,
+        "repeat": 7,
+        "seconds": [
+          0.03754050000134157,
+          0.03747829999338137,
+          0.0408672999983537,
+          0.04067130000476027,
+          0.04068900000129361,
+          0.03949350000038976,
+          0.040633999997226056
+        ]
+      },
+      "model": {
+        "edges": 586,
+        "variables": 256
+      }
+    },
+    "ground_truth_generation": {
+      "last_result": {
+        "checksum": "afb035eeeae7e0f8cff71846457ff750e14e3455fa72214efd63656f8a5f40fe",
+        "fixtures": 27
+      },
+      "max_seconds": 0.15587870000308612,
+      "median_seconds": 0.15466810000361875,
+      "min_seconds": 0.15317289999802597,
+      "repeat": 3,
+      "seconds": [
+        0.15587870000308612,
+        0.15466810000361875,
+        0.15317289999802597
+      ]
+    }
+  },
+  "metadata": {
+    "benchmark_finished": "2026-07-04T18:34:30-0400",
+    "benchmark_started": "2026-07-04T18:34:27-0400",
+    "command": "tools/benchmark_performance_baseline.py --repeat 7 --out reference/06-benchmarks/artifacts/performance-after-pt-cache-2026-07-04-rerun.json",
+    "git": {
+      "branch": "master",
+      "commit": "2d7bd9fbeb75a87e28dd8b7d5f175f1ab325fb7a",
+      "dirty": true,
+      "status_short": [
+        "M reference/research-journal/gotchas-and-todo.md",
+        " M src/gibbsiq/model.py",
+        " M src/gibbsiq/thrml_runtime.py",
+        " M test_suite/tests/test_model_compatibility.py",
+        " M test_suite/tests/test_thrml_runtime.py",
+        "?? reference/06-benchmarks/artifacts/performance-after-pt-cache-2026-07-04.json",
+        "?? reference/research-journal/2026-07-04-parallel-tempering-cache-implementation.md"
+      ]
+    },
+    "notes": [
+      "Stdlib deterministic baseline for core calculations.",
+      "Compare future runs on the same machine and Python environment.",
+      "Timings are wall-clock seconds from time.perf_counter()."
+    ],
+    "parameters": {
+      "repeat": 7
+    },
+    "payload_sha256_before_checksum_field": "bea12c6fde83093585f6923c33b5a8f40517185cd5a48d98394b49de38799371",
+    "platform": "Windows-11-10.0.26220-SP0",
+    "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "python": "3.14.2",
+    "script_path": "tools/benchmark_performance_baseline.py"
+  },
+  "schema_version": "2026-07-04"
+}
