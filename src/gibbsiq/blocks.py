@@ -1,13 +1,17 @@
 """Graph-coloring block construction for THRML block-Gibbs sampling.
 
 THRML updates one block of nodes per sub-step, and a block may only be
-sampled in parallel when its nodes share no coupling. A proper coloring of
-the interaction graph therefore yields the block partition with the fewest
-sequential sub-steps per sweep. THRML ships no coloring utility (its own
-spin-model example delegates to networkx DSATUR), so this module provides a
-deterministic DSATUR coloring over the IR graph using only the standard
-library. DSATUR colors bipartite graphs optimally with two colors, which
-covers the chains, grids, and even cycles common in QUBO encodings.
+sampled in parallel when its nodes share no coupling. A proper vertex
+coloring of the interaction graph therefore gives legal independent update
+blocks, and fewer colors reduce the sequential sub-steps per sweep.
+
+THRML ships no coloring utility (its own spin-model example delegates to
+networkx DSATUR), so this module provides deterministic standard-library
+coloring over the IR graph. The implementation first uses a linear
+bipartite check, which gives the optimal one- or two-block partition for
+edgeless graphs, chains, grids, trees, and even cycles. Non-bipartite graphs
+fall back to DSATUR with a lazy priority heap, avoiding the full uncolored-set
+scan at every step.
 
 On dense graphs the chromatic number approaches the variable count and the
 partition degenerates toward one singleton block per variable; callers
@@ -17,6 +21,9 @@ that regime is visible instead of silent.
 
 from __future__ import annotations
 
+import functools
+import heapq
+from collections import deque
 from dataclasses import dataclass
 from typing import Any
 
@@ -59,46 +66,124 @@ def graph_density(model: IsingModel) -> float:
 
 
 def color_blocks(model: IsingModel) -> BlockPartition:
-    """DSATUR coloring of the interaction graph.
+    """Color the interaction graph into deterministic independent blocks.
+
+    The partition depends only on graph topology, not coefficient values, so
+    repeated calls over the same variable order and edge set share the cached
+    coloring. Every block lists its variables in canonical order.
+    """
+    return BlockPartition(blocks=_color_blocks_cached(model.variables, model.graph))
+
+
+@functools.lru_cache(maxsize=128)
+def _color_blocks_cached(
+    variables: tuple[Variable, ...], edges: tuple[tuple[Variable, Variable], ...]
+) -> tuple[tuple[Variable, ...], ...]:
+    """Topology-only cached coloring backend."""
+    if not variables:
+        return ()
+    neighbors = _neighbors_from_edges(variables, edges)
+    if not edges:
+        return (variables,)
+
+    colors = _bipartite_coloring(variables, neighbors)
+    if colors is None:
+        colors = _dsatur_coloring(variables, neighbors)
+    return _blocks_from_colors(variables, colors)
+
+
+def _neighbors_from_edges(
+    variables: tuple[Variable, ...], edges: tuple[tuple[Variable, Variable], ...]
+) -> dict[Variable, set[Variable]]:
+    neighbors: dict[Variable, set[Variable]] = {variable: set() for variable in variables}
+    for left, right in edges:
+        neighbors[left].add(right)
+        neighbors[right].add(left)
+    return neighbors
+
+
+def _bipartite_coloring(
+    variables: tuple[Variable, ...], neighbors: dict[Variable, set[Variable]]
+) -> dict[Variable, int] | None:
+    """Return a deterministic two-coloring, or ``None`` for non-bipartite graphs."""
+    colors: dict[Variable, int] = {}
+    for start in variables:
+        if start in colors:
+            continue
+        colors[start] = 0
+        queue: deque[Variable] = deque([start])
+        while queue:
+            variable = queue.popleft()
+            neighbor_color = 1 - colors[variable]
+            # Once a component's start color is fixed, neighbor order cannot
+            # change the two sides of a bipartite component.
+            for neighbor in neighbors[variable]:
+                if neighbor not in colors:
+                    colors[neighbor] = neighbor_color
+                    queue.append(neighbor)
+                elif colors[neighbor] != neighbor_color:
+                    return None
+    return colors
+
+
+def _dsatur_coloring(
+    variables: tuple[Variable, ...], neighbors: dict[Variable, set[Variable]]
+) -> dict[Variable, int]:
+    """DSATUR coloring with lazy heap priorities.
 
     Each step colors the uncolored variable with the highest saturation
     (count of distinct colors among its neighbors), breaking ties by higher
-    degree and then by canonical variable order, so the partition is a pure
-    function of the model. Every block lists its variables in canonical order.
+    degree and then by canonical variable order. Heap entries are immutable,
+    so changed priorities create new entries and stale entries are discarded
+    when popped.
     """
-    index = variable_index(model.variables)
-    neighbors: dict[Variable, set[Variable]] = {variable: set() for variable in model.variables}
-    for left, right in model.quadratic:
-        neighbors[left].add(right)
-        neighbors[right].add(left)
-
+    index = variable_index(variables)
     colors: dict[Variable, int] = {}
-    neighbor_colors: dict[Variable, set[int]] = {variable: set() for variable in model.variables}
-    uncolored = set(model.variables)
+    neighbor_colors: dict[Variable, set[int]] = {variable: set() for variable in variables}
+    uncolored = set(variables)
+    heap: list[tuple[int, int, int, Variable]] = [
+        (0, -len(neighbors[variable]), index[variable], variable) for variable in variables
+    ]
+    heapq.heapify(heap)
+
     while uncolored:
-        variable = min(
-            uncolored,
-            key=lambda candidate: (
-                -len(neighbor_colors[candidate]),
-                -len(neighbors[candidate]),
-                index[candidate],
-            ),
-        )
+        saturation, negative_degree, position, variable = heapq.heappop(heap)
+        if variable not in uncolored:
+            continue
+        current_priority = (-len(neighbor_colors[variable]), -len(neighbors[variable]), index[variable])
+        if (saturation, negative_degree, position) != current_priority:
+            continue
+
         used = neighbor_colors[variable]
         color = 0
         while color in used:
             color += 1
         colors[variable] = color
         uncolored.remove(variable)
-        for neighbor in neighbors[variable]:
-            neighbor_colors[neighbor].add(color)
 
+        for neighbor in neighbors[variable]:
+            if neighbor in uncolored and color not in neighbor_colors[neighbor]:
+                neighbor_colors[neighbor].add(color)
+                heapq.heappush(
+                    heap,
+                    (
+                        -len(neighbor_colors[neighbor]),
+                        -len(neighbors[neighbor]),
+                        index[neighbor],
+                        neighbor,
+                    ),
+                )
+    return colors
+
+
+def _blocks_from_colors(
+    variables: tuple[Variable, ...], colors: dict[Variable, int]
+) -> tuple[tuple[Variable, ...], ...]:
     num_colors = max(colors.values()) + 1 if colors else 0
-    blocks = tuple(
-        tuple(variable for variable in model.variables if colors[variable] == color)
+    return tuple(
+        tuple(variable for variable in variables if colors[variable] == color)
         for color in range(num_colors)
     )
-    return BlockPartition(blocks=blocks)
 
 
 def validate_partition(model: IsingModel, partition: BlockPartition) -> None:
