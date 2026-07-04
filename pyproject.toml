@@ -91,20 +91,23 @@ check_untyped_defs = true
 files = ["src/gibbsiq"]
 ignore_missing_imports = true
 mypy_path = "src"
-python_version = "3.10"
+# Target 3.12 for the type-check specifically because a fresh CI
+# ``pip install -e ".[dev]"`` resolves numpy to 2.5.x, whose stubs ship PEP 695
+# ``type`` statements that mypy rejects as a syntax error under any target below
+# 3.12. numpy is reached transitively through the optional thrml/jax/dimod
+# backends; per-module ``follow_imports = skip`` on those importers stops mypy in
+# a local repro but did not prevent CI from loading numpy's stub, so the target is
+# raised to the minimum the stub requires. requires-python stays >= 3.10 and the
+# runtime code remains 3.10-compatible; only mypy's syntax target moves.
+python_version = "3.12"
 strict_equality = true
 warn_unused_configs = true
 
-# Do not follow mypy into the optional numeric backends. src/gibbsiq imports
+# Keep mypy out of the optional numeric backends regardless: src/gibbsiq imports
 # thrml, jax (thrml_runtime.py) and dimod (model.py, result.py) only inside
-# guarded functions, and each pulls in the numpy/jax scientific stack. A fresh CI
-# ``pip install -e ".[dev]"`` resolves numpy to 2.5.x, whose stubs ship PEP 695
-# ``type`` statements that mypy rejects under ``python_version = 3.10`` (a parse
-# error that follow_imports=skip on numpy itself cannot suppress once the stub is
-# reached — the skip must be applied at every importer that would reach numpy).
-# gibbsiq guards these as optional Any-typed backends, so cutting the follow at
-# each backend boundary keeps the 3.10 target for our own code while making the
-# type-check reproducible against dependency drift.
+# guarded functions and treats them as optional Any-typed backends, so following
+# them into the jax/numpy scientific stack only invites unrelated third-party stub
+# errors.
 [[tool.mypy.overrides]]
 module = ["thrml", "thrml.*", "dimod", "dimod.*", "jax", "jax.*"]
 follow_imports = "skip"
