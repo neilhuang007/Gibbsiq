@@ -75,6 +75,9 @@ Issues = "https://github.com/neilhuang007/Gibbsiq/issues"
 line-length = 110
 src = ["src", "test_suite/tests", "tools"]
 target-version = "py310"
+# Vendored upstream test suites (dimod, arviz-stats) are cross-validation reference
+# material, kept verbatim; do not lint or format them to our conventions.
+extend-exclude = ["test_suite/vendor"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "B"]

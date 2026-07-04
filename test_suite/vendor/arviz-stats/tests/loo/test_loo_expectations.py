@@ -1,0 +1,306 @@
+"""Test expectations functions for PSIS-LOO-CV."""
+
+# pylint: disable=redefined-outer-name, unused-argument
+import pytest
+
+from ..helpers import importorskip
+
+np = importorskip("numpy")
+azb = importorskip("arviz_base")
+xr = importorskip("xarray")
+
+from numpy.testing import assert_allclose, assert_almost_equal, assert_array_equal
+
+from arviz_stats import loo_expectations, loo_metrics, loo_r2
+from arviz_stats.loo.helper_loo import _get_r_eff
+from arviz_stats.utils import get_log_likelihood_dataset
+
+
+def test_loo_expectations_invalid_kind(centered_eight):
+    with pytest.raises(ValueError, match="kind must be one of"):
+        loo_expectations(centered_eight, kind="invalid")
+
+
+def test_loo_expectations_quantile_without_probs(centered_eight):
+    with pytest.raises(ValueError, match="probs must be provided when kind is 'quantile'"):
+        loo_expectations(centered_eight, kind="quantile")
+
+
+def test_loo_expectations_invalid_var_name(centered_eight):
+    with pytest.raises(KeyError):
+        loo_expectations(centered_eight, var_name="nonexistent")
+
+
+@pytest.mark.parametrize(
+    "kind, probs, expected_vals",
+    [
+        ("mean", None, 3.18),
+        ("quantile", [0.25, 0.75], [-7.78, 13.70]),
+    ],
+)
+def test_loo_expectations(centered_eight, kind, probs, expected_vals):
+    loo_exp_vals, _ = loo_expectations(centered_eight, kind=kind, probs=probs)
+
+    if kind == "quantile":
+        assert loo_exp_vals.shape == (2, 8)
+    else:
+        assert loo_exp_vals.shape == (8,)
+
+    assert_almost_equal(loo_exp_vals.sel({"school": "Choate"}), expected_vals, decimal=2)
+
+
+@pytest.mark.filterwarnings("ignore::UserWarning")
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
+@pytest.mark.parametrize("kind", ["mean", "var", "quantile"])
+def test_loo_expectations_khat(centered_eight, datatree, kind):
+    probs = [0.25, 0.75] if kind == "quantile" else None
+    result, khat = loo_expectations(centered_eight, kind=kind, probs=probs)
+
+    assert np.all(np.isfinite(khat.values))
+    assert np.all(khat.values >= -0.5) and np.all(khat.values <= 1.5)
+
+    if kind == "quantile":
+        expected_dims = tuple(d for d in result.dims if d != "quantile")
+        assert khat.dims == expected_dims
+        assert khat.shape == tuple(result.sizes[d] for d in expected_dims)
+    else:
+        assert khat.dims == result.dims
+        assert khat.shape == result.shape
+
+    assert len(np.unique(khat.values.flatten())) > 1
+
+    for dim_name in khat.dims:
+        khat_coord_vals = khat.coords[dim_name].values
+        result_coord_vals = result.coords[dim_name].values
+        if khat_coord_vals.dtype.kind in ("U", "S", "O"):
+            assert np.array_equal(khat_coord_vals, result_coord_vals)
+        else:
+            assert_allclose(khat_coord_vals, result_coord_vals)
+
+    _, khat_check = loo_expectations(datatree, var_name="y", kind=kind, probs=probs)
+    n_samples = (
+        datatree.log_likelihood["y"].sizes["chain"] * datatree.log_likelihood["y"].sizes["draw"]
+    )
+    good_k = min(1 - 1 / np.log10(n_samples), 0.7) if n_samples > 1 else 0.7
+    if np.any(khat_check.values > good_k):
+        with pytest.warns(UserWarning, match="Estimated shape parameter of Pareto distribution"):
+            loo_expectations(datatree, var_name="y", kind=kind, probs=probs)
+
+
+@pytest.mark.parametrize("kind", ["median", "sd"])
+def test_loo_expectations_median_sd(centered_eight, kind):
+    result, khat = loo_expectations(centered_eight, kind=kind)
+
+    assert result.shape == (8,)
+    assert khat.shape == (8,)
+    assert np.all(np.isfinite(result.values))
+    assert np.all(np.isfinite(khat.values))
+
+    if kind == "sd":
+        assert np.all(result.values >= 0)
+
+
+def test_loo_expectations_single_quantile(centered_eight):
+    result, khat = loo_expectations(centered_eight, kind="quantile", probs=0.5)
+
+    assert result.shape == (8,)
+    assert khat.shape == (8,)
+    assert np.all(np.isfinite(result.values))
+    assert np.all(np.isfinite(khat.values))
+
+
+def test_loo_expectations_extreme_probs(centered_eight):
+    result, khat = loo_expectations(centered_eight, kind="quantile", probs=[0.01, 0.99])
+
+    assert result.shape == (2, 8)
+    assert khat.shape == (8,)
+    assert np.all(np.isfinite(result.values))
+    assert np.all(np.isfinite(khat.values))
+
+
+def test_loo_expectations_var_computation(centered_eight):
+    result_var, khat_var = loo_expectations(centered_eight, kind="var")
+    result_sd, khat_sd = loo_expectations(centered_eight, kind="sd")
+
+    assert np.all(result_var.values >= 0)
+    assert_allclose(result_sd.values, np.sqrt(result_var.values), rtol=1e-10)
+    assert_array_equal(khat_var.values, khat_sd.values)
+
+
+@pytest.mark.filterwarnings("ignore::UserWarning")
+def test_loo_expectations_multidimensional():
+    rng = np.random.default_rng(42)
+
+    multi_dim_data = azb.from_dict(
+        {
+            "posterior": {
+                "mu": rng.normal(size=(2, 50)),
+                "coef": rng.normal(size=(2, 50, 3, 4, 2)),
+            },
+            "posterior_predictive": {"y": rng.normal(size=(2, 50, 3, 4))},
+            "log_likelihood": {"y": rng.normal(size=(2, 50, 3, 4))},
+            "observed_data": {"y": rng.normal(size=(3, 4))},
+        },
+        dims={"y": ["d1", "d2"], "coef": ["d1", "d2", "coef_dim"]},
+    )
+
+    result, khat = loo_expectations(multi_dim_data, kind="mean")
+    assert result.shape == (3, 4)
+    assert khat.shape == (3, 4)
+    assert np.all(np.isfinite(result.values))
+    assert np.all(np.isfinite(khat.values))
+
+    result, khat = loo_expectations(
+        multi_dim_data,
+        kind="mean",
+        group="posterior",
+        log_likelihood_var_name="y",
+    )
+    assert result["mu"].shape == (3, 4)
+    assert result["coef"].shape == (3, 4, 2)
+    assert np.all(np.isfinite(result["mu"].values))
+    assert np.all(np.isfinite(result["coef"].values))
+    assert np.all(np.isfinite(khat["mu"].values))
+    assert np.all(np.isfinite(khat["coef"].values))
+
+
+def test_loo_expectations_with_explicit_var_name(centered_eight):
+    result_explicit, khat_explicit = loo_expectations(centered_eight, var_name="obs", kind="mean")
+    result_auto, khat_auto = loo_expectations(centered_eight, kind="mean")
+
+    assert_array_equal(result_explicit.values, result_auto.values)
+    assert_array_equal(khat_explicit.values, khat_auto.values)
+
+
+@pytest.mark.parametrize("kind", ["mae", "mse", "rmse"])
+def test_loo_metrics(centered_eight, kind):
+    result = loo_metrics(centered_eight, kind=kind, round_to=2)
+
+    assert hasattr(result, "_fields")
+    assert hasattr(result, "mean")
+    assert hasattr(result, "se")
+    assert isinstance(result.mean, int | float | str)
+    assert isinstance(result.se, int | float | str)
+
+
+def test_loo_metrics_explicit_var_name(centered_eight):
+    result = loo_metrics(centered_eight, var_name="obs", kind="mae", round_to=2)
+
+    assert hasattr(result, "mean")
+    assert hasattr(result, "se")
+
+
+def test_loo_metrics_round_to(centered_eight):
+    result_2g = loo_metrics(centered_eight, kind="rmse", round_to=None)
+    result_3 = loo_metrics(centered_eight, kind="rmse", round_to=3)
+
+    assert hasattr(result_2g, "mean")
+    assert hasattr(result_3, "mean")
+
+
+@pytest.mark.filterwarnings("ignore:Estimated shape parameter of Pareto distribution:UserWarning")
+def test_loo_r2_summary(datatree_regression):
+    result = loo_r2(datatree_regression, var_name="y")
+    assert isinstance(result, tuple)
+    assert hasattr(result, "_fields")
+    assert "mean" in result._fields
+    assert "eti_lb" in result._fields
+    assert "eti_ub" in result._fields
+
+
+@pytest.mark.filterwarnings("ignore:Estimated shape parameter of Pareto distribution:UserWarning")
+def test_loo_r2_array(datatree_regression):
+    n_sims = 1000
+    result = loo_r2(datatree_regression, var_name="y", summary=False, n_simulations=n_sims)
+    assert isinstance(result, np.ndarray)
+    assert result.shape == (n_sims,)
+
+
+@pytest.mark.parametrize("point_estimate", ["mean", "median"])
+@pytest.mark.filterwarnings("ignore:Estimated shape parameter of Pareto distribution:UserWarning")
+def test_loo_r2_point_estimate(datatree_regression, point_estimate):
+    result = loo_r2(datatree_regression, var_name="y", summary=True, point_estimate=point_estimate)
+    assert point_estimate in result._fields
+
+
+@pytest.mark.parametrize("ci_kind", ["hdi", "eti"])
+@pytest.mark.filterwarnings("ignore:Estimated shape parameter of Pareto distribution:UserWarning")
+def test_loo_r2_ci_kind(datatree_regression, ci_kind):
+    result = loo_r2(datatree_regression, var_name="y", summary=True, ci_kind=ci_kind)
+    assert f"{ci_kind}_lb" in result._fields
+    assert f"{ci_kind}_ub" in result._fields
+
+
+@pytest.mark.parametrize("ci_prob", [0.9, 0.95])
+@pytest.mark.filterwarnings("ignore:Estimated shape parameter of Pareto distribution:UserWarning")
+def test_loo_r2_ci_prob(datatree_regression, ci_prob):
+    result = loo_r2(datatree_regression, var_name="y", summary=True, ci_prob=ci_prob)
+    assert hasattr(result, "_fields")
+
+
+@pytest.mark.parametrize("kind", ["circular_mean", "circular_var", "circular_sd"])
+def test_loo_expectations_circular(centered_eight, kind):
+    result, khat = loo_expectations(centered_eight, kind=kind)
+
+    assert result.shape == (8,)
+    assert khat.shape == (8,)
+    assert np.all(np.isfinite(result.values))
+    assert np.all(np.isfinite(khat.values))
+
+    if kind == "circular_mean":
+        assert np.all(result.values >= -np.pi)
+        assert np.all(result.values <= np.pi)
+    elif kind == "circular_var":
+        assert np.all(result.values >= 0)
+        assert np.all(result.values <= 1)
+    else:  # circular_sd
+        assert np.all(result.values >= 0)
+
+
+@pytest.mark.parametrize("kind", ["mean", "var", "sd", "median"])
+def test_loo_expectations_precomputed_weights(centered_eight, kind):
+    result_auto, _ = loo_expectations(centered_eight, kind=kind)
+
+    var_name = "obs"
+    log_likelihood = get_log_likelihood_dataset(centered_eight, var_names=var_name)
+    n_samples = log_likelihood[var_name].sizes["chain"] * log_likelihood[var_name].sizes["draw"]
+    r_eff = _get_r_eff(centered_eight, n_samples)
+
+    log_weights_computed, pareto_k_computed = log_likelihood[var_name].azstats.psislw(
+        dim=["chain", "draw"],
+        r_eff=r_eff,
+    )
+
+    result_precomputed, _ = loo_expectations(
+        centered_eight,
+        kind=kind,
+        log_weights=log_weights_computed,
+        pareto_k=pareto_k_computed,
+    )
+
+    assert_allclose(result_precomputed.values, result_auto.values, rtol=1e-10)
+
+
+def test_loo_expectations_quantile_precomputed_weights(centered_eight):
+    probs = [0.25, 0.75]
+    result_auto, _ = loo_expectations(centered_eight, kind="quantile", probs=probs)
+
+    var_name = "obs"
+    log_likelihood = get_log_likelihood_dataset(centered_eight, var_names=var_name)
+    n_samples = log_likelihood[var_name].sizes["chain"] * log_likelihood[var_name].sizes["draw"]
+    r_eff = _get_r_eff(centered_eight, n_samples)
+
+    log_weights_computed, pareto_k_computed = log_likelihood[var_name].azstats.psislw(
+        dim=["chain", "draw"],
+        r_eff=r_eff,
+    )
+
+    result_precomputed, _ = loo_expectations(
+        centered_eight,
+        kind="quantile",
+        probs=probs,
+        log_weights=log_weights_computed,
+        pareto_k=pareto_k_computed,
+    )
+
+    assert_allclose(result_precomputed.values, result_auto.values, rtol=1e-10)
