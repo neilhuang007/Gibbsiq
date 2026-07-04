@@ -133,6 +133,30 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertAlmostEqual(prob_plus, fixture["expected"]["when_neighbor_s1_is_plus_1"]["p_s0_plus_1"])
         self.assertAlmostEqual(prob_minus, fixture["expected"]["when_neighbor_s1_is_minus_1"]["p_s0_plus_1"])
 
+    def test_local_field_and_flip_delta_match_independent_recomputation(self) -> None:
+        model = compile_ising(
+            {"a": 0.2, "b": -0.4, "c": 0.7},
+            {("a", "b"): -1.5, ("a", "c"): 0.25, ("b", "c"): 0.9},
+            variables=("a", "b", "c"),
+            offset=1.25,
+        )
+        sample = {"a": 1, "b": -1, "c": 1}
+        for variable in model.variables:
+            expected_gamma = model.linear[variable]
+            for (left, right), coefficient in model.quadratic.items():
+                if left == variable:
+                    expected_gamma += coefficient * sample[right]
+                elif right == variable:
+                    expected_gamma += coefficient * sample[left]
+            flipped = dict(sample)
+            flipped[variable] = -flipped[variable]
+            self.assertAlmostEqual(model.local_field(variable, sample), expected_gamma, places=12)
+            self.assertAlmostEqual(
+                model.flip_energy_delta(variable, sample),
+                model.energy(flipped) - model.energy(sample),
+                places=12,
+            )
+
     def test_compile_bqm_accepts_duck_typed_spin_and_to_ising_objects(self) -> None:
         spin_model = compile_bqm(FakeBQM())
         converted_model = compile_bqm(FakeToIsingBQM())

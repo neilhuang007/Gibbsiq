@@ -22,8 +22,10 @@ works without the optional ``thrml`` extra, mirroring the ``dimod`` pattern.
 from __future__ import annotations
 
 import functools
+import math
+import random
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -61,6 +63,9 @@ class SamplerConfig:
     ``num_chains`` runs vmapped independent chains from one split seed; the
     result records a chain id for every sample so later diagnostics can
     compute between-chain disagreement without rerunning the sampler.
+    ``parallel_tempering_betas`` enables opt-in replica exchange. It is a
+    strictly increasing inverse-temperature ladder whose last entry must equal
+    ``beta``; returned samples come from that cold slot.
     """
 
     beta: float = 1.0
@@ -70,13 +75,21 @@ class SamplerConfig:
     seed: int = 0
     init: str = "hinton"
     warmup_beta_ladder: tuple[float, ...] | None = None
+    parallel_tempering_betas: tuple[float, ...] | None = None
+    parallel_tempering_swap_interval: int = 1
 
     def __post_init__(self) -> None:
         beta = finite_float(self.beta, name="beta")
         if beta <= 0.0:
             raise ValueError(f"beta must be positive, got {self.beta!r}")
         object.__setattr__(self, "beta", beta)
-        for name in ("n_warmup", "steps_per_sample", "num_chains", "seed"):
+        for name in (
+            "n_warmup",
+            "steps_per_sample",
+            "num_chains",
+            "seed",
+            "parallel_tempering_swap_interval",
+        ):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int):
                 raise ValueError(f"{name} must be an integer, got {value!r}")
@@ -86,6 +99,10 @@ class SamplerConfig:
             raise ValueError(f"steps_per_sample must be >= 1, got {self.steps_per_sample}")
         if self.num_chains < 1:
             raise ValueError(f"num_chains must be >= 1, got {self.num_chains}")
+        if self.parallel_tempering_swap_interval < 1:
+            raise ValueError(
+                f"parallel_tempering_swap_interval must be >= 1, got {self.parallel_tempering_swap_interval}"
+            )
         if self.init not in INIT_POLICIES:
             raise ValueError(f"init must be one of {INIT_POLICIES}, got {self.init!r}")
         if self.warmup_beta_ladder is not None:
@@ -102,6 +119,30 @@ class SamplerConfig:
                     "each ladder beta needs at least one sweep"
                 )
             object.__setattr__(self, "warmup_beta_ladder", ladder)
+        if self.parallel_tempering_betas is not None:
+            if self.warmup_beta_ladder is not None:
+                raise ValueError(
+                    "warmup_beta_ladder and parallel_tempering_betas are separate schedule modes; "
+                    "set only one of them"
+                )
+            ladder = tuple(
+                finite_float(value, name="parallel_tempering_betas entry")
+                for value in self.parallel_tempering_betas
+            )
+            if len(ladder) < 2:
+                raise ValueError("parallel_tempering_betas must contain at least two beta values")
+            if any(value <= 0.0 for value in ladder):
+                raise ValueError(f"parallel_tempering_betas entries must be positive, got {ladder!r}")
+            if any(left >= right for left, right in zip(ladder, ladder[1:])):
+                raise ValueError(
+                    f"parallel_tempering_betas must be strictly increasing from hot to cold, got {ladder!r}"
+                )
+            if ladder[-1] != beta:
+                raise ValueError(
+                    "parallel_tempering_betas must end at beta so returned samples have a fixed "
+                    f"target distribution; got beta={beta!r}, ladder={ladder!r}"
+                )
+            object.__setattr__(self, "parallel_tempering_betas", ladder)
 
     def warmup_segments(self) -> tuple[tuple[float, int], ...]:
         """Return ``(beta, sweeps)`` warmup segments; the remainder lands on the last."""
@@ -147,6 +188,10 @@ class _Lowering:
         self.free_blocks = [
             thrml.Block([node_of[variable] for variable in block]) for block in partition.blocks
         ]
+        position_of = {variable: index for index, variable in enumerate(model.variables)}
+        self.block_positions = tuple(
+            tuple(position_of[variable] for variable in block) for block in partition.blocks
+        )
         self.observed_blocks = [thrml.Block(self.nodes)]
 
     def program(self, beta: float) -> tuple[Any, Any]:
@@ -167,6 +212,15 @@ class _Lowering:
             ]
         return [self._jnp.full((size,), policy == "all_up", dtype=bool) for size in sizes]
 
+    def sample_from_state(self, state: list[Any], variables: tuple[Variable, ...]) -> dict[Variable, int]:
+        """Decode a free-block state list into model variable order."""
+        spins = [0] * len(variables)
+        for positions, block_state in zip(self.block_positions, state):
+            host_values = self._jax.device_get(block_state)
+            for position, value in zip(positions, host_values):
+                spins[position] = 1 if bool(value) else -1
+        return {variable: spins[position] for position, variable in enumerate(variables)}
+
 
 @dataclass(frozen=True, slots=True)
 class _DecodedChains:
@@ -177,6 +231,38 @@ class _DecodedChains:
     energy_trace: list[list[float]]
     best_trace: list[list[float]]
     sample_chains: list[list[dict[Variable, int]]]
+
+
+@dataclass(frozen=True, slots=True)
+class _TemperingChain:
+    """One independent parallel-tempering ladder's cold samples and swap evidence."""
+
+    samples: list[dict[Variable, int]]
+    energy_trace: list[float]
+    best_trace: list[float]
+    per_beta_energy: list[list[float]]
+    swap_trace: list[dict[str, Any]]
+    swap_attempts: int
+    swap_accepts: int
+    swap_attempts_by_pair: dict[str, int]
+    swap_accepts_by_pair: dict[str, int]
+
+
+@dataclass(frozen=True, slots=True)
+class _DecodedTempering:
+    """Merged cold-beta samples and traces from all PT ladders."""
+
+    samples: list[dict[Variable, int]]
+    chain_ids: list[int]
+    energy_trace: list[list[float]]
+    best_trace: list[list[float]]
+    sample_chains: list[list[dict[Variable, int]]]
+    per_beta_energy: list[list[list[float]]]
+    swap_trace: list[dict[str, Any]]
+    swap_attempts: int
+    swap_accepts: int
+    swap_attempts_by_pair: dict[str, int]
+    swap_accepts_by_pair: dict[str, int]
 
 
 def _decode_sample_chains(
@@ -211,6 +297,206 @@ def _decode_sample_chains(
     return _DecodedChains(samples, chain_ids, energy_trace, best_trace, sample_chains)
 
 
+def _advance_block_state(
+    *,
+    thrml: Any,
+    key: Any,
+    program: Any,
+    state: list[Any],
+    free_blocks: list[Any],
+    sweeps: int,
+) -> list[Any]:
+    """Run ``sweeps`` Gibbs sweeps and return the final free-block state."""
+    schedule = thrml.SamplingSchedule(n_warmup=sweeps - 1, n_samples=1, steps_per_sample=1)
+    observed = thrml.sample_states(key, program, schedule, state, [], free_blocks)
+    return [block_states[-1] for block_states in observed]
+
+
+def _pair_key(left_index: int, right_index: int) -> str:
+    return f"{left_index}-{right_index}"
+
+
+def _run_tempering_chain(
+    *,
+    thrml: Any,
+    jax: Any,
+    lowering: _Lowering,
+    model: IsingModel,
+    config: SamplerConfig,
+    programs: Sequence[tuple[float, Any, Any]],
+    chain_key: Any,
+    chain_index: int,
+    num_reads: int,
+) -> _TemperingChain:
+    """Run one PT ladder and return target-beta samples plus raw swap evidence."""
+    beta_ladder = [beta for beta, _, _ in programs]
+    key = chain_key
+    init_keys = jax.random.split(key, len(programs) + 1)
+    key = init_keys[-1]
+    states = [
+        lowering.initial_state(init_keys[beta_index], ebm, config.init)
+        for beta_index, (_, _, ebm) in enumerate(programs)
+    ]
+
+    if config.n_warmup:
+        for beta_index, (_, program, _) in enumerate(programs):
+            key, segment_key = jax.random.split(key)
+            states[beta_index] = _advance_block_state(
+                thrml=thrml,
+                key=segment_key,
+                program=program,
+                state=states[beta_index],
+                free_blocks=lowering.free_blocks,
+                sweeps=config.n_warmup,
+            )
+
+    energies = [model.energy(lowering.sample_from_state(state, model.variables)) for state in states]
+    swap_rng = random.Random(f"{config.seed}:pt:{chain_index}")
+    swap_attempts = 0
+    swap_accepts = 0
+    swap_attempts_by_pair: dict[str, int] = {}
+    swap_accepts_by_pair: dict[str, int] = {}
+    swap_trace: list[dict[str, Any]] = []
+    per_beta_energy: list[list[float]] = [[] for _ in programs]
+    samples: list[dict[Variable, int]] = []
+    energy_trace: list[float] = []
+    best_trace: list[float] = []
+    swap_round = 0
+
+    for read_index in range(num_reads):
+        for beta_index, (_, program, _) in enumerate(programs):
+            key, local_key = jax.random.split(key)
+            states[beta_index] = _advance_block_state(
+                thrml=thrml,
+                key=local_key,
+                program=program,
+                state=states[beta_index],
+                free_blocks=lowering.free_blocks,
+                sweeps=config.steps_per_sample,
+            )
+            energies[beta_index] = model.energy(
+                lowering.sample_from_state(states[beta_index], model.variables)
+            )
+
+        if (read_index + 1) % config.parallel_tempering_swap_interval == 0:
+            parity = swap_round % 2
+            swap_round += 1
+            for left_index in range(parity, len(programs) - 1, 2):
+                right_index = left_index + 1
+                beta_left = beta_ladder[left_index]
+                beta_right = beta_ladder[right_index]
+                energy_left = energies[left_index]
+                energy_right = energies[right_index]
+                log_acceptance = (beta_left - beta_right) * (energy_right - energy_left)
+                uniform = swap_rng.random()
+                accepted = log_acceptance >= 0.0 or math.log(uniform) < log_acceptance
+                pair = _pair_key(left_index, right_index)
+                swap_attempts += 1
+                swap_attempts_by_pair[pair] = swap_attempts_by_pair.get(pair, 0) + 1
+                if accepted:
+                    swap_accepts += 1
+                    swap_accepts_by_pair[pair] = swap_accepts_by_pair.get(pair, 0) + 1
+                    states[left_index], states[right_index] = states[right_index], states[left_index]
+                    energies[left_index], energies[right_index] = energies[right_index], energies[left_index]
+                swap_trace.append(
+                    {
+                        "chain_id": chain_index,
+                        "read_index": read_index,
+                        "left_beta_index": left_index,
+                        "right_beta_index": right_index,
+                        "left_beta": beta_left,
+                        "right_beta": beta_right,
+                        "left_energy_before": energy_left,
+                        "right_energy_before": energy_right,
+                        "log_acceptance": log_acceptance,
+                        "uniform": uniform,
+                        "accepted": accepted,
+                    }
+                )
+
+        for beta_index, energy in enumerate(energies):
+            per_beta_energy[beta_index].append(energy)
+        cold_sample = lowering.sample_from_state(states[-1], model.variables)
+        cold_energy = energies[-1]
+        samples.append(cold_sample)
+        energy_trace.append(cold_energy)
+        best_trace.append(cold_energy if not best_trace else min(best_trace[-1], cold_energy))
+
+    return _TemperingChain(
+        samples=samples,
+        energy_trace=energy_trace,
+        best_trace=best_trace,
+        per_beta_energy=per_beta_energy,
+        swap_trace=swap_trace,
+        swap_attempts=swap_attempts,
+        swap_accepts=swap_accepts,
+        swap_attempts_by_pair=swap_attempts_by_pair,
+        swap_accepts_by_pair=swap_accepts_by_pair,
+    )
+
+
+def _merge_tempering_chains(
+    chains: Sequence[_TemperingChain],
+    *,
+    num_reads: int,
+    num_chains: int,
+    beta_count: int,
+) -> _DecodedTempering:
+    samples: list[dict[Variable, int]] = []
+    chain_ids: list[int] = []
+    energy_trace: list[list[float]] = []
+    best_trace: list[list[float]] = []
+    sample_chains: list[list[dict[Variable, int]]] = []
+    per_beta_energy: list[list[list[float]]] = []
+    swap_trace: list[dict[str, Any]] = []
+    swap_attempts = 0
+    swap_accepts = 0
+    swap_attempts_by_pair: dict[str, int] = {}
+    swap_accepts_by_pair: dict[str, int] = {}
+
+    for chain_index in range(num_chains):
+        if chain_index >= len(chains):
+            energy_trace.append([])
+            best_trace.append([])
+            sample_chains.append([])
+            per_beta_energy.append([[] for _ in range(beta_count)])
+            continue
+        chain = chains[chain_index]
+        remaining = num_reads - len(samples)
+        take = max(0, min(remaining, len(chain.samples)))
+        samples.extend(chain.samples[:take])
+        chain_ids.extend([chain_index] * take)
+        energy_trace.append(chain.energy_trace[:take])
+        best_trace.append(chain.best_trace[:take])
+        sample_chains.append(chain.samples[:take])
+        per_beta_energy.append([row[:take] for row in chain.per_beta_energy])
+        swap_trace.extend(event for event in chain.swap_trace if event["read_index"] < take)
+        swap_attempts += sum(1 for event in chain.swap_trace if event["read_index"] < take)
+        swap_accepts += sum(
+            1 for event in chain.swap_trace if event["read_index"] < take and event["accepted"]
+        )
+        for event in chain.swap_trace:
+            if event["read_index"] >= take:
+                continue
+            pair = _pair_key(event["left_beta_index"], event["right_beta_index"])
+            swap_attempts_by_pair[pair] = swap_attempts_by_pair.get(pair, 0) + 1
+            if event["accepted"]:
+                swap_accepts_by_pair[pair] = swap_accepts_by_pair.get(pair, 0) + 1
+    return _DecodedTempering(
+        samples=samples,
+        chain_ids=chain_ids,
+        energy_trace=energy_trace,
+        best_trace=best_trace,
+        sample_chains=sample_chains,
+        per_beta_energy=per_beta_energy,
+        swap_trace=swap_trace,
+        swap_attempts=swap_attempts,
+        swap_accepts=swap_accepts,
+        swap_attempts_by_pair=swap_attempts_by_pair,
+        swap_accepts_by_pair=swap_accepts_by_pair,
+    )
+
+
 def _build_metadata(
     config: SamplerConfig,
     model: IsingModel,
@@ -234,6 +520,11 @@ def _build_metadata(
         "seed": config.seed,
         "beta": config.beta,
         "warmup_beta_ladder": None if config.warmup_beta_ladder is None else list(config.warmup_beta_ladder),
+        "parallel_tempering_enabled": config.parallel_tempering_betas is not None,
+        "parallel_tempering_betas": (
+            None if config.parallel_tempering_betas is None else list(config.parallel_tempering_betas)
+        ),
+        "parallel_tempering_swap_interval": config.parallel_tempering_swap_interval,
         "n_warmup": config.n_warmup,
         "steps_per_sample": config.steps_per_sample,
         "num_chains": config.num_chains,
@@ -274,6 +565,144 @@ class THRMLSampler:
         """Compile Ising fields through ``compile_ising`` and sample them."""
         return self.sample(compile_ising(h, J, **compile_kwargs), num_reads=num_reads)
 
+    def _sample_parallel_tempering(
+        self,
+        model: IsingModel,
+        *,
+        num_reads: int,
+        partition: BlockPartition,
+        lowering: _Lowering,
+        lower_started: float,
+    ) -> SampleResult:
+        """Run opt-in replica exchange and return cold-beta samples."""
+        jax, _, thrml, _ = _require_thrml()
+        config = self.config
+        assert config.parallel_tempering_betas is not None
+        programs = []
+        for beta in config.parallel_tempering_betas:
+            ebm, program = lowering.program(beta)
+            programs.append((beta, program, ebm))
+        reads_per_chain = -(-num_reads // config.num_chains)
+        lower_seconds = time.perf_counter() - lower_started
+
+        sample_started = time.perf_counter()
+        root_key = jax.random.key(config.seed)
+        chain_keys = jax.random.split(root_key, config.num_chains)
+        chains: list[_TemperingChain] = []
+        for chain_index in range(config.num_chains):
+            remaining = num_reads - chain_index * reads_per_chain
+            chain_reads = max(0, min(reads_per_chain, remaining))
+            if chain_reads <= 0:
+                break
+            chains.append(
+                _run_tempering_chain(
+                    thrml=thrml,
+                    jax=jax,
+                    lowering=lowering,
+                    model=model,
+                    config=config,
+                    programs=programs,
+                    chain_key=chain_keys[chain_index],
+                    chain_index=chain_index,
+                    num_reads=chain_reads,
+                )
+            )
+        decoded = _merge_tempering_chains(
+            chains,
+            num_reads=num_reads,
+            num_chains=config.num_chains,
+            beta_count=len(programs),
+        )
+        sample_seconds = time.perf_counter() - sample_started
+
+        diagnostics_started = time.perf_counter()
+        flat_energies = [energy for chain in decoded.energy_trace for energy in chain]
+        best_sample = decoded.samples[best_index(flat_energies)]
+        beta_schedule = [
+            {
+                "phase": "warmup",
+                "mode": "parallel_tempering",
+                "beta_ladder": list(config.parallel_tempering_betas),
+                "sweeps_per_beta": config.n_warmup,
+            },
+            {
+                "phase": "sampling",
+                "mode": "parallel_tempering",
+                "target_beta": config.beta,
+                "beta_ladder": list(config.parallel_tempering_betas),
+                "n_samples": reads_per_chain,
+                "steps_per_sample": config.steps_per_sample,
+                "swap_interval": config.parallel_tempering_swap_interval,
+            },
+        ]
+        magnetization_chains = magnetization_trace(decoded.sample_chains, model.variables)
+        distance_chains = distance_to_best_trace(decoded.sample_chains, best_sample, model.variables)
+        traces: dict[str, Any] = {
+            "energy": decoded.energy_trace,
+            "best_energy_so_far": decoded.best_trace,
+            "sample_chain_ids": decoded.chain_ids,
+            "beta_schedule": beta_schedule,
+            "magnetization": magnetization_chains,
+            "distance_to_best": distance_chains,
+            "parallel_tempering": {
+                "beta_ladder": list(config.parallel_tempering_betas),
+                "target_beta_index": len(config.parallel_tempering_betas) - 1,
+                "per_beta_energy": decoded.per_beta_energy,
+                "swap_trace": decoded.swap_trace,
+                "swap_attempts": decoded.swap_attempts,
+                "swap_accepts": decoded.swap_accepts,
+                "swap_acceptance_rate": (
+                    decoded.swap_accepts / decoded.swap_attempts if decoded.swap_attempts else None
+                ),
+                "swap_attempts_by_pair": decoded.swap_attempts_by_pair,
+                "swap_accepts_by_pair": decoded.swap_accepts_by_pair,
+            },
+        }
+
+        device = jax.devices()[0]
+        metadata = _build_metadata(
+            config,
+            model,
+            partition,
+            thrml,
+            jax,
+            device,
+            num_reads=num_reads,
+            reads_per_chain=reads_per_chain,
+            lower_seconds=lower_seconds,
+            sample_seconds=sample_seconds,
+        )
+        metadata.update(
+            {
+                "parallel_tempering_swap_attempts": decoded.swap_attempts,
+                "parallel_tempering_swap_accepts": decoded.swap_accepts,
+                "parallel_tempering_swap_acceptance_rate": (
+                    decoded.swap_accepts / decoded.swap_attempts if decoded.swap_attempts else None
+                ),
+                "parallel_tempering_swap_rng": "python.random.Random(seed='seed:pt:chain_id')",
+            }
+        )
+
+        diagnostics = compute_diagnostics(
+            energy_chains=decoded.energy_trace,
+            samples=decoded.samples,
+            variables=model.variables,
+            magnetization_chains=magnetization_chains,
+            timings={
+                "lower_seconds": lower_seconds,
+                "sample_seconds": sample_seconds,
+                "device_platform": device.platform,
+                "device_kind": device.device_kind,
+            },
+        )
+        diagnostics_seconds = time.perf_counter() - diagnostics_started
+        diagnostics["runtime"]["diagnostics_seconds"] = diagnostics_seconds
+        metadata["diagnostics_seconds"] = diagnostics_seconds
+
+        return SampleResult.from_model(
+            model, decoded.samples, traces=traces, diagnostics=diagnostics, metadata=metadata
+        )
+
     def sample(
         self,
         model: IsingModel,
@@ -301,6 +730,15 @@ class THRMLSampler:
             partition = color_blocks(model)
         validate_partition(model, partition)
         lowering = _Lowering(model, partition)
+
+        if config.parallel_tempering_betas is not None:
+            return self._sample_parallel_tempering(
+                model,
+                num_reads=num_reads,
+                partition=partition,
+                lowering=lowering,
+                lower_started=lower_started,
+            )
 
         segments = config.warmup_segments()
         sampling_ebm, sampling_program = lowering.program(config.beta)

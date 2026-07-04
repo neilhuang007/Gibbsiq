@@ -49,22 +49,47 @@ def sample_to_spin(
     sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
 ) -> dict[Variable, int]:
     """Validate a sample and return spin values keyed by model variable."""
+    normalized = normalize_vartype(vartype)
     spins: dict[Variable, int] = {}
     for variable in variables:
         if variable not in sample:
             raise ValueError(f"sample is missing variable {variable!r}")
         value = sample[variable]
-        if vartype == "SPIN":
+        if normalized == "SPIN":
             if value not in (-1, 1):
                 raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
             spins[variable] = int(value)
-        elif vartype == "BINARY":
+        elif normalized == "BINARY":
             if value not in (0, 1):
                 raise ValueError(f"binary value for {variable!r} must be 0 or 1, got {value!r}")
             spins[variable] = 2 * int(value) - 1
         else:
             raise ValueError(f"cannot convert {vartype!r} samples to spins; expected SPIN or BINARY")
     return spins
+
+
+def sample_to_spin_values(
+    sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
+) -> tuple[int, ...]:
+    """Validate a sample and return spin values aligned with ``variables``."""
+    normalized = normalize_vartype(vartype)
+    values: list[int] = []
+    for variable in variables:
+        try:
+            value = sample[variable]
+        except KeyError as error:
+            raise ValueError(f"sample is missing variable {variable!r}") from error
+        if normalized == "SPIN":
+            if value != -1 and value != 1:
+                raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
+            values.append(1 if value == 1 else -1)
+        elif normalized == "BINARY":
+            if value != 0 and value != 1:
+                raise ValueError(f"binary value for {variable!r} must be 0 or 1, got {value!r}")
+            values.append(1 if value == 1 else -1)
+        else:
+            raise ValueError(f"cannot convert {vartype!r} samples to spins; expected SPIN or BINARY")
+    return tuple(values)
 
 
 def spin_to_binary(
@@ -96,6 +121,12 @@ class IsingModel:
     source_format: str = "ising"
     variable_order: tuple[Variable, ...] | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    _variable_index: Mapping[Variable, int] = field(init=False, repr=False, compare=False)
+    _linear_values: tuple[float, ...] | None = field(init=False, repr=False, compare=False)
+    _quadratic_edges: tuple[tuple[int, int, float], ...] | None = field(init=False, repr=False, compare=False)
+    _neighbors: tuple[tuple[tuple[int, float], ...], ...] | None = field(
+        init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         variables = tuple(self.variables)
@@ -140,6 +171,44 @@ class IsingModel:
         object.__setattr__(self, "offset", finite_float(self.offset, name="offset"))
         object.__setattr__(self, "variable_order", variables)
         object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(self, "_variable_index", index)
+        object.__setattr__(self, "_linear_values", None)
+        object.__setattr__(self, "_quadratic_edges", None)
+        object.__setattr__(self, "_neighbors", None)
+
+    def _linear_cache(self) -> tuple[float, ...]:
+        """Return lazily ordered linear coefficients for indexed calculations."""
+        cached = self._linear_values
+        if cached is not None:
+            return cached
+        cached = tuple(self.linear[variable] for variable in self.variables)
+        object.__setattr__(self, "_linear_values", cached)
+        return cached
+
+    def _edge_cache(self) -> tuple[tuple[int, int, float], ...]:
+        """Return lazily indexed quadratic terms for repeated energy calls."""
+        cached = self._quadratic_edges
+        if cached is not None:
+            return cached
+        cached = tuple(
+            (self._variable_index[left], self._variable_index[right], coefficient)
+            for (left, right), coefficient in self.quadratic.items()
+        )
+        object.__setattr__(self, "_quadratic_edges", cached)
+        return cached
+
+    def _neighbor_cache(self) -> tuple[tuple[tuple[int, float], ...], ...]:
+        """Return the lazily built adjacency cache for degree-local calculations."""
+        cached = self._neighbors
+        if cached is not None:
+            return cached
+        neighbors: list[list[tuple[int, float]]] = [[] for _ in self.variables]
+        for left_index, right_index, coefficient in self._edge_cache():
+            neighbors[left_index].append((right_index, coefficient))
+            neighbors[right_index].append((left_index, coefficient))
+        cached = tuple(tuple(row) for row in neighbors)
+        object.__setattr__(self, "_neighbors", cached)
+        return cached
 
     @property
     def graph(self) -> tuple[tuple[Variable, Variable], ...]:
@@ -148,28 +217,41 @@ class IsingModel:
 
     def energy(self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN") -> float:
         """Evaluate the model energy for a spin or binary assignment."""
-        spins = sample_to_spin(sample, self.variables, normalize_vartype(vartype))
+        spins = sample_to_spin_values(sample, self.variables, vartype)
         energy = self.offset
-        for variable, coefficient in self.linear.items():
-            energy += coefficient * spins[variable]
-        for (left, right), coefficient in self.quadratic.items():
-            energy += coefficient * spins[left] * spins[right]
+        for position, coefficient in enumerate(self._linear_cache()):
+            energy += coefficient * spins[position]
+        for left_index, right_index, coefficient in self._edge_cache():
+            energy += coefficient * spins[left_index] * spins[right_index]
         return energy
 
     def local_field(
         self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
     ) -> float:
         """Return ``gamma_i = h_i + sum_j J_ij s_j`` for one variable."""
-        if variable not in self.variables:
-            raise ValueError(f"unknown variable {variable!r}")
-        spins = sample_to_spin(sample, self.variables, normalize_vartype(vartype))
-        gamma = self.linear[variable]
-        for (left, right), coefficient in self.quadratic.items():
-            if left == variable:
-                gamma += coefficient * spins[right]
-            elif right == variable:
-                gamma += coefficient * spins[left]
+        try:
+            position = self._variable_index[variable]
+        except KeyError as error:
+            raise ValueError(f"unknown variable {variable!r}") from error
+        spins = sample_to_spin_values(sample, self.variables, vartype)
+        gamma = self._linear_cache()[position]
+        for neighbor_index, coefficient in self._neighbor_cache()[position]:
+            gamma += coefficient * spins[neighbor_index]
         return gamma
+
+    def flip_energy_delta(
+        self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
+    ) -> float:
+        """Return ``E(s with variable flipped) - E(s)`` using the cached local field."""
+        try:
+            position = self._variable_index[variable]
+        except KeyError as error:
+            raise ValueError(f"unknown variable {variable!r}") from error
+        spins = sample_to_spin_values(sample, self.variables, vartype)
+        gamma = self._linear_cache()[position]
+        for neighbor_index, coefficient in self._neighbor_cache()[position]:
+            gamma += coefficient * spins[neighbor_index]
+        return -2.0 * spins[position] * gamma
 
     def conditional_probability(
         self,
