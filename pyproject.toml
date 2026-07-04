@@ -91,3 +91,15 @@ mypy_path = "src"
 python_version = "3.10"
 strict_equality = true
 warn_unused_configs = true
+
+# Do not follow mypy into the optional THRML backend. thrml pulls in the whole
+# jax/numpy scientific stack, and a fresh CI ``pip install`` resolves those to
+# their latest releases; numpy 2.5.x ships PEP 695 ``type`` statements in its
+# stubs, which mypy rejects under ``python_version = 3.10`` (a parse error that
+# follow_imports=skip on numpy itself cannot suppress once the stub is reached).
+# gibbsiq guards thrml as an optional Any-typed backend, so cutting the follow at
+# the thrml boundary keeps the 3.10 target for our own code while making the
+# type-check reproducible against dependency drift.
+[[tool.mypy.overrides]]
+module = ["thrml", "thrml.*"]
+follow_imports = "skip"
