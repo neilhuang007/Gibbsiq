@@ -15,7 +15,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from gibbsiq import BlockPartition, color_blocks, compile_ising, graph_density, validate_partition  # noqa: E402
+from gibbsiq import (  # noqa: E402
+    BlockPartition,
+    color_blocks,
+    compile_ising,
+    graph_density,
+    validate_partition,
+)
 
 SEEDS = (3, 17, 91)
 
@@ -80,6 +86,19 @@ class ColoringStructureTests(unittest.TestCase):
         self.assertEqual(partition.num_blocks, 2)
         validate_partition(model, partition)
 
+    def test_grid_graph_uses_two_blocks(self) -> None:
+        variables = tuple((row, column) for row in range(4) for column in range(5))
+        edges = {}
+        for row, column in variables:
+            if row + 1 < 4:
+                edges[((row, column), (row + 1, column))] = 1.0
+            if column + 1 < 5:
+                edges[((row, column), (row, column + 1))] = 1.0
+        model = compile_ising({variable: 0.0 for variable in variables}, edges, variables=variables)
+        partition = color_blocks(model)
+        self.assertEqual(partition.num_blocks, 2)
+        validate_partition(model, partition)
+
 
 class DsaturEdgeCaseTests(unittest.TestCase):
     """Canonical coloring instances from the graph-coloring literature."""
@@ -119,6 +138,14 @@ class DsaturEdgeCaseTests(unittest.TestCase):
         partition = color_blocks(model)
         self.assertEqual(partition.num_blocks, 2)
         validate_partition(model, partition)
+
+    def test_coefficients_do_not_change_topology_partition(self) -> None:
+        variables = tuple(range(6))
+        edges = {(i, (i + 1) % 6): 1.0 for i in variables}
+        scaled_edges = {edge: -7.5 for edge in edges}
+        base = compile_ising({variable: 0.0 for variable in variables}, edges)
+        scaled = compile_ising({variable: 3.0 for variable in variables}, scaled_edges)
+        self.assertEqual(color_blocks(base), color_blocks(scaled))
 
 
 class ValidatePartitionTests(unittest.TestCase):
