@@ -166,6 +166,74 @@ This rerun supersedes the contended artifact for performance interpretation. The
 diagnostics, oracle, and ground-truth timings return near the baseline range, while the
 targeted cached paths improve: `energy()` by `25.3%` and `local_field()` by `56.3%`.
 
+## Git-Isolated Rerun After Commit
+
+The user asked to commit the implementation and then use git version control to rerun both
+the baseline and current implementations. The implementation commit is
+`41572d38390332aa9ab197cea1721fdcb84c228d` (`Add parallel tempering and cached Ising
+evaluation`). The comparison used two detached worktrees:
+
+- Baseline worktree: `E:\projects\Gibbsiq_git_baseline_844e53b` at
+  `844e53b96b0f310b1faa5f3ff3ac98043942ad07`.
+- Current worktree: `E:\projects\Gibbsiq_git_current_41572d3` at
+  `41572d38390332aa9ab197cea1721fdcb84c228d`.
+
+One attempted second baseline run wrote output inside the baseline worktree after the first
+run had already left an untracked artifact there. The harness correctly recorded
+`dirty_at_start=true`, so that artifact is retained but rejected for the comparison:
+
+- Rejected path:
+  `reference/06-benchmarks/artifacts/performance-git-baseline-844e53b-run2-dirty.json`.
+- SHA-256: `4259cd00210ff79116c451e7c61fc4e86aa4da46b2d1508634701aee3b06a6b4`.
+
+The accepted rerun wrote output directly into the main worktree artifact directory while
+executing from clean detached worktrees. All four accepted artifacts recorded
+`dirty_at_start=false`:
+
+```powershell
+py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-baseline-844e53b-run1.json
+py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-current-41572d3-run1.json
+py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-baseline-844e53b-run2.json
+py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-current-41572d3-run2.json
+```
+
+Artifacts:
+
+| Artifact | Commit | Dirty | SHA-256 |
+| --- | --- | --- | --- |
+| `performance-git-baseline-844e53b-run1.json` | `844e53b96b0f310b1faa5f3ff3ac98043942ad07` | `false` | `c5d545964397629fd3564645a8c1fa4c3385fc45a2b99be8547f009746dc402d` |
+| `performance-git-current-41572d3-run1.json` | `41572d38390332aa9ab197cea1721fdcb84c228d` | `false` | `2709c90da0ee0cf288893cfe2886869078bbfe13d05d49a1a2b8e023c77299d8` |
+| `performance-git-baseline-844e53b-run2.json` | `844e53b96b0f310b1faa5f3ff3ac98043942ad07` | `false` | `4ce4da71701f968b65a80c92f001fb673e8315bc2587ef24952b731da1cb0658` |
+| `performance-git-current-41572d3-run2.json` | `41572d38390332aa9ab197cea1721fdcb84c228d` | `false` | `f651569266fe9de0de2e5360fbfecba0dbabc5affd6dcbb7db4b49158830c133` |
+
+Targeted median comparison:
+
+| Pair | Calculation | Baseline seconds | Current seconds | Change | Speedup |
+| --- | --- | ---: | ---: | ---: | ---: |
+| run 1 | `energy()` over `2000` samples | `0.147859200` | `0.118869800` | `-19.6%` | `1.24x` |
+| run 1 | `local_field()` over `2000` queries | `0.091168700` | `0.039559200` | `-56.6%` | `2.30x` |
+| run 2 | `energy()` over `2000` samples | `0.152805500` | `0.118959400` | `-22.1%` | `1.28x` |
+| run 2 | `local_field()` over `2000` queries | `0.091426000` | `0.040673500` | `-55.5%` | `2.25x` |
+
+Mean of the two per-run medians:
+
+| Calculation | Baseline seconds | Current seconds | Change | Speedup |
+| --- | ---: | ---: | ---: | ---: |
+| `energy()` over `2000` samples | `0.150332350` | `0.118914600` | `-20.9%` | `1.26x` |
+| `local_field()` over `2000` queries | `0.091297350` | `0.040116350` | `-56.1%` | `2.28x` |
+
+The same accepted artifacts show no broad regression in adjacent metrics. Across the two
+pairs, `compile_ising`, `compile_qubo`, block-coloring cold/cache, diagnostics, benchmark
+oracle, and ground-truth generation moved in mixed directions within about `6.5%` of the
+matching baseline run. A post-run one-second CPU delta sample found no dominant competing
+workload; the largest deltas were `claude` at `0.28` CPU seconds, `jetbrainsd` at `0.17`,
+`pycharm64` at `0.17`, and `obs64` at `0.16`.
+
+Interpretation: the git-isolated rerun confirms the cache improvement for the targeted
+pure-Python paths. The effect is smaller for `energy()` than the earlier clean rerun
+(`20.9%` vs. `25.3%`), but still consistent across both accepted pairs. The `local_field()`
+improvement remains stable at about `56%`.
+
 ## Verification
 
 - Syntax check:
@@ -180,6 +248,11 @@ targeted cached paths improve: `energy()` by `25.3%` and `local_field()` by `56.
   `py -3 tools/benchmark_performance_baseline.py --repeat 7 --out reference/06-benchmarks/artifacts/performance-after-pt-cache-2026-07-04.json`.
 - Clean rerun command:
   `py -3 tools/benchmark_performance_baseline.py --repeat 7 --out reference/06-benchmarks/artifacts/performance-after-pt-cache-2026-07-04-rerun.json`.
+- Git-isolated rerun commands:
+  `py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-baseline-844e53b-run1.json`;
+  `py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-current-41572d3-run1.json`;
+  `py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-baseline-844e53b-run2.json`;
+  `py -3 tools/benchmark_performance_baseline.py --repeat 7 --out E:\projects\Gibbsiq\reference\06-benchmarks\artifacts\performance-git-current-41572d3-run2.json`.
 - Markdown math check:
   `py -3 tools/check_markdown_math.py`; result: pass.
 - Whitespace check:
