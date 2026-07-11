@@ -224,16 +224,12 @@ class RuntimeBackendContractTests(unittest.TestCase):
         # Use an exact central binomial acceptance interval, not a normal
         # approximation. Each tail is at most 5e-5 under the analytic target.
         probabilities = [
-            math.comb(num_reads, count)
-            * exact_up**count
-            * (1.0 - exact_up) ** (num_reads - count)
+            math.comb(num_reads, count) * exact_up**count * (1.0 - exact_up) ** (num_reads - count)
             for count in range(num_reads + 1)
         ]
         tail_probability = 5e-5
         lower_count = max(
-            count
-            for count in range(num_reads + 1)
-            if math.fsum(probabilities[:count]) <= tail_probability
+            count for count in range(num_reads + 1) if math.fsum(probabilities[:count]) <= tail_probability
         )
         upper_count = next(
             count
