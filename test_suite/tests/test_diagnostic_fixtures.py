@@ -48,7 +48,7 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
     def setUp(self) -> None:
         self.fixtures = load_diagnostics()
 
-    def test_mode_collapse_metrics_from_counts(self) -> None:
+    def test_concentrated_sample_metrics_from_counts(self) -> None:
         fixture = self.fixtures["mode_collapse_counts_n4_reads128"]
         sample_counts = fixture["input"]["sample_counts"]
         expected = fixture["expected"]
@@ -87,8 +87,8 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
             expected["normalized_mean_pairwise_hamming_distance"],
             places=12,
         )
-        self.assertEqual(expected["required_flags"], ["mode_collapse"])
-        self.assertEqual(expected["observations"], [])
+        self.assertEqual(expected["required_flags"], [])
+        self.assertEqual(expected["observations"], ["high_sample_concentration"])
 
     def test_constant_energy_trace_stats(self) -> None:
         fixture = self.fixtures["constant_energy_trace"]

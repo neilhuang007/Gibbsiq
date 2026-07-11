@@ -168,8 +168,8 @@ The intended product is five layers (see `spec.md` and `reference/00-roadmap/`):
    block construction, and trace hooks.
 3. **Diagnostics and telemetry** — energy & best-so-far traces, autocorrelation, ESS-style
    estimate, R-hat-style chain disagreement, diversity (unique fraction, top-k mass, entropy,
-   Hamming), feasibility, and failure flags (`mode_collapse`, `chain_disagreement`,
-   `no_recent_improvement`, etc.).
+   Hamming), feasibility, failure flags (`chain_disagreement`, `poor_mixing`, etc.), and
+   non-failure observations (`high_sample_concentration`, `no_recent_improvement`, etc.).
 4. **Inspector** — `Inspector.from_result(result).show()` produces topology/trace/diagnostic
    reports, best-state tables, and baseline comparisons.
 5. **Benchmarks** — exact/bruteforce validator plus simulated annealing (neal/dimod), OpenJij,

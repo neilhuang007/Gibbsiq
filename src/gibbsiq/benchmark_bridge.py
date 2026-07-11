@@ -1,32 +1,19 @@
 """Bridge from sampler results to strict benchmark-oracle candidates.
 
-This module closes the loop between the THRML runtime and the ground-truth
-benchmark corpus (``reference/06-benchmarks/fixtures/ground-truth-small.json``):
-it lowers a benchmark fixture into the canonical :class:`IsingModel`, converts a
-:class:`SampleResult` into the candidate shape the oracle scores, and verifies
-the candidate under the *optimization claim* criterion.
+Lowers a fixture's ``input`` block into :class:`IsingModel`, builds an oracle
+candidate from a :class:`SampleResult`, and scores it under the
+optimization-claim criterion.
 
-Anti-cheat contract (the reason this module exists):
+Echo-proofing: reads only ``input``, never ``expected``. Witnesses are the
+sampler's best states, recomputed from the input model by the oracle's
+family verifiers (:data:`gibbsiq.benchmark_oracle.FAMILY_SPECS`), so a
+fabricated witness cannot pass. Enumeration-only quantities (ground-state
+degeneracy, optimal-selection counts) may be omitted -- sampling cannot prove
+completeness -- but are checked if volunteered.
 
-1. :func:`compile_fixture` and :func:`candidate_from_result` read **only** the
-   fixture's ``input`` block -- never ``expected`` -- so a candidate cannot echo
-   proven values it did not compute. Both functions accept fixtures whose
-   ``expected`` block has been removed entirely.
-2. Witnesses are the sampler's own best states. The oracle's family verifiers
-   (:data:`gibbsiq.benchmark_oracle.FAMILY_SPECS`) recompute each witness's
-   objective from the input model, so a fabricated witness cannot pass.
-3. :func:`verify_optimum_claim` checks every scalar a sampler can honestly
-   claim against the proven value. Enumeration-only quantities (ground-state
-   degeneracy, optimal-selection counts) may be omitted -- sampling cannot
-   prove completeness of the optimum set -- but if a candidate volunteers one,
-   it is held to the proven value. The full-characterization criterion
-   (:func:`gibbsiq.benchmark_oracle.verify_benchmark_fixture`) stays unchanged
-   and still requires them.
-
-``knapsack`` and ``tsp`` fixtures are deliberately unsupported: their Ising
-encodings need a penalty-weight / one-hot layer (Lucas 2014, secs. 5.2 and 7.2)
-that Gibbsiq does not lower yet. :func:`compile_fixture` raises
-``NotImplementedError`` for them rather than lowering something unfaithful.
+``knapsack``/``tsp`` need a penalty/one-hot encoding layer (Lucas 2014 secs.
+5.2, 7.2) not yet implemented; :func:`compile_fixture` raises
+``NotImplementedError`` for them.
 """
 
 from __future__ import annotations
@@ -38,18 +25,17 @@ from gibbsiq.conversions import compile_ising
 from gibbsiq.model import IsingModel
 from gibbsiq.result import SampleResult
 
-# Proven quantities a sampler cannot honestly claim: they require exhaustive
-# enumeration of the optimum set, which sampling can only lower-bound.
+# Require exhaustive enumeration of the optimum set; sampling only lower-bounds these.
 ENUMERATION_ONLY_KEYS = frozenset({"ground_state_degeneracy", "num_optimal_selections", "num_optimal_tours"})
 MAX_WITNESSES = 8
 SUPPORTED_FAMILIES = ("maxcut", "number_partition", "sk_spin_glass")
 
 
 def compile_fixture(fixture: dict[str, Any]) -> IsingModel:
-    """Lower a benchmark fixture's ``input`` block into the canonical Ising IR.
+    """Lower a fixture's ``input`` block into the canonical Ising IR.
 
-    Reads only ``fixture["input"]`` (and ``id``/``family`` for metadata), so the
-    lowered model carries no information about the proven optimum.
+    Reads only ``input`` (and ``id``/``family`` for metadata) -- never the
+    proven optimum.
     """
     family = fixture.get("family")
     model_input = fixture["input"]
@@ -100,8 +86,8 @@ def optimal_spin_witnesses(
 ) -> list[dict[str, int]]:
     """Distinct best-energy samples from a result, capped at ``MAX_WITNESSES``.
 
-    Witness states are keyed by string variable name to match the fixture
-    witness schema; first-seen sample order is preserved.
+    Keyed by string variable name to match the fixture witness schema;
+    first-seen order preserved.
     """
     assert result.interaction_energies is not None
     best_interaction_energy = min(result.interaction_energies)
@@ -121,10 +107,10 @@ def optimal_spin_witnesses(
 
 
 def candidate_from_result(fixture: dict[str, Any], result: SampleResult) -> dict[str, Any]:
-    """Build the oracle candidate for one fixture from a sampler result.
+    """Build the oracle candidate from a sampler result.
 
-    Reads only ``fixture["input"]``; every reported quantity is recomputed from
-    the result's samples under the canonical energy convention.
+    Reads only ``input``; every quantity is recomputed from the result's
+    samples under the canonical energy convention.
     """
     family = fixture.get("family")
     model_input = fixture["input"]
@@ -176,13 +162,11 @@ def _partition_witness(numbers: list[int], witness: dict[str, int]) -> dict[str,
 def verify_optimum_claim(
     fixture: dict[str, Any], actual: Any, tolerance: float = DEFAULT_TOLERANCE
 ) -> list[dict[str, Any]]:
-    """Score a sampler candidate under the optimization-claim criterion.
+    """Score a candidate under the optimization-claim criterion.
 
-    Identical to :func:`gibbsiq.benchmark_oracle.verify_benchmark_fixture`
-    except that enumeration-only scalar keys may be omitted (they are still
-    checked when the candidate volunteers them). Witness re-verification is
-    mandatory and uses the same family verifiers, so every witness objective is
-    recomputed from the input model. Returns a list of difference dicts
-    (empty == pass).
+    Like :func:`gibbsiq.benchmark_oracle.verify_benchmark_fixture` but
+    enumeration-only keys may be omitted (checked if volunteered). Witness
+    verification is mandatory and recomputes each objective from the input
+    model. Returns a list of difference dicts (empty == pass).
     """
     return score_candidate(fixture, actual, tolerance, optional_keys=ENUMERATION_ONLY_KEYS)

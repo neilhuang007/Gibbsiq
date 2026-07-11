@@ -1,7 +1,7 @@
-"""Core model containers for Gibbsiq.
+"""Ising model IR: variables, linear/quadratic terms, offset.
 
-The public model IR is intentionally small: every accepted input is normalized
-to the project Ising convention before any sampler or diagnostic layer sees it.
+Convention: E(s)=offset+sum h_i s_i+sum_{i<j} J_ij s_i s_j, s_i in {-1,+1}.
+All inputs normalize to this form before sampling/diagnostics.
 """
 
 from __future__ import annotations
@@ -20,18 +20,18 @@ Vartype: TypeAlias = Literal["SPIN", "BINARY"]
 
 
 def variable_sort_key(variable: Variable) -> tuple[str, str, str]:
-    """Return a deterministic key that can sort mixed Python label types."""
+    """Deterministic sort key for mixed-type variable labels."""
     cls = type(variable)
     return (cls.__module__, cls.__qualname__, repr(variable))
 
 
 def variable_index(variables: Sequence[Variable]) -> dict[Variable, int]:
-    """Map each variable to its position in ``variables`` (canonical-order lookup)."""
+    """Maps variable -> index in canonical order."""
     return {variable: position for position, variable in enumerate(variables)}
 
 
 def normalize_vartype(vartype: Any) -> Vartype:
-    """Normalize string or dimod-style vartype values to a simple literal."""
+    """Normalizes string/dimod vartype to "SPIN"/"BINARY"."""
     name = getattr(vartype, "name", vartype)
     if isinstance(name, str):
         upper = name.upper()
@@ -41,7 +41,7 @@ def normalize_vartype(vartype: Any) -> Vartype:
 
 
 def finite_float(value: Any, *, name: str) -> float:
-    """Coerce a numeric value and reject NaN or infinite coefficients."""
+    """Casts to float; rejects NaN/inf."""
     coerced = float(value)
     if not math.isfinite(coerced):
         raise ValueError(f"{name} must be finite, got {value!r}")
@@ -49,7 +49,7 @@ def finite_float(value: Any, *, name: str) -> float:
 
 
 def finite_sum(values: Sequence[float], *, name: str) -> float:
-    """Accurately sum finite terms and normalize overflow to ``ValueError``."""
+    """Exact sum via math.fsum; overflow raises ValueError."""
     try:
         total = math.fsum(values)
     except OverflowError as error:
@@ -60,7 +60,7 @@ def finite_sum(values: Sequence[float], *, name: str) -> float:
 def sample_to_spin(
     sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
 ) -> dict[Variable, int]:
-    """Validate a sample and return spin values keyed by model variable."""
+    """Validates sample; returns spins keyed by variable."""
     normalized = normalize_vartype(vartype)
     spins: dict[Variable, int] = {}
     for variable in variables:
@@ -85,7 +85,7 @@ def sample_to_spin(
 def sample_to_spin_values(
     sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
 ) -> tuple[int, ...]:
-    """Validate a sample and return spin values aligned with ``variables``."""
+    """Validates sample; returns spins as tuple aligned to variables."""
     normalized = normalize_vartype(vartype)
     values: list[int] = []
     for variable in variables:
@@ -111,7 +111,7 @@ def sample_to_spin_values(
 def spin_to_binary(
     sample: Mapping[Variable, int], variables: tuple[Variable, ...] | None = None
 ) -> dict[Variable, int]:
-    """Convert a spin sample over ``{-1,+1}`` into a binary sample over ``{0,1}``."""
+    """Spin {-1,+1} -> binary {0,1}."""
     ordered_variables = tuple(sample) if variables is None else variables
     spins = sample_to_spin(sample, ordered_variables, "SPIN")
     return {variable: (spins[variable] + 1) // 2 for variable in ordered_variables}
@@ -120,14 +120,14 @@ def spin_to_binary(
 def binary_to_spin(
     sample: Mapping[Variable, int], variables: tuple[Variable, ...] | None = None
 ) -> dict[Variable, int]:
-    """Convert a binary sample over ``{0,1}`` into a spin sample over ``{-1,+1}``."""
+    """Binary {0,1} -> spin {-1,+1}."""
     ordered_variables = tuple(sample) if variables is None else variables
     return sample_to_spin(sample, ordered_variables, "BINARY")
 
 
 @dataclass(frozen=True, slots=True)
 class IsingModel:
-    """Backend-independent Ising IR using Gibbsiq's audited sign convention."""
+    """Ising IR. E(s)=offset+sum h_i s_i+sum_{i<j} J_ij s_i s_j, s_i in {-1,+1}."""
 
     variables: tuple[Variable, ...]
     linear: Mapping[Variable, float]
@@ -154,6 +154,9 @@ class IsingModel:
             raise ValueError("variable_order must match variables exactly")
 
         index = variable_index(variables)
+        for variable in self.linear:
+            if variable not in index:
+                raise ValueError(f"linear bias for {variable!r} references unknown variable")
         linear = {
             variable: finite_float(self.linear.get(variable, 0.0), name=f"linear bias for {variable!r}")
             for variable in variables
@@ -171,9 +174,7 @@ class IsingModel:
             quadratic[ordered] = quadratic.get(ordered, 0.0) + finite_float(
                 coefficient, name=f"quadratic bias for {pair!r}"
             )
-        # Re-check the accumulated coefficients while sorting into canonical
-        # order: summing finite duplicates can still overflow to +/-inf (e.g.
-        # 1e308 + 1e308), which the per-term guard above cannot catch.
+        # Sum of finite duplicates can still overflow (e.g. 1e308+1e308); re-check here.
         ordered_quadratic: dict[tuple[Variable, Variable], float] = {}
         for pair, coefficient in sorted(
             quadratic.items(), key=lambda item: (index[item[0][0]], index[item[0][1]])
@@ -198,7 +199,7 @@ class IsingModel:
         object.__setattr__(self, "_neighbors", None)
 
     def _linear_cache(self) -> tuple[float, ...]:
-        """Return lazily ordered linear coefficients for indexed calculations."""
+        """Lazily cached linear coefficients, ordered by variable index."""
         cached = self._linear_values
         if cached is not None:
             return cached
@@ -207,7 +208,7 @@ class IsingModel:
         return cached
 
     def _edge_cache(self) -> tuple[tuple[int, int, float], ...]:
-        """Return lazily indexed quadratic terms for repeated energy calls."""
+        """Lazily cached quadratic terms as (left_idx, right_idx, coefficient)."""
         cached = self._quadratic_edges
         if cached is not None:
             return cached
@@ -219,7 +220,7 @@ class IsingModel:
         return cached
 
     def _neighbor_cache(self) -> tuple[tuple[tuple[int, float], ...], ...]:
-        """Return the lazily built adjacency cache for degree-local calculations."""
+        """Lazily cached adjacency list, indexed by variable position."""
         cached = self._neighbors
         if cached is not None:
             return cached
@@ -233,29 +234,24 @@ class IsingModel:
 
     @property
     def graph(self) -> tuple[tuple[Variable, Variable], ...]:
-        """Interaction graph edges in canonical variable order."""
+        """Quadratic-term edges in canonical variable order."""
         return tuple(self.quadratic)
 
     def energy(self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN") -> float:
-        """Evaluate the model energy for a spin or binary assignment."""
+        """E(s)=offset+interaction energy, for spin or binary input."""
         spins = sample_to_spin_values(sample, self.variables, vartype)
         return finite_sum(
             [self.offset, self._interaction_energy_from_spins(spins)],
             name="computed energy",
         )
 
-    def interaction_energy(
-        self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
-    ) -> float:
-        """Evaluate the offset-free Ising terms for numerically stable differences."""
+    def interaction_energy(self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN") -> float:
+        """Offset-free energy (sum h_i s_i+sum J_ij s_i s_j); for stable energy diffs."""
         spins = sample_to_spin_values(sample, self.variables, vartype)
         return self._interaction_energy_from_spins(spins)
 
     def _interaction_energy_from_spins(self, spins: tuple[int, ...]) -> float:
-        terms = [
-            coefficient * spins[position]
-            for position, coefficient in enumerate(self._linear_cache())
-        ]
+        terms = [coefficient * spins[position] for position, coefficient in enumerate(self._linear_cache())]
         terms.extend(
             coefficient * spins[left_index] * spins[right_index]
             for left_index, right_index, coefficient in self._edge_cache()
@@ -281,7 +277,7 @@ class IsingModel:
     def flip_energy_delta(
         self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
     ) -> float:
-        """Return ``E(s with variable flipped) - E(s)`` using the cached local field."""
+        """Flip delta: E(s_i -> -s_i) - E(s) = -2*s_i*gamma_i."""
         try:
             position = self._variable_index[variable]
         except KeyError as error:
@@ -308,7 +304,7 @@ class IsingModel:
         beta: float = 1.0,
         vartype: Vartype = "SPIN",
     ) -> float:
-        """Return ``P(s_i=+1 | s_-i)`` under the audited Gibbs sign."""
+        """P(s_i=+1 | s_-i) = sigmoid(-2*beta*gamma_i)."""
         canonical_beta = finite_float(beta, name="beta")
         if canonical_beta < 0.0:
             raise ValueError(f"beta must be non-negative, got {beta!r}")
@@ -323,7 +319,7 @@ class IsingModel:
         return exp_arg / (1.0 + exp_arg)
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize the IR with stable string pair keys for JSON fixtures."""
+        """Serializes IR to dict; quadratic keys as "left,right" strings."""
         return {
             "variables": list(self.variables),
             "linear": {variable: self.linear[variable] for variable in self.variables},
@@ -339,7 +335,7 @@ class IsingModel:
         }
 
     def to_dimod(self) -> Any:
-        """Return a dimod BinaryQuadraticModel when dimod is installed."""
+        """Returns dimod.BinaryQuadraticModel (requires dimod)."""
         try:
             import dimod  # type: ignore[import-not-found]
         except ImportError as error:  # pragma: no cover - exercised only without optional dep

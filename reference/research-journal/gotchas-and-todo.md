@@ -129,8 +129,10 @@ follow-up sections):
   ESS/R-hat formulas retain their external cross-checks. Raw-energy Geyer ESS lacks
   rank-normalized bulk/tail ESS, so the corrective patch removes the rank-normalized
   `ESS > 400` recommendation from its flags. It also names occupancy efficiency accurately
-  and separates constant/progress observations from sampler-failure flags. The criterion
-  closes after focused fixtures and full-suite verification.
+  and separates constant/progress observations from sampler-failure flags. Top-1 mass alone
+  now produces `high_sample_concentration`, not `mode_collapse`, because target concentration
+  is not evidence of a failed kernel. The criterion closes after focused fixtures and
+  full-suite verification.
 - **Stage 1 bridge gap — penalty / one-hot encoding layer.** Knapsack and TSP
   fixtures raise `NotImplementedError` in `benchmark_bridge.py` until this exists;
   the diagnostics `constraints` section reports `{"status": "not_available"}`

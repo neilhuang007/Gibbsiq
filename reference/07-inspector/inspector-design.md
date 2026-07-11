@@ -80,10 +80,9 @@ Comparison:
 - `poor_mixing`
 - `low_ess`
 - `chain_disagreement`
-- `mode_collapse`
+- `high_sample_concentration` (observation, not a failure flag)
 - `no_recent_improvement`
 - `low_feasibility`
 - `bad_schedule`
 - `block_stuck`
 - `conversion_unverified`
-

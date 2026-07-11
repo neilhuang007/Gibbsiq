@@ -25,16 +25,17 @@ prove equilibration or optimality.
 
 Flags are telemetry warnings with optimization-context meanings, never pass/fail verdicts.
 `chain_disagreement` identifies incompatible chains or an undefined/infinite zero-within-chain
-case. `mode_collapse` and diversity warnings can also reflect a legitimately concentrated
-target, especially at high beta. `no_recent_improvement`, `zero_energy_variance`, and
-`zero_within_chain_variance` are observations because flat objectives and finite supports can
-produce them under correct sampling. Every payload echoes active trigger constants under
-`diagnostics["thresholds"]` so downstream consumers can reinterpret the evidence.
+case. High top-1 mass becomes `high_sample_concentration`, an observation rather than a
+`mode_collapse` failure: a correct low-temperature target can legitimately concentrate on one
+state. `no_recent_improvement`, `zero_energy_variance`, and `zero_within_chain_variance` are
+also observations because flat objectives and finite supports can produce them under correct
+sampling. Every payload echoes active trigger constants under `diagnostics["thresholds"]` so
+downstream consumers can reinterpret the evidence.
 
 | Threshold constant | Value | Source |
 | --- | --- | --- |
 | `RHAT_THRESHOLD` | 1.01 | Vehtari et al. 2021 |
-| `MODE_COLLAPSE_TOP1_MASS_THRESHOLD` | 0.9 | frozen diversity fixture fires |
+| `HIGH_SAMPLE_CONCENTRATION_TOP1_MASS_THRESHOLD` | 0.9 | project heuristic; observation only |
 | `LOW_DIVERSITY_OCCUPANCY_EFFICIENCY_THRESHOLD` | 0.05 | project heuristic; requires sensitivity reporting |
 | `NO_RECENT_IMPROVEMENT_WINDOW_FRACTION` | 0.5 | second half of the budget |
 | `POOR_MIXING_MIN_TAU_MULTIPLES` | 50.0 | emcee autocorrelation tutorial |
@@ -151,7 +152,6 @@ Report:
 
 Implemented (v0, canonical order):
 
-- `mode_collapse`
 - `low_diversity`
 - `poor_mixing`
 - `chain_disagreement` (numeric R-hat above threshold, or zero within-chain variance)
@@ -159,6 +159,7 @@ Implemented (v0, canonical order):
 
 Observation vocabulary:
 
+- `high_sample_concentration`
 - `no_recent_improvement`
 - `zero_energy_variance`
 - `zero_within_chain_variance`

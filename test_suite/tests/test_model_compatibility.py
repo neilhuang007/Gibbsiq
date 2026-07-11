@@ -12,7 +12,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from gibbsiq import SampleResult, compile_bqm, compile_ising, compile_qubo  # noqa: E402
+from gibbsiq import IsingModel, SampleResult, compile_bqm, compile_ising, compile_qubo  # noqa: E402
 
 
 def load_exact_fixture(fixture_id: str) -> dict:
@@ -118,6 +118,24 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertEqual(model.to_dict()["quadratic"], {"a,z": 3.0})
         self.assertEqual(model.offset, 4.0)
         self.assertEqual(model.energy({"a": 1, "z": -1}), -2.0)
+
+    def test_direct_model_rejects_unknown_linear_variables(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            "linear bias for 'unknown' references unknown variable",
+        ):
+            IsingModel(
+                variables=("a",),
+                linear={"a": 1.0, "unknown": 3.0},
+                quadratic={},
+            )
+
+        model = IsingModel(
+            variables=("a", "b"),
+            linear={"a": 1.0},
+            quadratic={},
+        )
+        self.assertEqual(model.linear, {"a": 1.0, "b": 0.0})
 
     def test_gibbs_conditional_uses_audited_sign(self) -> None:
         fixture = load_exact_fixture("single_site_conditional_sign")

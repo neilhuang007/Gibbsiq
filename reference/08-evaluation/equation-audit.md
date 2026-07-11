@@ -334,8 +334,14 @@ normalized_mean_pairwise_hamming_distance = 0.06822096456692914. Common wrong va
 these pins kill: log2 entropy, distinct-state-only Hamming (excluding same-state pairs),
 and ordered-pair denominators.
 
-Use: diversity section of the diagnostics contract; `mode_collapse` and
-`low_diversity` warning flags.
+Use: diversity section of the diagnostics contract; `low_diversity` warning flag and
+`high_sample_concentration` observation. `top1_mass >= 0.9` records high concentration but
+MUST NOT, by itself, produce a `mode_collapse` failure flag: a valid low-temperature
+Boltzmann target can assign more than 90% probability to one state. Diagnosing mode collapse
+requires evidence relative to the intended target (for example, disagreement with an exact
+small-model distribution) or another independently justified mixing failure. The 0.9
+boundary is retained as a project heuristic for surfacing the observation, not as a
+correctness threshold.
 
 Classification rule audited 2026-07-11: `no_recent_improvement`,
 `zero_energy_variance`, and `zero_within_chain_variance` are observations, not

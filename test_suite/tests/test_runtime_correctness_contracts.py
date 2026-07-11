@@ -158,6 +158,94 @@ class RuntimeMathContractTests(unittest.TestCase):
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class RuntimeBackendContractTests(unittest.TestCase):
+    def test_offset_only_model_fixed_beta_preserves_result_contract(self) -> None:
+        model = compile_ising({}, offset=-3.5)
+
+        result = THRMLSampler(SamplerConfig(num_chains=2, seed=1)).sample(model, num_reads=3)
+
+        self.assertEqual([dict(sample) for sample in result.samples], [{}, {}, {}])
+        self.assertEqual(result.energies, (-3.5, -3.5, -3.5))
+        self.assertEqual(result.traces["energy"], [[-3.5, -3.5], [-3.5]])
+        self.assertEqual(result.traces["interaction_energy"], [[0.0, 0.0], [0.0]])
+        self.assertEqual(result.traces["distance_to_best"], [[0, 0], [0]])
+        self.assertNotIn("parallel_tempering", result.traces)
+        self.assertEqual(result.metadata["local_transition_rng"], "not_used_constant_model")
+
+    def test_offset_only_model_uses_exact_deterministic_shortcut(self) -> None:
+        model = compile_ising({}, offset=4.25)
+        config = SamplerConfig(
+            beta=2.0,
+            n_warmup=7,
+            steps_per_sample=3,
+            num_chains=3,
+            seed=41,
+            parallel_tempering_betas=(0.5, 2.0),
+        )
+
+        result = THRMLSampler(config).sample(model, num_reads=5)
+
+        self.assertEqual(result.variables, ())
+        self.assertEqual([dict(sample) for sample in result.samples], [{}, {}, {}, {}, {}])
+        self.assertEqual(result.energies, (4.25,) * 5)
+        self.assertEqual(result.interaction_energies, (0.0,) * 5)
+        self.assertEqual(result.best_sample, {})
+        self.assertEqual(result.best_energy, 4.25)
+        self.assertEqual(result.traces["sample_chain_ids"], [0, 0, 1, 1, 2])
+        self.assertEqual([len(chain) for chain in result.traces["energy"]], [2, 2, 1])
+        self.assertIsNone(result.traces["magnetization"])
+        self.assertEqual(result.traces["parallel_tempering"]["swap_attempts"], 0)
+        self.assertEqual(
+            result.traces["parallel_tempering"]["status"],
+            "not_applicable_constant_model",
+        )
+        self.assertTrue(result.metadata["constant_model_shortcut"])
+        self.assertEqual(result.metadata["execution_backend"], "deterministic constant-model shortcut")
+        self.assertEqual(result.metadata["lowered_targets"], [])
+
+    def test_parallel_tempering_cold_marginal_matches_exact_boltzmann(self) -> None:
+        beta = 2.0
+        field = 0.5
+        num_reads = 128
+        model = compile_ising({"s": field}, offset=9.75)
+        config = SamplerConfig(
+            beta=beta,
+            n_warmup=8,
+            steps_per_sample=1,
+            num_chains=1,
+            seed=73,
+            init="random",
+            parallel_tempering_betas=(0.25, beta),
+        )
+
+        result = THRMLSampler(config).sample(model, num_reads=num_reads)
+        exact_up = 1.0 / (1.0 + math.exp(2.0 * beta * field))
+        observed_up = sum(sample["s"] == 1 for sample in result.samples)
+        # A one-site Gibbs step refreshes each replica exactly before every exchange.
+        # Use an exact central binomial acceptance interval, not a normal
+        # approximation. Each tail is at most 5e-5 under the analytic target.
+        probabilities = [
+            math.comb(num_reads, count)
+            * exact_up**count
+            * (1.0 - exact_up) ** (num_reads - count)
+            for count in range(num_reads + 1)
+        ]
+        tail_probability = 5e-5
+        lower_count = max(
+            count
+            for count in range(num_reads + 1)
+            if math.fsum(probabilities[:count]) <= tail_probability
+        )
+        upper_count = next(
+            count
+            for count in range(num_reads + 1)
+            if math.fsum(probabilities[count + 1 :]) <= tail_probability
+        )
+
+        self.assertGreaterEqual(observed_up, lower_count)
+        self.assertLessEqual(observed_up, upper_count)
+        self.assertEqual(result.traces["parallel_tempering"]["swap_attempts"], num_reads)
+        self.assertTrue(any(event["accepted"] for event in result.traces["parallel_tempering"]["swap_trace"]))
+
     def test_float32_rejects_unstable_accumulation(self) -> None:
         if str(jnp.asarray(1.0).dtype) != "float32":
             self.skipTest("active JAX backend has x64 enabled")

@@ -130,15 +130,17 @@ class FrozenSamplerTests(unittest.TestCase):
         self.assertAlmostEqual(self.result.best_energy, -2.5, places=9)
         self.assertEqual(self.result.best_sample, {"a": -1, "b": -1, "c": -1})
 
-    def test_frozen_run_flags_mode_collapse(self) -> None:
+    def test_frozen_run_reports_concentration_without_diagnosing_mode_collapse(self) -> None:
         diagnostics = self.result.diagnostics
-        self.assertEqual(
-            diagnostics["flags"],
-            ["mode_collapse"],
-        )
+        self.assertEqual(diagnostics["flags"], [])
         self.assertEqual(
             diagnostics["observations"],
-            ["no_recent_improvement", "zero_energy_variance", "zero_within_chain_variance"],
+            [
+                "high_sample_concentration",
+                "no_recent_improvement",
+                "zero_energy_variance",
+                "zero_within_chain_variance",
+            ],
         )
         self.assertEqual(diagnostics["energy"]["ess_status"], "undefined_constant_trace")
         self.assertEqual(diagnostics["energy"]["autocorrelation_status"], "constant_trace")

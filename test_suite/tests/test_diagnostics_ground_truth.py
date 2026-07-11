@@ -29,6 +29,7 @@ from gibbsiq.diagnostics import (  # noqa: E402
     compute_diagnostics,
     distance_to_best_trace,
     diversity_flags,
+    diversity_observations,
     diversity_section,
     energy_flags,
     energy_observations,
@@ -610,9 +611,16 @@ class FlagThresholdBoundaryTests(unittest.TestCase):
         self.assertEqual(section["ess"], 399.999999999)
         self.assertNotIn("low_ess", energy_flags(section))
 
-    def test_mode_collapse_boundary_is_inclusive(self) -> None:
-        self.assertIn("mode_collapse", diversity_flags({"top1_mass": 0.9, "unique_fraction": 0.5}))
-        self.assertNotIn("mode_collapse", diversity_flags({"top1_mass": 0.8999999, "unique_fraction": 0.5}))
+    def test_high_sample_concentration_boundary_is_inclusive(self) -> None:
+        self.assertIn(
+            "high_sample_concentration",
+            diversity_observations({"top1_mass": 0.9, "unique_fraction": 0.5}),
+        )
+        self.assertNotIn(
+            "high_sample_concentration",
+            diversity_observations({"top1_mass": 0.8999999, "unique_fraction": 0.5}),
+        )
+        self.assertNotIn("mode_collapse", diversity_flags({"top1_mass": 1.0}))
 
     def test_low_diversity_boundary_is_inclusive(self) -> None:
         self.assertIn(

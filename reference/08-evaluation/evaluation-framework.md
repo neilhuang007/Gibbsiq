@@ -91,7 +91,7 @@ Required diagnostic families:
 - chain disagreement / R-hat-style warning;
 - feasibility rate;
 - no-recent-improvement warning;
-- mode-collapse warning.
+- high-sample-concentration observation.
 
 Fixture source: `fixtures/diagnostic-fixtures.json`. Seven fixtures as of 2026-07-02: the
 original three (`mode_collapse_counts_n4_reads128`, `constant_energy_trace`,
@@ -113,7 +113,8 @@ can only appear in a new family or a new fixture, never silently inside an old o
 Pass criteria:
 
 - constant traces do not produce NaN diagnostics in public output;
-- mode collapse fixtures raise `mode_collapse`;
+- concentrated-count fixtures report `high_sample_concentration` without diagnosing
+  `mode_collapse` from top-1 mass alone;
 - disagreement fixtures raise `chain_disagreement`;
 - diagnostics explicitly distinguish "not enough data" from "healthy";
 - the healthy negative-control fixture keeps `required_flags` exactly empty;
@@ -223,5 +224,4 @@ The first implementation is acceptable when:
 - exact and simulated annealing baselines run against the same fixture IDs;
 - diagnostics catch all fixture failure modes;
 - benchmark outputs are reproducible from stored seeds and config.
-
 

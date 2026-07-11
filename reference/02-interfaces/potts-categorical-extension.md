@@ -55,8 +55,8 @@ change, not a breaking one:
 - `PottsModel` / categorical IR with deterministic state ordering and offset preservation.
 - One-hot QUBO reduction bridge (both directions) for baseline comparison.
 - THRML lowering to categorical node types and categorical block construction.
-- Diagnostics generalization: Hamming distance, diversity, and mode-collapse flags over
-  k-ary state spaces.
+- Diagnostics generalization: Hamming distance, diversity, concentration observations, and
+  target-aware collapse checks over k-ary state spaces.
 - Equation-audit entries and analytic fixtures for the categorical conditional.
 
 ## Non-Claims
