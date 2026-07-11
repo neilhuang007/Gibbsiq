@@ -1,25 +1,10 @@
-"""Independent re-verification oracle for ground-truth benchmark fixtures.
+"""Re-verification oracle for ground-truth benchmark fixtures.
 
-The benchmark corpus (``reference/06-benchmarks/fixtures/ground-truth-small.json``)
-stores proven optima derived by exhaustive enumeration. When scoring a solver
-candidate against it we apply the *strictest* pass criterion:
-
-1. every scalar field (optimum value, degeneracy, derived quantities) must match
-   the proven value exactly (floats within tolerance);
-2. the candidate must supply at least one witness state, and the oracle
-   recomputes that witness's objective **from the input model** -- it never
-   trusts the candidate's self-reported numbers. A witness only counts if it is
-   feasible and actually attains the proven optimum.
-
-This module recomputes each family's objective directly from the fixture
-``input`` block, so a candidate cannot pass by echoing the expected value while
-returning a state that does not achieve it.
-
-The energy convention matches the project canon
-``E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j`` with ``s_i in {-1,+1}``.
-
-Difference records are returned as plain dicts (same shape as the evaluation
-report) so this module has no dependency on ``gibbsiq.evaluation``.
+Strict pass criterion: scalar fields (optimum value, exact degeneracy) must
+match the proven value; witness objective is recomputed from the input model,
+never trusted from candidate-reported numbers. Energy convention:
+``E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j``, ``s_i in {-1,+1}``.
+Differences are plain dicts -- no dependency on ``gibbsiq.evaluation``.
 """
 
 from __future__ import annotations
@@ -28,8 +13,7 @@ import math
 from collections.abc import Callable
 from typing import Any, TypeAlias
 
-# Canonical absolute tolerance for scoring candidates against proven values;
-# shared by benchmark_bridge and evaluation so there is one source of truth.
+# Shared tolerance for benchmark_bridge and evaluation.
 DEFAULT_TOLERANCE = 1e-9
 
 
@@ -117,9 +101,8 @@ def maxcut_cut_value(model: dict[str, Any], spins: dict[str, int]) -> int:
 
 
 def ising_energy(model: dict[str, Any], spins: dict[str, int]) -> float:
-    # Deliberately independent of IsingModel.energy: the oracle must not share
-    # energy code with the lowering path it verifies, or an IR sign/offset bug
-    # would self-consistently pass. Do not consolidate.
+    # Independent of IsingModel.energy -- sharing it would let an IR sign/offset
+    # bug self-consistently pass. Do not consolidate.
     energy = float(model.get("offset", 0.0))
     for var, field in model.get("linear", {}).items():
         energy += float(field) * spins[str(var)]

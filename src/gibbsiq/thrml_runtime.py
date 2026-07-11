@@ -1,22 +1,14 @@
-"""THRML optimization runtime: lower the Ising IR into block-Gibbs programs.
+"""THRML optimization runtime: lowers the Ising IR into block-Gibbs programs.
 
-Sign convention audit. THRML's ``IsingEBM`` defines
+Sign mapping: THRML's ``IsingEBM`` uses
+``E_thrml(s) = -beta * (sum_i b_i s_i + sum_(i,j) w_ij s_i s_j)``,
+Gibbsiq uses ``E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j``.
+Equal Boltzmann distributions require ``b = -h``, ``w = -J``. Offset is
+never sent to THRML; energies are always recomputed via ``IsingModel.energy``.
+THRML boolean ``True`` = spin ``+1`` (pinned by the two-spin analytic test).
 
-```text
-E_thrml(s) = -beta * (sum_i b_i s_i + sum_(i,j) w_ij s_i s_j)
-```
-
-and samples ``p(s) proportional to exp(-E_thrml(s))``, while Gibbsiq's audited
-convention is ``E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j``
-targeted at ``p(s) proportional to exp(-beta * E(s))``. Equating the two
-Boltzmann distributions requires ``b = -h`` and ``w = -J``. The offset shifts
-every energy equally, never changes the distribution, and is preserved because
-all reported energies are recomputed through ``IsingModel.energy`` rather than
-read back from THRML. THRML represents spin states as booleans with ``True``
-meaning ``+1``. The two-spin analytic-distribution test pins this mapping.
-
-The ``thrml`` and ``jax`` imports are deferred so that ``import gibbsiq``
-works without the optional ``thrml`` extra, mirroring the ``dimod`` pattern.
+``thrml``/``jax`` imports are deferred so ``import gibbsiq`` works without
+the optional extra (mirrors the ``dimod`` pattern).
 """
 
 from __future__ import annotations
@@ -60,16 +52,12 @@ def _require_thrml() -> tuple[Any, Any, Any, Any]:
 class SamplerConfig:
     """Controls for one THRML block-Gibbs run.
 
-    ``beta`` is the inverse temperature used while samples are collected.
-    ``warmup_beta_ladder`` optionally anneals the warmup phase: the
-    ``n_warmup`` sweeps are split across the ladder entries in order (the
-    last entry absorbs the remainder) before sampling starts at ``beta``.
-    ``num_chains`` runs vmapped independent chains from one split seed; the
-    result records a chain id for every sample so later diagnostics can
-    compute between-chain disagreement without rerunning the sampler.
-    ``parallel_tempering_betas`` enables opt-in replica exchange. It is a
-    strictly increasing inverse-temperature ladder whose last entry must equal
-    ``beta``; returned samples come from that cold slot.
+    ``beta``: sampling-phase inverse temperature. ``warmup_beta_ladder``:
+    optional annealing schedule, ``n_warmup`` sweeps split across entries
+    (remainder to the last), ending at ``beta``. ``num_chains``: vmapped
+    chains from one split seed, chain id recorded per sample for
+    between-chain diagnostics. ``parallel_tempering_betas``: opt-in replica
+    exchange, strictly increasing ladder ending at ``beta`` (cold slot).
     """
 
     beta: float = 1.0
@@ -104,9 +92,7 @@ class SamplerConfig:
         if self.num_chains < 1:
             raise ValueError(f"num_chains must be >= 1, got {self.num_chains}")
         if not 0 <= self.seed <= 2**32 - 1:
-            raise ValueError(
-                f"seed must be in JAX's uint32 key domain [0, {2**32 - 1}], got {self.seed}"
-            )
+            raise ValueError(f"seed must be in JAX's uint32 key domain [0, {2**32 - 1}], got {self.seed}")
         if self.parallel_tempering_swap_interval < 1:
             raise ValueError(
                 f"parallel_tempering_swap_interval must be >= 1, got {self.parallel_tempering_swap_interval}"
@@ -159,7 +145,7 @@ class SamplerConfig:
             object.__setattr__(self, "parallel_tempering_betas", ladder)
 
     def warmup_segments(self) -> tuple[tuple[float, int], ...]:
-        """Return ``(beta, sweeps)`` warmup segments; the remainder lands on the last."""
+        """Return ``(beta, sweeps)`` warmup segments, remainder on the last."""
         if self.warmup_beta_ladder is None:
             return ()
         count = len(self.warmup_beta_ladder)
@@ -172,9 +158,8 @@ class SamplerConfig:
 
 @functools.lru_cache(maxsize=1)
 def _edgeless_ising_ebm_class() -> Any:
-    """THRML's ``IsingEBM.factors`` indexes ``edges[0]`` and cannot represent a
-    model with no couplings; this subclass drops the empty coupling factor so
-    isolated-spin models (h only) still lower cleanly."""
+    """Drop the empty coupling factor: ``IsingEBM.factors`` indexes ``edges[0]``
+    and fails for edgeless (h-only) models."""
     _, _, thrml, thrml_models = _require_thrml()
 
     class _EdgelessIsingEBM(thrml_models.IsingEBM):  # type: ignore[name-defined]
@@ -228,21 +213,17 @@ class _Lowering:
         name: str,
         require_nonzero: Sequence[bool] | None = None,
     ) -> None:
-        """Reject finite host values that the active JAX dtype cannot represent."""
+        """Reject finite host values the active JAX dtype cannot represent."""
         host_values = self._jax.device_get(backend_values).reshape(-1).tolist()
         nonzero_flags = (
-            [source != 0.0 for source in source_values]
-            if require_nonzero is None
-            else list(require_nonzero)
+            [source != 0.0 for source in source_values] if require_nonzero is None else list(require_nonzero)
         )
         for index, (source, backend, must_be_nonzero) in enumerate(
             zip(source_values, host_values, nonzero_flags)
         ):
             backend_float = float(backend)
             if not math.isfinite(source):
-                raise ValueError(
-                    f"{name}[{index}] overflows in host arithmetic; rescale the model or beta"
-                )
+                raise ValueError(f"{name}[{index}] overflows in host arithmetic; rescale the model or beta")
             if not math.isfinite(backend_float):
                 raise ValueError(
                     f"{name}[{index}]={source!r} becomes non-finite when lowered to "
@@ -273,20 +254,13 @@ class _Lowering:
         backend_biases: Any,
         backend_weights: Any,
     ) -> None:
-        """Bound lowering error in every conditional logit, including cancellation.
-
-        For node ``i``, coefficient conversion contributes at most
-        ``|delta h_i| + sum_j |delta J_ij|`` for every neighboring spin state.
-        A standard ``gamma_k`` floating-summation term also covers THRML's
-        backend reduction. The Gibbs logit has a factor of two. This catches
-        cases where conversion or accumulation cancellation changes the
-        conditional distribution materially.
-        """
+        """Bound float32-lowering error per conditional logit (coefficient delta
+        plus accumulation cancellation); catches cases that shift the
+        conditional distribution beyond ``_LOCAL_LOGIT_ERROR_LIMIT``."""
         lowered_biases = [float(value) for value in self._jax.device_get(backend_biases).tolist()]
         lowered_weights = [float(value) for value in self._jax.device_get(backend_weights).tolist()]
         coefficient_error_bounds = [
-            abs(source - lowered)
-            for source, lowered in zip(source_biases, lowered_biases)
+            abs(source - lowered) for source, lowered in zip(source_biases, lowered_biases)
         ]
         absolute_term_sums = [abs(value) for value in lowered_biases]
         degrees = [0] * len(lowered_biases)
@@ -303,12 +277,9 @@ class _Lowering:
             degrees[left] += 1
             degrees[right] += 1
 
-        # THRML computes each coupling contribution with jnp.sum and then adds
-        # the linear contribution.  The standard floating-point summation bound
-        # gamma_k * sum(abs(terms)), gamma_k=k*u/(1-k*u), is conservative for
-        # any reduction tree with at most k additions.  Include it so exactly
-        # representable coefficients cannot still cancel incorrectly in the
-        # backend accumulator.
+        # Standard summation error bound gamma_k=k*u/(1-k*u) for THRML's
+        # jnp.sum reduction (k additions); covers accumulator cancellation
+        # even for exactly representable coefficients.
         unit_roundoff = float(self._jnp.finfo(backend_biases.dtype).eps) / 2.0
         field_error_bounds: list[float] = []
         for coefficient_error, absolute_sum, degree in zip(
@@ -318,9 +289,7 @@ class _Lowering:
         ):
             denominator = 1.0 - degree * unit_roundoff
             accumulation_error = (
-                math.inf
-                if denominator <= 0.0
-                else (degree * unit_roundoff / denominator) * absolute_sum
+                math.inf if denominator <= 0.0 else (degree * unit_roundoff / denominator) * absolute_sum
             )
             field_error_bounds.append(coefficient_error + accumulation_error)
         logit_error_bound = 2.0 * max(field_error_bounds, default=0.0)
@@ -362,12 +331,8 @@ class _Lowering:
             effective_weights,
         )
         lowered_beta = float(self._jax.device_get(beta_array))
-        lowered_biases = tuple(
-            float(value) for value in self._jax.device_get(effective_biases).tolist()
-        )
-        lowered_weights = tuple(
-            float(value) for value in self._jax.device_get(effective_weights).tolist()
-        )
+        lowered_biases = tuple(float(value) for value in self._jax.device_get(effective_biases).tolist())
+        lowered_weights = tuple(float(value) for value in self._jax.device_get(effective_weights).tolist())
         self.lowered_targets[beta] = {
             "requested_beta": beta,
             "lowered_beta": lowered_beta,
@@ -383,10 +348,7 @@ class _Lowering:
         """Evaluate the ideal log density represented by one lowered beta slot."""
         target = self.lowered_targets[beta]
         spins = tuple(int(sample[variable]) for variable in self.variables)
-        terms = [
-            coefficient * spins[index]
-            for index, coefficient in enumerate(target["effective_biases"])
-        ]
+        terms = [coefficient * spins[index] for index, coefficient in enumerate(target["effective_biases"])]
         terms.extend(
             coefficient * spins[left] * spins[right]
             for (left, right), coefficient in zip(
@@ -778,7 +740,7 @@ def _build_metadata(
     thrml: Any,
     jax: Any,
     device: Any,
-    lowering: _Lowering,
+    lowering: _Lowering | None,
     *,
     num_reads: int,
     reads_per_chain: int,
@@ -787,18 +749,17 @@ def _build_metadata(
     sample_seconds: float,
 ) -> dict[str, Any]:
     """Assemble runtime provenance for a ``SampleResult``."""
-    metadata = {
-        "sampler": "gibbsiq.THRMLSampler",
-        "execution_backend": "THRML JAX simulator",
-        "thrml_version": getattr(thrml, "__version__", "unknown"),
-        "jax_version": jax.__version__,
-        "jax_enable_x64": bool(jax.config.read("jax_enable_x64")),
-        "lowered_coefficient_dtype": lowering.lowered_coefficient_dtype,
-        "lowered_beta_dtype": lowering.lowered_beta_dtype,
-        "max_local_logit_error_bound": lowering.max_local_logit_error_bound,
-        "local_logit_error_limit": _LOCAL_LOGIT_ERROR_LIMIT,
-        "lowered_edge_order": [[left, right] for left, right in model.quadratic],
-        "lowered_targets": [
+    if lowering is None:
+        lowered_coefficient_dtype = None
+        lowered_beta_dtype = None
+        max_local_logit_error_bound = 0.0
+        lowered_targets: list[dict[str, Any]] = []
+        sampling_target_semantics = "constant Hamiltonian sampled exactly without lowering a THRML program"
+    else:
+        lowered_coefficient_dtype = lowering.lowered_coefficient_dtype
+        lowered_beta_dtype = lowering.lowered_beta_dtype
+        max_local_logit_error_bound = lowering.max_local_logit_error_bound
+        lowered_targets = [
             {
                 "requested_beta": target["requested_beta"],
                 "lowered_beta": target["lowered_beta"],
@@ -806,17 +767,35 @@ def _build_metadata(
                 "effective_weights": list(target["effective_weights"]),
             }
             for target in lowering.lowered_targets.values()
-        ],
-        "sampling_target_semantics": (
+        ]
+        sampling_target_semantics = (
             "THRML backend-coefficient approximation to the canonical Ising target; "
             "local conditional-logit error is bounded by local_logit_error_limit"
+        )
+    metadata = {
+        "sampler": "gibbsiq.THRMLSampler",
+        "execution_backend": (
+            "deterministic constant-model shortcut" if lowering is None else "THRML JAX simulator"
         ),
+        "constant_model_shortcut": lowering is None,
+        "thrml_version": getattr(thrml, "__version__", "unknown"),
+        "jax_version": jax.__version__,
+        "jax_enable_x64": bool(jax.config.read("jax_enable_x64")),
+        "lowered_coefficient_dtype": lowered_coefficient_dtype,
+        "lowered_beta_dtype": lowered_beta_dtype,
+        "max_local_logit_error_bound": max_local_logit_error_bound,
+        "local_logit_error_limit": _LOCAL_LOGIT_ERROR_LIMIT,
+        "lowered_edge_order": [[left, right] for left, right in model.quadratic],
+        "lowered_targets": lowered_targets,
+        "sampling_target_semantics": sampling_target_semantics,
         "device_platform": device.platform,
         "device_kind": device.device_kind,
         "python_version": platform.python_version(),
         "python_implementation": platform.python_implementation(),
         "operating_system": platform.platform(),
-        "local_transition_rng": "jax.random key splitting",
+        "local_transition_rng": (
+            "not_used_constant_model" if lowering is None else "jax.random key splitting"
+        ),
         "python_executable": sys.executable,
         "seed": config.seed,
         "beta": config.beta,
@@ -869,6 +848,142 @@ class THRMLSampler:
         """Compile Ising fields through ``compile_ising`` and sample them."""
         return self.sample(compile_ising(h, J, **compile_kwargs), num_reads=num_reads)
 
+    def _sample_constant_model(
+        self,
+        model: IsingModel,
+        *,
+        num_reads: int,
+        partition: BlockPartition,
+        lower_started: float,
+    ) -> SampleResult:
+        """Return the unique empty assignment for an offset-only model; no THRML
+        graph to run. Magnetization is marked not-applicable, not fabricated."""
+        jax, _, thrml, _ = _require_thrml()
+        config = self.config
+        reads_by_chain = _reads_by_chain(num_reads, config.num_chains)
+        reads_per_chain = max(reads_by_chain)
+        lower_seconds = time.perf_counter() - lower_started
+
+        sample_started = time.perf_counter()
+        sample_chains: list[list[dict[Variable, int]]] = [
+            [{} for _ in range(chain_reads)] for chain_reads in reads_by_chain
+        ]
+        samples = [sample for chain in sample_chains for sample in chain]
+        sample_chain_ids = [
+            chain_index for chain_index, chain_reads in enumerate(reads_by_chain) for _ in range(chain_reads)
+        ]
+        total_energy_chains = [[model.offset for _ in range(chain_reads)] for chain_reads in reads_by_chain]
+        interaction_energy_chains = [[0.0 for _ in range(chain_reads)] for chain_reads in reads_by_chain]
+        sample_seconds = time.perf_counter() - sample_started
+
+        diagnostics_started = time.perf_counter()
+        if config.parallel_tempering_betas is None:
+            segments = config.warmup_segments()
+            beta_schedule = [
+                {"phase": "warmup", "beta": beta, "sweeps": sweeps} for beta, sweeps in segments
+            ] or [{"phase": "warmup", "beta": config.beta, "sweeps": config.n_warmup}]
+            beta_schedule.append(
+                {
+                    "phase": "sampling",
+                    "beta": config.beta,
+                    "n_samples": reads_per_chain,
+                    "reads_by_chain": list(reads_by_chain),
+                    "steps_per_sample": config.steps_per_sample,
+                }
+            )
+        else:
+            beta_schedule = [
+                {
+                    "phase": "warmup",
+                    "mode": "parallel_tempering",
+                    "beta_ladder": list(config.parallel_tempering_betas),
+                    "sweeps_per_beta": config.n_warmup,
+                },
+                {
+                    "phase": "sampling",
+                    "mode": "parallel_tempering",
+                    "target_beta": config.beta,
+                    "beta_ladder": list(config.parallel_tempering_betas),
+                    "n_samples": reads_per_chain,
+                    "reads_by_chain": list(reads_by_chain),
+                    "steps_per_sample": config.steps_per_sample,
+                    "swap_interval": config.parallel_tempering_swap_interval,
+                },
+            ]
+
+        traces: dict[str, Any] = {
+            "energy": total_energy_chains,
+            "interaction_energy": interaction_energy_chains,
+            "best_energy_so_far": total_energy_chains,
+            "sample_chain_ids": sample_chain_ids,
+            "beta_schedule": beta_schedule,
+            "magnetization": None,
+            "distance_to_best": [[0 for _ in chain] for chain in sample_chains],
+        }
+        if config.parallel_tempering_betas is not None:
+            traces["parallel_tempering"] = {
+                "beta_ladder": list(config.parallel_tempering_betas),
+                "target_beta_index": len(config.parallel_tempering_betas) - 1,
+                "per_beta_energy": [
+                    [list(chain) for _ in config.parallel_tempering_betas] for chain in total_energy_chains
+                ],
+                "swap_trace": [],
+                "swap_attempts": 0,
+                "swap_accepts": 0,
+                "swap_acceptance_rate": None,
+                "swap_attempts_by_pair": {},
+                "swap_accepts_by_pair": {},
+                "status": "not_applicable_constant_model",
+            }
+
+        device = jax.devices()[0]
+        metadata = _build_metadata(
+            config,
+            model,
+            partition,
+            thrml,
+            jax,
+            device,
+            None,
+            num_reads=num_reads,
+            reads_per_chain=reads_per_chain,
+            reads_by_chain=reads_by_chain,
+            lower_seconds=lower_seconds,
+            sample_seconds=sample_seconds,
+        )
+        if config.parallel_tempering_betas is not None:
+            metadata.update(
+                {
+                    "parallel_tempering_swap_attempts": 0,
+                    "parallel_tempering_swap_accepts": 0,
+                    "parallel_tempering_swap_acceptance_rate": None,
+                    "parallel_tempering_swap_rng": "not_used_constant_model",
+                    "parallel_tempering_swap_target": "not_applicable_constant_model",
+                }
+            )
+
+        diagnostics = compute_diagnostics(
+            energy_chains=interaction_energy_chains,
+            samples=samples,
+            variables=model.variables,
+            timings={
+                "lower_seconds": lower_seconds,
+                "sample_seconds": sample_seconds,
+                "device_platform": device.platform,
+                "device_kind": device.device_kind,
+            },
+        )
+        diagnostics_seconds = time.perf_counter() - diagnostics_started
+        diagnostics["runtime"]["diagnostics_seconds"] = diagnostics_seconds
+        metadata["diagnostics_seconds"] = diagnostics_seconds
+        return SampleResult.from_model(
+            model,
+            samples,
+            traces=traces,
+            diagnostics=diagnostics,
+            metadata=metadata,
+        )
+
     def _sample_parallel_tempering(
         self,
         model: IsingModel,
@@ -920,12 +1035,9 @@ class THRMLSampler:
 
         diagnostics_started = time.perf_counter()
         interaction_energy_chains = [
-            [model.interaction_energy(sample) for sample in chain]
-            for chain in decoded.sample_chains
+            [model.interaction_energy(sample) for sample in chain] for chain in decoded.sample_chains
         ]
-        flat_interaction_energies = [
-            energy for chain in interaction_energy_chains for energy in chain
-        ]
+        flat_interaction_energies = [energy for chain in interaction_energy_chains for energy in chain]
         best_sample = decoded.samples[best_index(flat_interaction_energies)]
         beta_schedule = [
             {
@@ -1024,18 +1136,14 @@ class THRMLSampler:
         num_reads: int = 1,
         partition: BlockPartition | None = None,
     ) -> SampleResult:
-        """Run block Gibbs on ``model`` and return exactly ``num_reads`` samples.
+        """Run block Gibbs on ``model``, return exactly ``num_reads`` samples.
 
-        Reads are balanced across chains with ``divmod``; earlier chains receive
-        at most one extra read. Backend arrays use the maximum chain length and
-        per-chain traces are sliced to their declared allocations, so the flat
-        ``energies`` tuple always equals the concatenated ``traces["energy"]``.
+        Reads balanced via ``divmod`` (earlier chains get the extra read);
+        per-chain traces sliced to allocation so flat ``energies`` equals
+        concatenated ``traces["energy"]``.
         """
         if isinstance(num_reads, bool) or not isinstance(num_reads, int) or num_reads < 1:
             raise ValueError(f"num_reads must be an integer >= 1, got {num_reads!r}")
-        if not model.variables:
-            raise ValueError("cannot sample a model with no variables")
-
         jax, jnp, thrml, _ = _require_thrml()
         config = self.config
 
@@ -1043,6 +1151,13 @@ class THRMLSampler:
         if partition is None:
             partition = color_blocks(model)
         validate_partition(model, partition)
+        if not model.variables:
+            return self._sample_constant_model(
+                model,
+                num_reads=num_reads,
+                partition=partition,
+                lower_started=lower_started,
+            )
         lowering = _Lowering(model, partition)
 
         if config.parallel_tempering_betas is not None:
@@ -1056,9 +1171,7 @@ class THRMLSampler:
 
         segments = config.warmup_segments()
         sampling_ebm, sampling_program = lowering.program(config.beta)
-        # The chain initializes at the first warmup beta (or the sampling beta
-        # when there is no ladder), so the first segment's EBM doubles as the
-        # init EBM.
+        # Chain inits at the first warmup beta (or sampling beta if no ladder).
         init_ebm = sampling_ebm
         segment_programs: list[tuple[Any, int]] = []
         for beta, sweeps in segments:
@@ -1112,12 +1225,9 @@ class THRMLSampler:
         # (EVAL-EQ-010 resource split): everything after decode is telemetry.
         diagnostics_started = time.perf_counter()
         interaction_energy_chains = [
-            [model.interaction_energy(sample) for sample in chain]
-            for chain in decoded.sample_chains
+            [model.interaction_energy(sample) for sample in chain] for chain in decoded.sample_chains
         ]
-        flat_interaction_energies = [
-            energy for chain in interaction_energy_chains for energy in chain
-        ]
+        flat_interaction_energies = [energy for chain in interaction_energy_chains for energy in chain]
         best_sample = decoded.samples[best_index(flat_interaction_energies)]
 
         beta_schedule = [

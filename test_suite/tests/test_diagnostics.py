@@ -20,6 +20,7 @@ from gibbsiq.diagnostics import (  # noqa: E402
     diagnostic_candidate_from_input,
     distance_to_best_trace,
     diversity_flags,
+    diversity_observations,
     diversity_section,
     energy_flags,
     energy_observations,
@@ -110,9 +111,20 @@ class FlagBoundaryTests(unittest.TestCase):
         self.assertNotIn("low_ess", diagnostics.FLAG_ORDER)
         self.assertNotIn("low_ess", diagnostics.thresholds_summary())
 
-    def test_mode_collapse_boundary(self) -> None:
-        self.assertEqual(diversity_flags({"top1_mass": 0.9}), ["mode_collapse"])
-        self.assertEqual(diversity_flags({"top1_mass": 0.8999}), [])
+    def test_high_sample_concentration_boundary(self) -> None:
+        self.assertEqual(
+            diversity_observations({"top1_mass": 0.9}),
+            ["high_sample_concentration"],
+        )
+        self.assertEqual(diversity_observations({"top1_mass": 0.8999}), [])
+        self.assertEqual(diversity_flags({"top1_mass": 1.0}), [])
+
+    def test_concentrated_exact_boltzmann_target_is_not_mode_collapse(self) -> None:
+        # For one spin with h=1 and beta=ln(19)/2, P(s=-1)=19/20 exactly.
+        section = diversity_section({(-1,): 95, (1,): 5}, num_variables=1)
+        self.assertEqual(section["top1_mass"], 0.95)
+        self.assertNotIn("mode_collapse", diversity_flags(section))
+        self.assertEqual(diversity_observations(section), ["high_sample_concentration"])
 
     def test_low_diversity_boundary(self) -> None:
         self.assertEqual(diversity_flags({"occupancy_efficiency": 0.05}), ["low_diversity"])
@@ -257,7 +269,11 @@ class ComputeDiagnosticsPayloadTests(unittest.TestCase):
         )
         expected_order = [flag for flag in diagnostics.FLAG_ORDER if flag in expected_flags]
         self.assertEqual(payload["flags"], expected_order)
-        expected_observations = set(energy_observations(energy)) | set(chain_observations(chains_section))
+        expected_observations = (
+            set(energy_observations(energy))
+            | set(chain_observations(chains_section))
+            | set(diversity_observations(diversity))
+        )
         expected_observation_order = [
             observation
             for observation in diagnostics.OBSERVATION_ORDER

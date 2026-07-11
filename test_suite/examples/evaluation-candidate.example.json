@@ -90,8 +90,8 @@
         "entropy_nats": 0.3096046315802033,
         "mean_pairwise_hamming_distance": 0.27288385826771655,
         "normalized_mean_pairwise_hamming_distance": 0.06822096456692914,
-        "required_flags": ["mode_collapse"],
-        "observations": []
+        "required_flags": [],
+        "observations": ["high_sample_concentration"]
       }
     },
     {

@@ -1,22 +1,16 @@
 """Graph-coloring block construction for THRML block-Gibbs sampling.
 
-THRML updates one block of nodes per sub-step, and a block may only be
-sampled in parallel when its nodes share no coupling. A proper vertex
-coloring of the interaction graph therefore gives legal independent update
-blocks, and fewer colors reduce the sequential sub-steps per sweep.
+A block samples in parallel only if its nodes share no coupling, so a proper
+vertex coloring of the interaction graph gives legal independent blocks;
+fewer colors means fewer sequential sub-steps per sweep.
 
-THRML ships no coloring utility (its own spin-model example delegates to
-networkx DSATUR), so this module provides deterministic standard-library
-coloring over the IR graph. The implementation first uses a linear
-bipartite check, which gives the optimal one- or two-block partition for
-edgeless graphs, chains, grids, trees, and even cycles. Non-bipartite graphs
-fall back to DSATUR with a lazy priority heap, avoiding the full uncolored-set
-scan at every step.
+THRML ships no coloring utility (its own example delegates to networkx
+DSATUR). This module colors deterministically: a linear bipartite check
+gives the optimal partition for edgeless graphs, chains, grids, trees, and
+even cycles; non-bipartite graphs fall back to DSATUR with a lazy heap.
 
-On dense graphs the chromatic number approaches the variable count and the
-partition degenerates toward one singleton block per variable; callers
-record ``num_blocks``, ``block_sizes``, and graph density in run metadata so
-that regime is visible instead of silent.
+Dense graphs degenerate toward one block per variable; ``num_blocks``,
+``block_sizes``, and graph density are recorded in run metadata.
 """
 
 from __future__ import annotations
@@ -68,9 +62,8 @@ def graph_density(model: IsingModel) -> float:
 def color_blocks(model: IsingModel) -> BlockPartition:
     """Color the interaction graph into deterministic independent blocks.
 
-    The partition depends only on graph topology, not coefficient values, so
-    repeated calls over the same variable order and edge set share the cached
-    coloring. Every block lists its variables in canonical order.
+    Depends only on graph topology (cached), not coefficient values; each
+    block lists variables in canonical order.
     """
     return BlockPartition(blocks=_color_blocks_cached(model.variables, model.graph))
 
@@ -115,8 +108,7 @@ def _bipartite_coloring(
         while queue:
             variable = queue.popleft()
             neighbor_color = 1 - colors[variable]
-            # Once a component's start color is fixed, neighbor order cannot
-            # change the two sides of a bipartite component.
+            # Component start color fixes both sides; neighbor order doesn't matter.
             for neighbor in neighbors[variable]:
                 if neighbor not in colors:
                     colors[neighbor] = neighbor_color
@@ -131,11 +123,9 @@ def _dsatur_coloring(
 ) -> dict[Variable, int]:
     """DSATUR coloring with lazy heap priorities.
 
-    Each step colors the uncolored variable with the highest saturation
-    (count of distinct colors among its neighbors), breaking ties by higher
-    degree and then by canonical variable order. Heap entries are immutable,
-    so changed priorities create new entries and stale entries are discarded
-    when popped.
+    Colors the highest-saturation variable each step, ties broken by degree
+    then canonical order. Heap entries are immutable; stale entries are
+    discarded on pop.
     """
     index = variable_index(variables)
     colors: dict[Variable, int] = {}
@@ -186,10 +176,10 @@ def _blocks_from_colors(
 
 
 def validate_partition(model: IsingModel, partition: BlockPartition) -> None:
-    """Raise ``ValueError`` unless the partition is a valid coloring of the model.
+    """Raise ``ValueError`` unless the partition is a valid coloring.
 
-    Every variable must appear in exactly one block, and no block may contain
-    two variables joined by a nonzero coupling.
+    Each variable must appear in exactly one block; no block may contain a
+    coupled pair.
     """
     placed = [variable for block in partition.blocks for variable in block]
     if len(placed) != len(set(placed)):

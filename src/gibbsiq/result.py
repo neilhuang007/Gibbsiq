@@ -1,7 +1,7 @@
-"""Initial solver result schema.
+"""Solver result schema.
 
-Stage 1 does not implement a sampler, but downstream layers need a stable shape
-for samples, energies, traces, diagnostics, metadata, and optional dimod export.
+Stable shape for samples, energies, traces, diagnostics, metadata, and
+optional dimod export.
 """
 
 from __future__ import annotations
@@ -26,12 +26,10 @@ def normalize_result_vartype(vartype: Any) -> ResultVartype:
 
 
 def best_index(energies: Sequence[float]) -> int:
-    """Index of the minimal energy, resolving ties to the first occurrence.
+    """Index of minimal energy; ties resolve to first occurrence.
 
-    The first-minimal rule keeps ``best_sample`` / ``best_energy`` and the
-    diagnostics ``distance_to_best`` trace deterministic on degenerate optima.
-    The runtime and :class:`SampleResult` share this one definition so their
-    reported best state can never disagree.
+    Shared by the runtime and :class:`SampleResult` — keeps ``best_sample`` /
+    ``best_energy`` and ``distance_to_best`` deterministic on degenerate optima.
     """
     return min(range(len(energies)), key=energies.__getitem__)
 
@@ -63,11 +61,10 @@ def _resolve_num_states(
 
 @dataclass(frozen=True, slots=True)
 class SampleResult:
-    """Container for sampler outputs under a fixed variable order.
+    """Sampler output under a fixed variable order.
 
-    ``vartype`` covers spin and binary samples from the Ising path plus
-    CATEGORICAL samples for k-ary (Potts-style) models, whose per-variable
-    state counts are recorded in ``num_states``.
+    ``vartype``: SPIN/BINARY (Ising path) or CATEGORICAL (k-ary/Potts-style),
+    with per-variable state counts in ``num_states``.
     """
 
     samples: tuple[Mapping[Variable, int], ...]
@@ -171,7 +168,7 @@ class SampleResult:
     ) -> "SampleResult":
         """Build a result and compute energies from the canonical model."""
         normalized_vartype = normalize_vartype(vartype)
-        # __post_init__ copies each sample defensively, so only materialize here.
+        # defensive copy happens in __post_init__; just materialize the sequence here
         sample_rows = tuple(samples)
         energies = tuple(model.energy(sample, vartype=normalized_vartype) for sample in sample_rows)
         interaction_energies = tuple(

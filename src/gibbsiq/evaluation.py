@@ -1,8 +1,7 @@
 """JSON evaluator for Gibbsiq golden fixtures.
 
-The evaluator compares a candidate JSON document against the exact and
-diagnostic fixtures under ``reference/08-evaluation/fixtures`` and writes a
-machine-readable JSON report.
+Compares a candidate JSON document against exact/diagnostic fixtures under
+``reference/08-evaluation/fixtures``; writes a JSON report.
 """
 
 from __future__ import annotations
@@ -24,12 +23,10 @@ UNORDERED_LIST_KEYS = {
     "sample_counts",
 }
 
-# Per-row aliases accepted in list-shaped candidates (forms 1/2 in
-# ``normalize_candidate``): the fixture id and the payload may each arrive under
-# any of these keys, in priority order.
+# Row aliases for list-shaped candidates (normalize_candidate forms 1/2), priority order.
 _ROW_ID_KEYS = ("id", "fixture_id")
 _ROW_ACTUAL_KEYS = ("actual", "output", "result")
-# Top-level bookkeeping keys ignored when a candidate is a flat id -> output map.
+# Ignored top-level keys for flat id -> output map candidates.
 _CANDIDATE_METADATA_KEYS = frozenset({"schema_version", "metadata", "generated_by", "created_at"})
 
 
@@ -106,11 +103,10 @@ def load_fixture_sets(fixture_dir: Path, benchmark_path: Path | None = None) -> 
 
 
 def _extract_row(index: int, row: Any) -> tuple[str, Any]:
-    """Pull ``(fixture_id, actual)`` from one list-shaped candidate row.
+    """Extract ``(fixture_id, actual)`` from a list-shaped candidate row.
 
-    The id is the first truthy value among ``_ROW_ID_KEYS``; the payload is the
-    first present key among ``_ROW_ACTUAL_KEYS``, falling back to the row minus
-    its id keys.
+    id: first truthy match in ``_ROW_ID_KEYS``. actual: first present key in
+    ``_ROW_ACTUAL_KEYS``, else row minus its id keys.
     """
     if not isinstance(row, dict):
         raise ValueError(f"candidate row {index} must be an object")
@@ -124,17 +120,14 @@ def _extract_row(index: int, row: Any) -> tuple[str, Any]:
 
 
 def normalize_candidate(candidate: Any) -> dict[str, Any]:
-    """Return a mapping of fixture id to actual output.
-
-    Accepted input forms:
+    """Map fixture id to actual output. Accepted forms:
 
     1. ``{"results": [{"id": "fixture_id", "actual": {...}}]}``
     2. ``{"fixtures": [{"id": "fixture_id", "actual": {...}}]}``
     3. ``{"fixture_id": {...}, "another_fixture": {...}}``
 
-    In the list forms each row's id may use any key in ``_ROW_ID_KEYS`` and its
-    payload any key in ``_ROW_ACTUAL_KEYS``; in form 3 the top-level
-    ``_CANDIDATE_METADATA_KEYS`` are ignored.
+    List forms: id from ``_ROW_ID_KEYS``, payload from ``_ROW_ACTUAL_KEYS``.
+    Form 3: ``_CANDIDATE_METADATA_KEYS`` ignored.
     """
     if not isinstance(candidate, dict):
         raise ValueError("candidate JSON must be an object")
@@ -171,9 +164,8 @@ def compare_values(
 ) -> list[Difference]:
     """Deep-compare ``actual`` against ``expected``.
 
-    ``key`` is the mapping key under which this value was found (None at the
-    root and for list elements); it decides multiset vs ordered list comparison
-    via ``UNORDERED_LIST_KEYS``.
+    ``key`` is the enclosing mapping key (None at root / list elements);
+    selects multiset vs ordered list comparison via ``UNORDERED_LIST_KEYS``.
     """
     if isinstance(expected, bool):
         return [] if isinstance(actual, bool) and expected == actual else _mismatch(path, expected, actual)
@@ -271,11 +263,10 @@ def compare_unordered_lists(
     path: str,
     tolerance: float,
 ) -> list[Difference]:
-    """Compare an unordered multiset without discarding deep float tolerance.
+    """Compare as an unordered multiset, preserving float tolerance.
 
-    A bipartite maximum matching is used instead of greedy pairing because
-    tolerance neighborhoods can overlap.  Multiplicity is preserved and each
-    actual item can satisfy at most one expected item.
+    Bipartite maximum matching, not greedy pairing — tolerance neighborhoods
+    can overlap. Multiplicity preserved; one actual item per expected item.
     """
     if len(expected) == len(actual):
         compatible = [

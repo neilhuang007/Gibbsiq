@@ -22,11 +22,8 @@ def compile_qubo(
     metadata: Mapping[str, Any] | None = None,
     source_format: str = "qubo",
 ) -> IsingModel:
-    """Normalize a QUBO into the canonical Ising IR.
-
-    Accepted inputs are either fixture-style objects with ``linear`` and
-    ``quadratic`` fields, or a flat mapping of ``(u, v) -> coefficient`` where
-    diagonal entries are binary linear terms.
+    """QUBO -> Ising IR. Accepts {linear,quadratic,...} fixture shape or flat
+    {(u,v): coefficient} map; diagonal entries are binary linear terms.
     """
     parsed = _parse_qubo(qubo, offset=offset, variables=variables)
     order = parsed["variables"]
@@ -80,7 +77,7 @@ def compile_ising(
     metadata: Mapping[str, Any] | None = None,
     source_format: str = "ising",
 ) -> IsingModel:
-    """Normalize Ising fields and couplings into canonical variable order."""
+    """h,J -> Ising IR in canonical variable order."""
     parsed = _parse_ising(h, J, offset=offset, variables=variables)
     model_metadata = dict(metadata or {})
     model_metadata.update(
@@ -103,11 +100,8 @@ def compile_ising(
 
 
 def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> IsingModel:
-    """Normalize a dimod-style BinaryQuadraticModel into the canonical Ising IR.
-
-    The function has no hard dependency on dimod. If the object exposes
-    ``to_ising()``, that method is used. Otherwise, a duck-typed object with
-    ``linear``, ``quadratic``, ``offset``, and ``vartype`` attributes is accepted.
+    """BQM -> Ising IR. Uses to_ising() if present; else duck-types
+    linear/quadratic/offset/vartype attributes. No hard dimod dependency.
     """
     model_metadata = dict(metadata or {})
     model_metadata["source_format"] = "bqm"
@@ -173,7 +167,7 @@ def _with_bqm_provenance(
     bqm_vartype: str,
     input_offset: float,
 ) -> IsingModel:
-    """Reassert source-BQM provenance after the shared Ising/QUBO conversion."""
+    """Re-stamps BQM provenance metadata after Ising/QUBO conversion."""
     metadata = dict(model.metadata)
     metadata.update(
         {
@@ -212,8 +206,7 @@ def _parse_qubo(
         linear = {}
         term_items = qubo.items()
 
-    # Binary diagonal entries (u == u) are linear terms; off-diagonal entries are
-    # accumulated as-is and canonicalized once in _finish -> _normalize_pairs.
+    # Diagonal (u==u) -> linear term; off-diagonal accumulated, canonicalized in _finish/_normalize_pairs.
     quadratic: dict[tuple[Variable, Variable], float] = {}
     for key, value in term_items:
         left, right = _parse_pair_key(key)
@@ -258,12 +251,8 @@ def _parse_ising(
 
 
 def _is_structured_model(value: Mapping[Any, Any]) -> bool:
-    """Distinguish schema containers from flat models with reserved-word labels.
-
-    A scalar variable named ``"linear"`` or ``"offset"`` is valid.  Treat the
-    mapping as structured only when at least one schema field has the container
-    shape that the structured representation requires.  An offset-only model
-    remains expressible as ``{"linear": {}, "offset": value}``.
+    """True if mapping uses the structured {linear,quadratic,variables} schema,
+    not a flat term map (a variable literally named "linear" stays valid).
     """
     return (
         isinstance(value.get("linear"), Mapping)
@@ -278,14 +267,11 @@ def _finish(
     quadratic: Mapping[tuple[Variable, Variable], float],
     offset: float,
 ) -> dict[str, Any]:
-    """Resolve variable order and normalize the parsed terms into the parse result.
-
-    Shared tail of ``_parse_qubo`` and ``_parse_ising``; the two parsers differ
-    only in how each routes diagonal terms (QUBO -> linear, Ising -> offset).
+    """Shared tail of _parse_qubo/_parse_ising: resolves variable order,
+    normalizes parsed terms.
     """
     order = _resolve_variables(raw_variables, linear, quadratic)
-    # Linear stays sparse here: consumers read it with .get(variable, 0.0) and
-    # IsingModel.__post_init__ owns densification plus the finite check.
+    # Sparse here; IsingModel.__post_init__ densifies + finite-checks.
     return {
         "variables": order,
         "linear": dict(linear),
@@ -335,7 +321,7 @@ def _variables_from_bqm(bqm: Any) -> tuple[Variable, ...] | None:
 
 
 def _vartype_name(bqm: Any) -> str:
-    """Human-readable vartype label from a dimod-style object (its enum ``.name``)."""
+    """Vartype label from bqm.vartype.name (or the raw value)."""
     vartype = getattr(bqm, "vartype", "unknown")
     return str(getattr(vartype, "name", vartype))
 
@@ -360,8 +346,7 @@ def _normalize_pairs(
                 key=lambda item: (variable_sort_key(item[0][0]), variable_sort_key(item[0][1])),
             )
         )
-    # _resolve_variables has already validated every pair member, so the index
-    # lookup cannot miss here.
+    # Safe: _resolve_variables already validated pair members exist in index.
     return dict(sorted(normalized.items(), key=lambda item: (index[item[0][0]], index[item[0][1]])))
 
 
@@ -379,7 +364,7 @@ def _ordered_pair(
     right: Variable,
     index: Mapping[Variable, int] | None,
 ) -> tuple[Variable, Variable]:
-    """Order a pair by ``index`` position, or by ``variable_sort_key`` when unindexed."""
+    """Orders pair by index position, or by variable_sort_key when unindexed."""
     if index is None:
         return (left, right) if variable_sort_key(left) <= variable_sort_key(right) else (right, left)
     return (left, right) if index[left] < index[right] else (right, left)
