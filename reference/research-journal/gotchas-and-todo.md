@@ -34,6 +34,11 @@ this file tracks what is open, the journal records what was done.
 - **Citing a tool as a source.** Record the primary reference with an identifier
   (arXiv, DOI, `file:line`, a repository commit), not the search or extraction tool
   that surfaced it.
+- **Treating generated Markdown as a faithful paper transcription.** A sentence-level audit of
+  the Jelinčič derivative found invented circuitry and unit errors of at least 6 to 12 orders
+  of magnitude. The primary PDF is authoritative; every derivative declares its provenance,
+  and quantitative claims carry a PDF page or equation
+  (`2026-07-11-primary-source-integrity-audit.md`).
 
 ## Engineering gotchas
 
@@ -115,11 +120,17 @@ Benchmarks and scoring (`2026-05-31-ground-truth-test-set.md`):
 By stage (status source: `reference/00-roadmap/README.md` and the journal
 follow-up sections):
 
-- **Stage 2 exit criterion — parallel tempering execution.** Code for opt-in
-  PT landed on 2026-07-04, with cold-slot samples, swap traces, and per-beta
-  energy traces. The exit criterion remains open until the optional THRML
-  runtime tests run in an environment with `thrml` installed and pass. Upstream
-  composition point: THRML PR #30 (beta-ladder / sampler abstraction).
+- **Stage 2 exit criterion - parallel tempering execution.** Opt-in PT code and traces exist.
+  The 2026-07-11 audit found correctness defects in the exchange and transition flow. The exit
+  criterion remains open until targeted PT invariants and the full optional THRML suite pass
+  after correction. Upstream composition point: THRML PR #30 (beta-ladder / sampler
+  abstraction).
+- **Stage 3 semantic criterion - estimator thresholds and flag taxonomy.** The existing
+  ESS/R-hat formulas retain their external cross-checks. Raw-energy Geyer ESS lacks
+  rank-normalized bulk/tail ESS, so the corrective patch removes the rank-normalized
+  `ESS > 400` recommendation from its flags. It also names occupancy efficiency accurately
+  and separates constant/progress observations from sampler-failure flags. The criterion
+  closes after focused fixtures and full-suite verification.
 - **Stage 1 bridge gap — penalty / one-hot encoding layer.** Knapsack and TSP
   fixtures raise `NotImplementedError` in `benchmark_bridge.py` until this exists;
   the diagnostics `constraints` section reports `{"status": "not_available"}`

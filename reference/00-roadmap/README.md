@@ -1,6 +1,6 @@
 # Roadmap
 
-## Status (updated 2026-07-02)
+## Status (updated 2026-07-11)
 
 The roadmap is THRML-first. Gibbsiq is the optimization infrastructure and trust layer above
 THRML. Diagnostics, dimod compatibility, and baseline adapters exist to make THRML-backed
@@ -14,24 +14,23 @@ changing the THRML-first execution target. The 2026-07-01 positioning decision i
 | Stage | Title | Status |
 | --- | --- | --- |
 | 0 | [Research and framing](stage-00-research-and-framing.md) | Complete — research pack, evaluator, strict benchmark oracle, ground-truth corpus |
-| 1 | [Core model compatibility](stage-01-core-model-compatibility.md) | Complete (2026-06-01) — `compile_qubo`/`compile_ising`/`compile_bqm`, Ising IR, `SampleResult`; 55 tests passed at completion; current suite has 149 tests |
-| 2 | [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Complete (2026-07-01) — `THRMLSampler`, audited lowering, deterministic DSATUR graph-coloring blocks, schedule/seed/init control, vmapped multi-chain traces, independent energy recomputation, exhaustive small-instance validation; remaining: parallel-tempering execution |
-| 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Complete (2026-07-02; SOTA-aligned 2026-07-03) — `src/gibbsiq/diagnostics.py` (pure stdlib): Geyer ESS/tau and split R-hat cross-validated against arviz (486 cases, `1e-9`) and an R-`posterior` reference (`4.9e-15` worst rel. err.), rank-normalized + folded split R-hat under separate keys (EVAL-EQ-013, arviz `method="rank"` parity at machine precision), magnetization chain-disagreement wiring closing the equal-energy double-well blind spot, diversity/energy/chain sections, family-scoped failure flags, thresholds echo, magnetization and distance-to-best traces, every `sample()` call embeds the payload; 4 new golden fixtures with a mutation-kill matrix |
+| 1 | [Core model compatibility](stage-01-core-model-compatibility.md) | Complete (2026-06-01) - `compile_qubo`/`compile_ising`/`compile_bqm`, Ising IR, and `SampleResult` |
+| 2 | [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Core complete; PT exit criterion under corrective audit (2026-07-11) - fixed-beta lowering, deterministic DSATUR blocks, schedule/seed/init control, multi-chain traces, independent energy recomputation, and small-instance validation are implemented; PT requires targeted and full-suite re-verification |
+| 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Implemented; corrective semantic audit awaiting full verification (2026-07-11) - stdlib Geyer ESS/tau and split R-hat retain their arviz/R cross-checks; the patch removes the unsupported raw-ESS threshold, reports occupancy efficiency accurately, and separates observations from failures; rank-normalized bulk/tail ESS remains future work |
 | 4 | [Inspector and reporting](stage-04-inspector-and-reporting.md) | Pending |
 | 5 | [Baselines and benchmarks](stage-05-baselines-and-benchmarks.md) | Pending |
 | 6 | [Adaptive hardware-aware runtime](stage-06-adaptive-hardware-runtime.md) | Pending |
 
-Progress follows the staged order. Stages 0–3 are complete. Stage 3 (diagnostics) landed on
-2026-07-02: every THRML run emits the full telemetry payload, synthetic failure fixtures
-trigger their expected flags, and the ESS/R-hat implementations are anchored to external
-references (journal: `2026-07-02-stage-03-diagnostics-pipeline.md`). The 2026-07-03
-validation sweep characterized and same-day closed two blind spots — variance-only chain
-disagreement (rank-normalized + folded split R-hat, EVAL-EQ-013) and equal-energy
-double-well trapping (magnetization chain-disagreement wiring) — with all frozen goldens
-bit-identical (journal: `2026-07-03-stage-03-sota-alignment.md`). Stage 4 (inspector and
-reporting) is the current target. Parallel-tempering execution remains the open Stage 2 exit
-criterion; when it lands, diagnostics move to per-constant-beta segments per the EVAL-EQ-007
-stationarity contract.
+Progress follows the staged order. Stages 0-3 have implemented core deliverables. Stage 3
+diagnostics emit telemetry and its ESS/R-hat formulas retain external cross-checks (journals:
+`2026-07-02-stage-03-diagnostics-pipeline.md` and
+`2026-07-03-stage-03-sota-alignment.md`). The 2026-07-11 corrective patch removes the
+rank-normalized threshold from raw-energy ESS, reports occupancy efficiency under an accurate
+name, and separates observable/progress statuses from sampler-failure flags. Full-suite
+verification remains pending, and rank-normalized bulk/tail ESS is absent.
+Stage 4 reporting remains pending. Parallel-tempering code is present, but the same audit keeps
+the Stage 2 exit criterion open until corrected exchange and transition behavior pass targeted
+invariants and the full optional THRML suite.
 
 Stage 1 carry-over items, tracked in the journal and not blocking Stage 2: hidden-style
 metamorphic tests (variable relabel, offset shift, spin-gauge), a `to_qubo()` reverse
@@ -69,4 +68,3 @@ stages:
 
 These items support the THRML-first direction and the independent-verification moat; they are
 sequenced opportunistically rather than gated on the Stage 2-6 order.
-

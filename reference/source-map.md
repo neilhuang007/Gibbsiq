@@ -1,6 +1,8 @@
 # Source Map
 
-This file lists the most useful references from the first Tavily research pass. Prefer official docs, primary papers, and source repositories over secondary summaries.
+This file lists the repository's most useful research sources. Prefer official documentation,
+primary papers, and source repositories over secondary summaries, and record the date and
+scope of current-source checks.
 
 ## THRML / Extropic
 
@@ -15,16 +17,18 @@ This file lists the most useful references from the first Tavily research pass. 
 - Extropic thermodynamic computing essay: http://extropic.ai/writing/thermodynamic-computing-from-zero-to-one
 - Extropic/THRML cited hardware architecture paper: https://arxiv.org/abs/2510.23972
 - Local paper PDF: `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.pdf`
-- Local cleaned transcript: `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.md`
+- Local verified source guide and withdrawal notice:
+  `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.md`
 - Local lab note: `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.note.md`
-- Tavily re-check on 2026-06-14 confirmed the paper describes THRML as a JAX/XLA simulation
-  library for hardware EBMs and Extropic's essay describes `thrml` as a way to develop
-  algorithms for TSUs before hardware availability. Do not convert those sources into a
-  QUBO speedup claim without Gibbsiq benchmark evidence.
+- Primary-source re-check on 2026-07-11 confirmed that the paper evaluates a GPU simulator of
+  a future device and uses a physical model for system energy. THRML's official getting-started
+  guide calls the public library a JAX-based GPU simulator for programs intended for future
+  Extropic hardware. These sources do not establish a QUBO speedup or a production TSU result.
 
 ## QUBO / BQM / Formulation APIs
 
 - dimod docs: https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod/
+- dimod ESS docs: https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod/ess.html
 - `dimod.Sampler.sample`: https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod/generated/dimod.Sampler.sample.html
 - dimod repository: https://github.com/dwavesystems/dimod
 - dimod repository license/currentness checked 2026-05-28: Apache-2.0, pushed 2026-05-14.

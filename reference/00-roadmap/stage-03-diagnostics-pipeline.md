@@ -1,11 +1,14 @@
 # Stage 3 - Diagnostics Pipeline
 
-**Status: complete (2026-07-02).** Implemented in `src/gibbsiq/diagnostics.py` and wired
-into `THRMLSampler.sample`; audited in EVAL-EQ-007/008/011/012; journaled in
-`reference/research-journal/2026-07-02-stage-03-diagnostics-pipeline.md`. The constraint
-feasibility summary reports `not_available` until the penalty/one-hot encoding layer exists,
-and the unpenalized-objective trace waits on the same layer. When parallel tempering lands
-(open Stage 2 exit criterion), diagnostics move to per-constant-beta segments.
+**Status: implemented; corrective semantic audit open (2026-07-11).** The pipeline is
+implemented in `src/gibbsiq/diagnostics.py` and wired into `THRMLSampler.sample`; the recorded
+ESS/R-hat formula cross-checks remain valid. The corrective patch removes the unsupported
+raw-ESS threshold, reports occupancy efficiency under an accurate name, and separates
+finite-support or constant-objective observations from sampler failures; full-suite
+verification remains pending. Rank-normalized bulk/tail ESS remains absent. The constraint
+feasibility summary reports `not_available`
+until the penalty/one-hot encoding layer exists, and the unpenalized-objective trace waits on
+the same layer.
 
 ## Goal
 
@@ -34,6 +37,10 @@ optimality; exact or independently verified oracles do that for benchmark instan
 - Diagnostics serialize into result artifacts.
 - Diagnostics consume the raw samples and traces emitted by Stage 2 without rerunning the
   sampler.
+- Thresholds name and match their estimator variant; raw-energy ESS does not use the
+  rank-normalized bulk/tail ESS recommendation.
+- Observable and progress statuses are separated from sampler-failure flags on flat objectives
+  and fully explored small state spaces.
 
 ## Implementation Notes
 

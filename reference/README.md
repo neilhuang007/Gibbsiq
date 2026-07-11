@@ -1,6 +1,6 @@
 # Reference Index
 
-Research snapshot: 2026-06-14.
+Research snapshot: 2026-07-11.
 
 ## Start Here
 
@@ -29,20 +29,22 @@ Research snapshot: 2026-06-14.
   (arXiv) by [`tools/build_references.py`](../tools/build_references.py). Cite by
   BibTeX key; do not hand-type bibliographies. Regenerate, don't hand-edit.
 - Each paper under `<section>/papers/` carries up to three files:
-  - `<slug>.md` — the cleaned, faithful transcription (with a citation header
-    pointing back to `references.bib`).
+  - `<slug>.md` - a checked reading guide, source-derived text, or a clearly labeled
+    withdrawal notice. Its provenance statement defines which of these it is.
   - `<slug>.note.md` — a Gibbsiq "lab note": what the paper does and how it links
     to the project's layers and conventions.
-  - `<slug>.transcript.md` — where present, the raw `pdftotext` provenance dump
-    (frontmatter-stamped; not authoritative — see the equation audit).
+  - `<slug>.transcript.md` - where present, the raw `pdftotext` provenance dump
+    (frontmatter-stamped; not authoritative - see the equation audit).
 - [`tools/verify_citation.py`](../tools/verify_citation.py) resolves a single DOI
   or arXiv id on demand; [`tools/transcribe_pdf.py`](../tools/transcribe_pdf.py)
-  re-extracts faithful text from any PDF.
+  extracts text from a PDF for comparison. Extraction does not establish transcription
+  fidelity; page-scoped claims still require comparison with the PDF.
 
 ## Rules for Future Agents
 
 - Prefer primary sources: official docs, papers, source repos.
-- Use [the equation audit](08-evaluation/equation-audit.md) for math; raw PDF transcripts are not authoritative.
+- Use [the equation audit](08-evaluation/equation-audit.md) for math; local Markdown
+  derivatives and raw PDF transcripts cannot override the primary PDF.
 - Run or preserve [evaluation fixtures](08-evaluation/fixtures/README.md) before changing conventions.
 - Keep docs short and implementation-oriented.
 - Record assumptions and sign conventions.

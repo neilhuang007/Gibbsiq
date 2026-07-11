@@ -1,23 +1,15 @@
 """Independent ground-truth tests for ``src/gibbsiq/diagnostics.py`` (Stage 3).
 
-``test_diagnostics_arviz_crosscheck.py`` pins agreement with arviz's own
-algorithm. This file does not lean on arviz (or numpy) at all: every
-expectation here comes from statistical theory (closed-form AR(1)
-autocorrelation time, iid sample-size recovery), hand-derived arithmetic
-worked out in comments, or brute-force stdlib recomputation of the same
-quantity by a structurally different code path (e.g. an explicit O(R^2)
-pairwise loop standing in for the count-weighted diversity formula). Every
-random draw goes through a seeded ``random.Random`` instance so runs are
-deterministic. Standard library only: ``unittest``, ``random``, ``math``.
+Unlike ``test_diagnostics_arviz_crosscheck.py``, this file avoids arviz and numpy
+entirely: expectations come from closed-form statistical theory, hand-derived
+arithmetic worked out in comments, or brute-force stdlib recomputation through a
+structurally different code path. All random draws use a seeded ``random.Random``
+for determinism. Stdlib only (``unittest``, ``random``, ``math``).
 
-Where a scenario is a documented limitation of the plain (non-rank-normalized,
-non-folded) split R-hat variant (EVAL-EQ-007), or a known gap in energy-only
-diagnostics versus raw state traces, the test says so in a comment. Both
-characterized blind spots were closed on 2026-07-03: the rank-normalized +
-folded variant (EVAL-EQ-013) now reports under separately named keys and the
-magnetization trace feeds chain-disagreement (EVAL-EQ-007 wiring); the
-formerly-flipping characterization tests below were flipped accordingly while
-the plain `rhat` key keeps its original, deliberately blind semantics.
+The rank-normalized + folded R-hat variant (EVAL-EQ-013) and the magnetization
+chain-disagreement wiring (EVAL-EQ-007) both landed 2026-07-03; tests below that
+exercise those paths are noted inline. The plain `rhat` key retains its original,
+deliberately mean-only semantics.
 """
 
 from __future__ import annotations
@@ -39,6 +31,7 @@ from gibbsiq.diagnostics import (  # noqa: E402
     diversity_flags,
     diversity_section,
     energy_flags,
+    energy_observations,
     energy_section,
     ess_mean,
     magnetization_trace,
@@ -65,37 +58,22 @@ def generate_ar1_chains(seed: int, phi: float, num_chains: int, num_draws: int) 
 
 
 class Ar1AutocorrelationTimeTheoryTests(unittest.TestCase):
-    """Theoretical integrated autocorrelation time under the project's
-    convention (EVAL-EQ-008: tau = 1 + 2 * sum_k rho_k) for an AR(1) process
-    with rho_k = phi**k is a geometric series:
+    """Pins Geyer tau_hat against the closed-form AR(1) autocorrelation time."""
 
-        tau_theory = 1 + 2 * sum_{k=1..inf} phi**k = 1 + 2*phi/(1-phi)
-                   = (1 - phi + 2*phi) / (1 - phi) = (1 + phi) / (1 - phi)
-
-    This is independent of arviz and independent of the Geyer truncation
-    machinery under test; it is closed-form statistics.
-
-    A SINGLE realization's tau_hat has non-trivial sampling variance,
-    especially near phi=0.9 (slow decay makes the long-lag rho_hat terms
-    noisy): an empirical 8-seed sweep at this file's exact configuration
-    gave tau_hat ranging 17.8-23.7 around the true 19.0, i.e. individual
-    draws routinely miss a 15% band. Averaging several independent seeded
-    replicates (still fully deterministic) is the standard way to compare a
-    noisy point estimator against its theoretical target, and is more
-    honest than either inflating the tolerance until any single draw passes
-    or silently hand-picking one lucky seed.
-    """
-
+    # EVAL-EQ-008: tau = 1 + 2*sum_k rho_k. For AR(1) with rho_k = phi**k this
+    # geometric series collapses to tau_theory = (1 + phi) / (1 - phi).
     def _mean_tau_hat(self, phi: float, num_chains: int, num_draws: int, seeds: range) -> float:
+        # A single realization's tau_hat is noisy (near phi=0.9, an 8-seed
+        # sweep ranged 17.8-23.7 around the true 19.0), so average several
+        # seeded replicates rather than tolerate one lucky/unlucky draw.
         tau_hats = []
         for seed in seeds:
             chains = generate_ar1_chains(seed=seed, phi=phi, num_chains=num_chains, num_draws=num_draws)
             result = ess_mean(chains)
             self.assertEqual(result["autocorrelation_status"], "ok")
-            # size/tau_hat consistency holds for EVERY replicate individually:
             # split doubles the chain count and halves the per-chain draw
-            # count, so size = (2*num_chains) * (num_draws//2). This is an
-            # algebraic identity of the estimator, not a statistical claim.
+            # count: size = (2*num_chains) * (num_draws//2). Algebraic
+            # identity of the estimator, holds per-replicate exactly.
             expected_ess = (2 * num_chains) * (num_draws // 2) / result["tau_hat"]
             self.assertAlmostEqual(result["ess"], expected_ess, places=9)
             tau_hats.append(result["tau_hat"])
@@ -140,10 +118,8 @@ class IidSampleSizeRecoveryTests(unittest.TestCase):
         self.assertEqual(chain_flags(chain_section(chains)), [])
 
     def test_ess_close_to_sample_size_for_iid_binary_spins(self) -> None:
-        # Discrete +-1 traces (heavy ties) mimic a spin/energy trace far from
-        # the continuous-Gaussian case the Geyer algorithm is usually
-        # exercised on; this pins that mean-ESS still behaves for two-valued
-        # data.
+        # Discrete +-1 traces (heavy ties) stand in for a real spin/energy
+        # trace, far from the continuous-Gaussian case Geyer is usually run on.
         rng = random.Random(20260703_04)
         num_chains, num_draws = 4, 2000
         chains = [[rng.choice([-1.0, 1.0]) for _ in range(num_draws)] for _ in range(num_chains)]
@@ -242,19 +218,15 @@ class SplitRhatMeanShiftedChainsTests(unittest.TestCase):
 
 
 class VarianceOnlyDisagreementTests(unittest.TestCase):
-    def test_variance_only_disagreement_caught_by_rank_normalized_rhat(self) -> None:
-        # FLIPPED 2026-07-03 (was
-        # test_plain_rhat_blind_to_variance_only_disagreement_known_limitation)
-        # when the EVAL-EQ-013 rank-normalized + folded variant landed. The
-        # plain split R-hat (EVAL-EQ-007) remains blind by design: it compares
-        # between-chain MEAN disagreement (B) against within-chain variance
-        # (W), and all four chains share mean 0.0 while differing only in
-        # SCALE (sd 0.1 vs sd 10.0) — that blindness is still pinned below
-        # because the plain `rhat` key must never change meaning. The folded
-        # component of the rank-normalized variant converts the scale
-        # difference into a location difference, so the separately named
-        # `rank_normalized_rhat` key exceeds the threshold and
-        # chain_disagreement now fires through the rank path.
+    def test_rank_rhat_catches_variance_only_disagreement(self) -> None:
+        # All four chains share mean 0.0, differing only in scale (sd 0.1 vs
+        # 10.0). Plain split R-hat (EVAL-EQ-007) compares mean disagreement
+        # (B) against within-chain variance (W), so it stays blind to this by
+        # design — pinned below since the plain `rhat` key must never change
+        # meaning. The rank-normalized variant's folded component converts
+        # the scale difference into a location difference, so
+        # `rank_normalized_rhat` exceeds threshold and chain_disagreement
+        # fires through the rank path instead.
         rng = random.Random(20260703_09)
         chains = [
             [rng.gauss(0.0, 0.1) for _ in range(500)],
@@ -281,37 +253,38 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
     SAMPLES = [{"a": 1, "b": 1}] * 50 + [{"a": -1, "b": -1}] * 50
     VARIABLES = ["a", "b"]
 
-    def test_identical_constant_chains_blind_spot_without_magnetization(self) -> None:
-        # Synthetic double-well characterization: two chains are each frozen
-        # in a DIFFERENT degenerate ground state that happens to carry the
-        # SAME energy. Energy-only R-hat is blind to this because the energy
-        # trace itself is constant and identical across chains -- only the
-        # raw magnetization/state trace exposes the disagreement. Without
-        # magnetization_chains the payload therefore must NOT claim
-        # disagreement; the closing wiring is exercised in the companion
-        # test below.
+    def test_identical_constant_chains_report_healthy_rhat(self) -> None:
+        # Double-well setup: two chains are each frozen in a DIFFERENT
+        # degenerate ground state that happens to carry the SAME energy.
+        # Energy-only R-hat can't see this (the energy trace is constant and
+        # identical across chains) -- only the raw magnetization/state trace
+        # exposes it. Without magnetization_chains supplied, the payload must
+        # not claim disagreement; see the companion test below for the fix.
         payload = compute_diagnostics(
             energy_chains=self.ENERGY_CHAINS, samples=self.SAMPLES, variables=self.VARIABLES
         )
 
         self.assertNotIn("chain_disagreement", payload["flags"])
-        self.assertIn("zero_energy_variance", payload["flags"])
-        self.assertIn("zero_within_chain_variance", payload["flags"])
-        self.assertIn("low_diversity", payload["flags"])
+        self.assertNotIn("zero_energy_variance", payload["flags"])
+        self.assertNotIn("zero_within_chain_variance", payload["flags"])
+        self.assertNotIn("low_diversity", payload["flags"])
+        self.assertCountEqual(
+            payload["observations"],
+            ["no_recent_improvement", "zero_energy_variance", "zero_within_chain_variance"],
+        )
         self.assertNotIn("mode_collapse", payload["flags"])
         self.assertEqual(payload["diversity"]["unique_states"], 2)
         self.assertEqual(payload["chains"]["rhat_status"], "undefined_constant_trace")
         self.assertEqual(payload["chains"]["rank_normalized_rhat_status"], "undefined_constant_trace")
         self.assertNotIn("magnetization", payload["chains"])
 
-    def test_magnetization_wiring_closes_the_equal_energy_blind_spot(self) -> None:
-        # LANDED 2026-07-03 (EVAL-EQ-007 magnetization wiring): the same
-        # payload with the per-chain magnetization trace supplied now fires
-        # chain_disagreement through the chains.magnetization subsection —
-        # chain 0 sits at constant magnetization +1 and chain 1 at -1, the
-        # zero-within-variance (infinite R-hat) path. The energy-family
-        # constant-trace flags are unchanged: magnetization contributes ONLY
-        # chain_disagreement.
+    def test_magnetization_wiring_fires_chain_disagreement(self) -> None:
+        # Same payload as above but with the per-chain magnetization trace
+        # supplied (EVAL-EQ-007 wiring, landed 2026-07-03): chain 0 sits at
+        # constant magnetization +1 and chain 1 at -1, the zero-within-variance
+        # (infinite R-hat) path, so chain_disagreement now fires through
+        # chains.magnetization. Energy-family constant-trace flags are
+        # unchanged -- magnetization contributes only chain_disagreement.
         magnetization_chains = [[1.0] * 50, [-1.0] * 50]
         payload = compute_diagnostics(
             energy_chains=self.ENERGY_CHAINS,
@@ -327,18 +300,22 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
             magnetization["rank_normalized_rhat_status"],
             "undefined_or_infinite_zero_within_variance",
         )
-        # Energy-family flags are untouched by the magnetization subsection.
-        self.assertIn("zero_energy_variance", payload["flags"])
-        self.assertIn("zero_within_chain_variance", payload["flags"])
+        # Energy-family observations are untouched by the magnetization subsection.
+        self.assertNotIn("zero_energy_variance", payload["flags"])
+        self.assertNotIn("zero_within_chain_variance", payload["flags"])
+        self.assertCountEqual(
+            payload["observations"],
+            ["no_recent_improvement", "zero_energy_variance", "zero_within_chain_variance"],
+        )
         self.assertNotIn("mode_collapse", payload["flags"])
         self.assertEqual(payload["chains"]["rhat_status"], "undefined_constant_trace")
 
-    def test_frozen_same_well_magnetization_adds_no_disagreement(self) -> None:
-        # Control for the wiring: a sampler frozen in ONE state produces
+    def test_frozen_same_well_no_disagreement(self) -> None:
+        # Control for the wiring above: a sampler frozen in ONE state produces
         # identical constant magnetization chains, which must map to the
-        # constant-trace status, never to chain_disagreement. The residual
-        # all-chains-in-one-well trap stays invisible to every within-sample
-        # diagnostic (EVAL-EQ-007 honest-caveat note).
+        # constant-trace status, never to chain_disagreement. A sampler stuck
+        # in a single well this way stays invisible to any within-sample
+        # diagnostic -- there is no cross-chain signal to detect it.
         payload = compute_diagnostics(
             energy_chains=self.ENERGY_CHAINS,
             samples=[{"a": 1, "b": 1}] * 100,
@@ -350,7 +327,7 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
 
 
 class RankNormalizedRhatHandComputedTests(unittest.TestCase):
-    def test_tied_alternating_chains_exact_value_and_folded_collapse(self) -> None:
+    def test_tied_alternating_chains_folded_collapse(self) -> None:
         # Fully hand-derivable EVAL-EQ-013 case exercising ties, the Blom
         # backtransform symmetry, and the folded-collapse rule at once.
         # chains = [[1,2,1,2],[1,2,1,2]] -> split: four chains, each [1,2].
@@ -372,11 +349,11 @@ class RankNormalizedRhatHandComputedTests(unittest.TestCase):
         self.assertAlmostEqual(result["rank_normalized_rhat_bulk"], math.sqrt(0.5), places=12)
         self.assertIsNone(result["rank_normalized_rhat_folded"])
 
-    def test_shifted_tied_chains_match_hand_derived_rank_arithmetic(self) -> None:
+    def test_shifted_tied_chains_match_rank_arithmetic(self) -> None:
         # chains = [[1,2,1,2],[3,4,3,4]] -> split chains [1,2],[3,4],[1,2],[3,4].
         # Pooled: two of each value 1,2,3,4 (S=8); average-tie ranks
         #   1 -> 1.5, 2 -> 3.5, 3 -> 5.5, 4 -> 7.5.
-        # The expectation below recomputes bulk/folded from these HAND-LISTED
+        # The expectation below recomputes bulk/folded from these hand-listed
         # ranks through the audited EVAL-EQ-007 core -- a code path that
         # never touches the ranking/median machinery under test.
         from statistics import NormalDist
@@ -409,16 +386,14 @@ class RankNormalizedRhatHandComputedTests(unittest.TestCase):
 
 class RankNormalizedRhatInvarianceTests(unittest.TestCase):
     def test_bulk_invariant_under_strictly_monotone_transform(self) -> None:
-        # The defining property of rank normalization (Vehtari et al. 2021):
-        # any strictly increasing transform preserves the pooled ranks, hence
-        # the z-scores, hence the BULK component BIT-FOR-BIT. The FOLDED
-        # component is deliberately excluded from this claim: folding takes
-        # |x - median(x)| on the RAW scale before re-ranking, and a nonlinear
-        # transform like exp() moves points asymmetrically around the median,
-        # so folded values re-rank differently -- true of arviz and the paper
-        # by construction, not a Gibbsiq deviation. The plain split R-hat has
-        # no invariance at all, which is exactly why the variants live under
-        # separate keys.
+        # Defining property of rank normalization (Vehtari et al. 2021): any
+        # strictly increasing transform preserves the pooled ranks, hence the
+        # z-scores, hence the bulk component bit-for-bit. Folded is exempt:
+        # it takes |x - median(x)| on the raw scale before re-ranking, and a
+        # nonlinear transform like exp() moves points asymmetrically around
+        # the median, so folded values re-rank differently -- true of arviz
+        # and the paper by construction. Plain split R-hat has no invariance
+        # at all, which is why the variants live under separate keys.
         rng = random.Random(20260703_13)
         chains = [[rng.gauss(0.0, 1.0) for _ in range(200)] for _ in range(4)]
         transformed = [[math.exp(value) for value in chain] for chain in chains]
@@ -432,18 +407,17 @@ class RankNormalizedRhatInvarianceTests(unittest.TestCase):
         plain_after = split_rhat(transformed)["rhat"]
         self.assertGreater(abs(plain_original - plain_after), 1e-12)
 
-    def test_all_components_invariant_under_positive_affine_transform(self) -> None:
+    def test_all_components_invariant_under_affine_transform(self) -> None:
         # Affine maps commute with the median and scale |x - median|
-        # uniformly, so ranks of both the raw and the folded draws are
-        # preserved and EVERY key must match. The data and coefficients here
-        # are small integers so every operation is exact in floating point:
-        # with CONTINUOUS data the invariance holds only up to an inherent
-        # knife-edge of the published algorithm (arviz included) -- the
-        # pooled split count is always even, the median is the average of
-        # the two middle order statistics, and those two draws fold to
-        # exactly equidistant values whose bit-exact tie is rounding-luck.
-        # Verified empirically: a gaussian seed under x -> 3.5x - 11 flips
-        # exactly that one tie and shifts the folded component by 4e-6.
+        # uniformly, so ranks of both raw and folded draws are preserved and
+        # every key must match. Small integer data/coefficients keep every
+        # operation exact in floating point: with continuous data the
+        # invariance holds only up to a knife-edge in the published algorithm
+        # (arviz included) -- the pooled split count is always even, the
+        # median averages the two middle order statistics, and those two
+        # draws fold to exactly equidistant values whose bit-exact tie is
+        # rounding-luck. Verified empirically: a gaussian seed under
+        # x -> 3.5x - 11 flips exactly that one tie and shifts folded by 4e-6.
         rng = random.Random(20260703_15)
         chains = [[float(rng.choice((0, 1, 2, 3, 5))) for _ in range(200)] for _ in range(4)]
         transformed = [[2.0 * value + 7.0 for value in chain] for chain in chains]
@@ -462,20 +436,19 @@ class RankNormalizedRhatDegenerateStatusTests(unittest.TestCase):
         self.assertEqual(result["rank_normalized_rhat_status"], "undefined_constant_trace")
         self.assertIsNone(result["rank_normalized_rhat"])
 
-    def test_chains_constant_at_distinct_values_report_zero_within_variance(self) -> None:
+    def test_distinct_constant_values_zero_within_variance(self) -> None:
         result = rank_normalized_split_rhat([[1.0] * 10, [2.0] * 10])
         self.assertEqual(result["rank_normalized_rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertIsNone(result["rank_normalized_rhat"])
 
-    def test_folded_infinite_scale_disagreement_reports_zero_within_variance(self) -> None:
-        # Extreme variance-only disagreement: both chains alternate
-        # symmetrically around the pooled median 0 with different amplitudes,
-        # so the folded trace is constant WITHIN each chain (1 vs 3) while
-        # differing BETWEEN chains -> folded W = 0 with B > 0, the infinite
-        # folded R-hat. Bulk is well defined (all chain means sit at rank
-        # center), so the bulk key stays numeric per EVAL-EQ-013 while the
-        # combined value is None under the zero-within-variance status, and
-        # chain_disagreement fires.
+    def test_folded_scale_disagreement_zero_within_variance(self) -> None:
+        # Both chains alternate symmetrically around the pooled median 0 with
+        # different amplitudes, so the folded trace is constant WITHIN each
+        # chain (1 vs 3) while differing BETWEEN chains -> folded W = 0 with
+        # B > 0, the infinite folded R-hat. Bulk stays numeric (all chain
+        # means sit at rank center) per EVAL-EQ-013, so the combined value is
+        # None under the zero-within-variance status, and chain_disagreement
+        # fires.
         chains = [[-1.0, 1.0] * 10, [-3.0, 3.0] * 10]
         result = rank_normalized_split_rhat(chains)
         self.assertEqual(result["rank_normalized_rhat_status"], "undefined_or_infinite_zero_within_variance")
@@ -489,7 +462,7 @@ class RankNormalizedRhatDegenerateStatusTests(unittest.TestCase):
 
 
 class RankNormalizedRhatRecoveryTests(unittest.TestCase):
-    def test_iid_gaussian_and_heavy_tie_binary_chains_report_healthy_values(self) -> None:
+    def test_gaussian_binary_chains_report_healthy_rhat(self) -> None:
         # Healthy-run control including the discrete regime this project
         # actually lives in: a two-valued (+-1) iid trace is MAXIMALLY tied,
         # and average-tie ranking must still deliver a near-1 value rather
@@ -503,7 +476,7 @@ class RankNormalizedRhatRecoveryTests(unittest.TestCase):
             self.assertLess(result["rank_normalized_rhat"], 1.01)
         self.assertNotIn("chain_disagreement", chain_flags(chain_section(binary)))
 
-    def test_mean_shifted_chains_fire_through_rank_path_too(self) -> None:
+    def test_mean_shifted_chains_fire_via_rank_path(self) -> None:
         rng = random.Random(20260703_08)
         chains = [
             [rng.gauss(0.0, 1.0) for _ in range(200)],
@@ -544,6 +517,7 @@ class DiversityBruteForcePairEnumerationTests(unittest.TestCase):
         expected_top1_mass = sorted_fractions[0]
         expected_top3_mass = math.fsum(sorted_fractions[:3])
         expected_unique_fraction = len(counts) / total
+        expected_occupancy_efficiency = len(counts) / min(total, 2 ** len(variables))
 
         # LITERAL O(R^2) double loop over the flat 128-read list, independent
         # of the count-weighted state-pair formula under test.
@@ -563,11 +537,12 @@ class DiversityBruteForcePairEnumerationTests(unittest.TestCase):
         self.assertAlmostEqual(section["top1_mass"], expected_top1_mass, places=12)
         self.assertAlmostEqual(section["top3_mass"], expected_top3_mass, places=12)
         self.assertAlmostEqual(section["unique_fraction"], expected_unique_fraction, places=12)
+        self.assertAlmostEqual(section["occupancy_efficiency"], expected_occupancy_efficiency, places=12)
         self.assertAlmostEqual(section["mean_pairwise_hamming_distance"], expected_mean_hamming, places=12)
 
 
 class TraceBruteForceCrossCheckTests(unittest.TestCase):
-    def test_magnetization_and_distance_to_best_match_brute_force(self) -> None:
+    def test_magnetization_distance_match_brute_force(self) -> None:
         variables = ["x", "y", "z"]
         chains = [
             [
@@ -619,12 +594,10 @@ class TraceBruteForceCrossCheckTests(unittest.TestCase):
 
 
 class FlagThresholdBoundaryTests(unittest.TestCase):
-    """Pin the exact inclusive/exclusive boundary semantics of each flag
-    predicate by calling the flag functions directly against crafted dicts.
-    """
+    """Pins exact inclusive/exclusive flag boundaries via direct calls to the flag functions."""
 
-    def test_low_ess_boundary(self) -> None:
-        just_below_threshold = {
+    def test_raw_energy_ess_has_no_health_threshold(self) -> None:
+        section = {
             "ess_status": "ok",
             "ess": 399.999999999,
             "autocorrelation_status": "ok",
@@ -634,17 +607,22 @@ class FlagThresholdBoundaryTests(unittest.TestCase):
             "variance": 1.0,
             "count": 10,
         }
-        at_threshold = dict(just_below_threshold, ess=400.0)
-        self.assertIn("low_ess", energy_flags(just_below_threshold))
-        self.assertNotIn("low_ess", energy_flags(at_threshold))
+        self.assertEqual(section["ess"], 399.999999999)
+        self.assertNotIn("low_ess", energy_flags(section))
 
     def test_mode_collapse_boundary_is_inclusive(self) -> None:
         self.assertIn("mode_collapse", diversity_flags({"top1_mass": 0.9, "unique_fraction": 0.5}))
         self.assertNotIn("mode_collapse", diversity_flags({"top1_mass": 0.8999999, "unique_fraction": 0.5}))
 
     def test_low_diversity_boundary_is_inclusive(self) -> None:
-        self.assertIn("low_diversity", diversity_flags({"top1_mass": 0.1, "unique_fraction": 0.05}))
-        self.assertNotIn("low_diversity", diversity_flags({"top1_mass": 0.1, "unique_fraction": 0.0500001}))
+        self.assertIn(
+            "low_diversity",
+            diversity_flags({"top1_mass": 0.1, "occupancy_efficiency": 0.05}),
+        )
+        self.assertNotIn(
+            "low_diversity",
+            diversity_flags({"top1_mass": 0.1, "occupancy_efficiency": 0.0500001}),
+        )
 
     def test_poor_mixing_boundary(self) -> None:
         fires = {"autocorrelation_status": "ok", "tau_hat": 10.0, "draws_per_chain": 499}
@@ -653,23 +631,23 @@ class FlagThresholdBoundaryTests(unittest.TestCase):
         self.assertNotIn("poor_mixing", energy_flags(silent))
 
 
-class NoRecentImprovementFlagSemanticsTests(unittest.TestCase):
-    def test_no_recent_improvement_flag_semantics(self) -> None:
+class NoRecentImprovementObservationSemanticsTests(unittest.TestCase):
+    def test_no_recent_improvement_observation_semantics(self) -> None:
         improving_to_the_end = energy_section([[5.0, 4.0, 3.0, 2.0]])
         self.assertTrue(improving_to_the_end["recent_improvement"])
         self.assertNotIn("no_recent_improvement", energy_flags(improving_to_the_end))
 
-        # A sampler that finds the optimum on the very FIRST read and then
-        # never improves again still raises this flag: it is an intended
-        # stop-signal ("nothing has gotten better in the back half of the
-        # run"), not a claim that the run performed badly.
+        # A sampler that finds the optimum on the first read and never
+        # improves again still records this: it's an intended stop-signal,
+        # not a claim that the run performed badly.
         never_improves_after_first_read = energy_section([[2.0, 5.0, 5.0, 5.0, 5.0, 5.0]])
         self.assertFalse(never_improves_after_first_read["recent_improvement"])
-        self.assertIn("no_recent_improvement", energy_flags(never_improves_after_first_read))
+        self.assertNotIn("no_recent_improvement", energy_flags(never_improves_after_first_read))
+        self.assertIn("no_recent_improvement", energy_observations(never_improves_after_first_read))
 
 
 class RaggedAndEmptyChainHandlingTests(unittest.TestCase):
-    def test_empty_chain_is_dropped_and_result_matches_without_it(self) -> None:
+    def test_empty_chain_dropped_result_matches(self) -> None:
         with_empty_chain = ess_mean([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], []])
         without_empty_chain = ess_mean([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]])
         self.assertEqual(with_empty_chain, without_empty_chain)

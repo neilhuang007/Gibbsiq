@@ -1,12 +1,4 @@
-"""Unit tests for ``src/gibbsiq/diagnostics.py``.
-
-Covers status precedence (insufficient_data before constancy), chain
-splitting, per-flag boundary conditions, the four-draw Geyer edge case,
-diversity math against hand-computed values, family-scoped flag emission,
-the fixture adapter against every golden diagnostic fixture, the
-magnetization/distance-to-best trace helpers, and the top-level
-``compute_diagnostics`` payload.
-"""
+"""Unit tests for ``src/gibbsiq/diagnostics.py``."""
 
 from __future__ import annotations
 
@@ -22,6 +14,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from gibbsiq import diagnostics  # noqa: E402
 from gibbsiq.diagnostics import (  # noqa: E402
     chain_flags,
+    chain_observations,
     chain_section,
     compute_diagnostics,
     diagnostic_candidate_from_input,
@@ -29,6 +22,7 @@ from gibbsiq.diagnostics import (  # noqa: E402
     diversity_flags,
     diversity_section,
     energy_flags,
+    energy_observations,
     energy_section,
     ess_mean,
     magnetization_trace,
@@ -68,7 +62,7 @@ def find_nan_or_inf(value, path: str = "$"):
 class StatusPrecedenceTests(unittest.TestCase):
     """insufficient_data (fewer than 4 raw draws) must be checked before constancy."""
 
-    def test_short_constant_trace_is_insufficient_not_constant(self) -> None:
+    def test_short_constant_trace_is_insufficient_data(self) -> None:
         result = ess_mean([[5.0, 5.0, 5.0]])
         self.assertEqual(result["autocorrelation_status"], diagnostics.STATUS_INSUFFICIENT_DATA)
         self.assertEqual(result["ess_status"], diagnostics.STATUS_INSUFFICIENT_DATA)
@@ -95,31 +89,36 @@ class StatusPrecedenceTests(unittest.TestCase):
 
 
 class SplitChainsTests(unittest.TestCase):
-    def test_odd_length_chain_drops_the_middle_draw(self) -> None:
+    def test_odd_length_chain_drops_middle_draw(self) -> None:
         self.assertEqual(split_chains([[1, 2, 3, 4, 5]]), [[1.0, 2.0], [4.0, 5.0]])
 
     def test_even_length_chain_splits_exactly(self) -> None:
         self.assertEqual(split_chains([[1, 2, 3, 4]]), [[1.0, 2.0], [3.0, 4.0]])
 
-    def test_ragged_chains_are_truncated_before_splitting(self) -> None:
+    def test_ragged_chains_truncate_before_split(self) -> None:
         self.assertEqual(split_chains([[1, 2, 3], [1, 2]]), [[1.0], [1.0], [2.0], [2.0]])
 
-    def test_empty_chain_is_dropped_before_splitting(self) -> None:
+    def test_empty_chain_dropped_before_split(self) -> None:
         self.assertEqual(split_chains([[1, 2, 3, 4], []]), [[1.0, 2.0], [3.0, 4.0]])
 
 
 class FlagBoundaryTests(unittest.TestCase):
     """Each flag predicate exercised directly against a minimal section dict."""
 
-    def test_low_ess_boundary(self) -> None:
-        self.assertEqual(energy_flags({"ess_status": "ok", "ess": 399.999999999}), ["low_ess"])
-        self.assertEqual(energy_flags({"ess_status": "ok", "ess": 400.0}), [])
+    def test_energy_ess_has_no_health_threshold(self) -> None:
+        self.assertEqual(energy_flags({"ess_status": "ok", "ess": 399.999999999}), [])
+        self.assertNotIn("low_ess", diagnostics.FLAG_ORDER)
+        self.assertNotIn("low_ess", diagnostics.thresholds_summary())
 
     def test_mode_collapse_boundary(self) -> None:
         self.assertEqual(diversity_flags({"top1_mass": 0.9}), ["mode_collapse"])
         self.assertEqual(diversity_flags({"top1_mass": 0.8999}), [])
 
     def test_low_diversity_boundary(self) -> None:
+        self.assertEqual(diversity_flags({"occupancy_efficiency": 0.05}), ["low_diversity"])
+        self.assertEqual(diversity_flags({"occupancy_efficiency": 0.0501}), [])
+
+    def test_low_diversity_maps_to_unique_fraction(self) -> None:
         self.assertEqual(diversity_flags({"unique_fraction": 0.05}), ["low_diversity"])
         self.assertEqual(diversity_flags({"unique_fraction": 0.0501}), [])
 
@@ -127,7 +126,7 @@ class FlagBoundaryTests(unittest.TestCase):
         self.assertEqual(chain_flags({"rhat_status": "ok", "rhat": 1.0100001}), ["chain_disagreement"])
         self.assertEqual(chain_flags({"rhat_status": "ok", "rhat": 1.01}), [])
 
-    def test_chain_disagreement_fires_on_zero_within_variance_regardless_of_rhat(self) -> None:
+    def test_chain_disagreement_on_zero_within_variance(self) -> None:
         result = chain_flags({"rhat_status": diagnostics.STATUS_ZERO_WITHIN_VARIANCE, "rhat": None})
         self.assertEqual(result, ["chain_disagreement"])
 
@@ -137,18 +136,25 @@ class FlagBoundaryTests(unittest.TestCase):
         self.assertEqual(energy_flags(fires), ["poor_mixing"])
         self.assertEqual(energy_flags(silent), [])
 
-    def test_no_recent_improvement_fires_only_on_false(self) -> None:
-        self.assertEqual(energy_flags({"recent_improvement": False}), ["no_recent_improvement"])
-        self.assertEqual(energy_flags({"recent_improvement": None}), [])
-        self.assertEqual(energy_flags({"recent_improvement": True}), [])
+    def test_recent_improvement_false_is_observation(self) -> None:
+        self.assertEqual(energy_flags({"recent_improvement": False}), [])
+        self.assertEqual(energy_observations({"recent_improvement": False}), ["no_recent_improvement"])
+        self.assertEqual(energy_observations({"recent_improvement": None}), [])
+        self.assertEqual(energy_observations({"recent_improvement": True}), [])
 
-    def test_zero_energy_variance_requires_a_positive_count(self) -> None:
-        self.assertEqual(energy_flags({"variance": 0.0, "count": 5}), ["zero_energy_variance"])
-        self.assertEqual(energy_flags({"variance": 0.0, "count": 0}), [])
+    def test_zero_energy_variance_needs_positive_count(self) -> None:
+        self.assertEqual(energy_flags({"variance": 0.0, "count": 5}), [])
+        self.assertEqual(energy_observations({"variance": 0.0, "count": 5}), ["zero_energy_variance"])
+        self.assertEqual(energy_observations({"variance": 0.0, "count": 0}), [])
+
+    def test_zero_within_chain_variance_as_observation(self) -> None:
+        section = {"split_within_chain_variance": 0.0}
+        self.assertEqual(chain_flags(section), [])
+        self.assertEqual(chain_observations(section), ["zero_within_chain_variance"])
 
 
 class GeyerFourDrawEdgeTests(unittest.TestCase):
-    def test_four_draw_single_chain_floors_tau_at_the_size_bound(self) -> None:
+    def test_four_draw_chain_floors_tau_at_size_bound(self) -> None:
         result = ess_mean([[0.0, 1.0, 0.5, 1.5]])
         self.assertEqual(result["ess_status"], "ok")
         expected_tau = 1.0 / math.log10(4.0)
@@ -161,6 +167,7 @@ class DiversityMathTests(unittest.TestCase):
         section = diversity_section({(1, 1): 3, (1, -1): 1}, num_variables=2)
         self.assertEqual(section["num_reads"], 4)
         self.assertEqual(section["unique_fraction"], 0.5)
+        self.assertEqual(section["occupancy_efficiency"], 0.5)
         self.assertEqual(section["top1_mass"], 0.75)
         expected_entropy = -0.75 * math.log(0.75) - 0.25 * math.log(0.25)
         self.assertAlmostEqual(section["entropy_nats"], expected_entropy, places=12)
@@ -172,18 +179,30 @@ class DiversityMathTests(unittest.TestCase):
         self.assertIsNone(section["mean_pairwise_hamming_distance"])
         self.assertIsNone(section["normalized_mean_pairwise_hamming_distance"])
 
+    def test_finite_support_occupancy_stays_stable(self) -> None:
+        counts = {(1, 1): 25, (1, -1): 25, (-1, 1): 25, (-1, -1): 25}
+        section = diversity_section(counts, num_variables=2)
+        self.assertEqual(section["unique_fraction"], 0.04)
+        self.assertEqual(section["occupancy_efficiency"], 1.0)
+        self.assertNotIn("low_diversity", diversity_flags(section))
+
+    def test_support_bound_caps_large_variable_count(self) -> None:
+        section = diversity_section({(1,): 1}, num_variables=1_000_000)
+        self.assertEqual(section["occupancy_efficiency"], 1.0)
+
 
 class FamilyScopingTests(unittest.TestCase):
-    def test_chain_family_flags_never_include_low_ess(self) -> None:
+    def test_chain_family_flags_exclude_low_ess(self) -> None:
         fixtures = {fixture["id"]: fixture for fixture in load_diagnostic_fixtures()}
         fixture = fixtures["chain_disagreement_zero_within_variance"]
         candidate = diagnostic_candidate_from_input(fixture["input"])
-        self.assertEqual(candidate["required_flags"], ["chain_disagreement", "zero_within_chain_variance"])
+        self.assertEqual(candidate["required_flags"], ["chain_disagreement"])
+        self.assertEqual(candidate["observations"], ["zero_within_chain_variance"])
         self.assertNotIn("low_ess", candidate["required_flags"])
 
 
 class AdapterVsGoldenTests(unittest.TestCase):
-    def test_every_fixture_adapter_matches_its_golden_expected_block(self) -> None:
+    def test_fixture_adapter_matches_golden_expected(self) -> None:
         fixtures = load_diagnostic_fixtures()
         self.assertEqual(len(fixtures), 7)
         for fixture in fixtures:
@@ -207,7 +226,7 @@ class TraceHelperTests(unittest.TestCase):
 
 
 class ComputeDiagnosticsPayloadTests(unittest.TestCase):
-    def test_payload_has_all_top_level_keys_and_is_json_safe(self) -> None:
+    def test_payload_top_level_keys_are_json_safe(self) -> None:
         energy_chains = [[0.0, 1.0, 0.5, 1.5, 0.25], [0.2, -0.3, 0.6, 0.1, -0.4]]
         samples = [{"a": 1}, {"a": -1}, {"a": 1}, {"a": 1}, {"a": -1}]
         variables = ["a"]
@@ -218,7 +237,16 @@ class ComputeDiagnosticsPayloadTests(unittest.TestCase):
             timings={"sample_seconds": 2.0},
         )
 
-        for key in ("energy", "diversity", "chains", "constraints", "runtime", "flags", "thresholds"):
+        for key in (
+            "energy",
+            "diversity",
+            "chains",
+            "constraints",
+            "runtime",
+            "flags",
+            "observations",
+            "thresholds",
+        ):
             self.assertIn(key, payload)
 
         energy = energy_section(energy_chains)
@@ -229,6 +257,13 @@ class ComputeDiagnosticsPayloadTests(unittest.TestCase):
         )
         expected_order = [flag for flag in diagnostics.FLAG_ORDER if flag in expected_flags]
         self.assertEqual(payload["flags"], expected_order)
+        expected_observations = set(energy_observations(energy)) | set(chain_observations(chains_section))
+        expected_observation_order = [
+            observation
+            for observation in diagnostics.OBSERVATION_ORDER
+            if observation in expected_observations
+        ]
+        self.assertEqual(payload["observations"], expected_observation_order)
 
         self.assertEqual(payload["thresholds"], diagnostics.thresholds_summary())
 
@@ -256,12 +291,11 @@ class ReadsPerSecondTests(unittest.TestCase):
 
 
 class NonFiniteInputRejectionTests(unittest.TestCase):
-    """EVAL-EQ-007 non-finite input rule: NaN/Inf energy values raise
-    ValueError at the boundary instead of leaking into serialized output
-    (NaN rhat under an "ok" status) or silently terminating the Geyer scan
-    into a finite-but-meaningless ESS. The THRML runtime cannot produce
-    non-finite energies; this guards the baseline-adapter path.
-    """
+    """NaN/Inf energy values raise ValueError at the boundary (EVAL-EQ-007)."""
+
+    # Guards the baseline-adapter path: THRML itself cannot produce non-finite
+    # energies, but a NaN/Inf must not leak into serialized output (e.g. NaN
+    # rhat under an "ok" status) or silently truncate the Geyer scan.
 
     NAN_CHAINS = [[1.0, 2.0, float("nan"), 4.0, 5.0, 6.0], [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]]
     INF_CHAINS = [[1.0, 2.0, float("inf"), 4.0, 5.0, 6.0], [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]]
@@ -285,13 +319,9 @@ class NonFiniteInputRejectionTests(unittest.TestCase):
 
 
 class OneStuckChainAmongVaryingChainsTests(unittest.TestCase):
-    """One frozen chain among varying chains: W stays positive so rhat is
-    numeric (no zero-within-variance status), and the frozen chain's
-    diverging mean drives rhat above the threshold, so chain_disagreement
-    fires through the numeric path rather than the degenerate-status path.
-    """
+    """One frozen chain among varying chains keeps W positive, so rhat takes the numeric path."""
 
-    def test_numeric_rhat_path_flags_disagreement_without_zero_variance(self) -> None:
+    def test_numeric_rhat_path_flags_disagreement(self) -> None:
         chains = [
             [3.0] * 20,
             [1.0, 2.0] * 10,

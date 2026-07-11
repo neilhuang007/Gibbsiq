@@ -27,7 +27,13 @@ and benchmark oracle are kept backend-portable at the architectural level as a h
 contract-level portability that keeps the THRML-first execution target, journaled in
 `reference/research-journal/2026-07-01-trust-layer-positioning.md`.
 
-The repository has completed **Stages 0 through 3 of a 6-stage roadmap** (status:
+THRML's official documentation currently describes the public runtime as a JAX-based GPU
+simulator for programs intended for future Extropic hardware. Simulator results and the
+Jelinčič system-level energy model are not production TSU measurements and cannot support a
+QUBO hardware-speedup claim.
+
+The repository has implemented the core deliverables for **Stages 0 through 3 of a 6-stage
+roadmap** while the Stage 2 PT exit criterion remains open (status:
 `reference/00-roadmap/README.md`). `src/gibbsiq/` holds the model IR and conversions
 (`model.py`, `conversions.py`), the `SampleResult` schema (`result.py`), the JSON evaluator
 (`evaluation.py`), the strict benchmark oracle (`benchmark_oracle.py`), the THRML runtime
@@ -36,18 +42,24 @@ graph-coloring block construction (`blocks.py`), the benchmark bridge
 (`benchmark_bridge.py`) lowering ground-truth fixtures into the IR and scoring sampler
 results against the strict oracle, and the diagnostics layer (`diagnostics.py`, pure
 stdlib). **Stage 2 (THRML optimization runtime)** landed 2026-07-01 with exhaustive
-small-instance validation; parallel-tempering execution is its open exit criterion.
-**Stage 3 (diagnostics pipeline)** landed 2026-07-02: Geyer ESS/tau and plain split R-hat
+small-instance validation. Opt-in parallel-tempering code exists, but the 2026-07-11
+corrective audit keeps its exit criterion open until targeted invariants and the full optional
+THRML suite pass.
+**Stage 3 (diagnostics pipeline)** is implemented and under corrective semantic audit. It
+landed 2026-07-02 with Geyer ESS/tau and plain split R-hat
 (arviz v0.21.0 algorithm, cross-validated to 1e-9 against arviz and to 1e-8 against an
 R-`posterior` reference), diversity/energy/chain sections, family-scoped failure flags with
 a thresholds echo, and magnetization / distance-to-best traces — every `sample()` call
-embeds the payload. SOTA alignment landed 2026-07-03: rank-normalized + folded split R-hat
+embeds the payload. Rank-normalized + folded split R-hat landed 2026-07-03
 under separately named `rank_normalized_rhat*` keys (EVAL-EQ-013; the plain `rhat` key is
 frozen), and magnetization chain-disagreement wiring (`chains.magnetization` subsection)
 closing the equal-energy double-well blind spot. Trace-window diagnostics assume a
-constant-beta collection window (guaranteed by the runtime; see EVAL-EQ-007). The full suite
-runs 265 tests (12 skip without the optional arviz dev dependency). Inspector and baseline
-layers remain to be built.
+constant-beta collection window (guaranteed by the runtime; see EVAL-EQ-007). The 2026-07-11
+corrective patch removes the raw-energy `low_ess` threshold, renames
+`occupancy_efficiency`, and separates observable/progress statuses from sampler-failure flags;
+full-suite verification remains pending. Rank-normalized bulk/tail ESS, inspector,
+constraint-encoding, and baseline layers remain to be built. Record the exact suite count and
+skip count from the command actually run; do not preserve a historical count as current.
 
 ## Commands
 
@@ -72,9 +84,10 @@ python tools/generate_ground_truth.py --out reference/06-benchmarks/fixtures/gro
 ```
 
 The evaluator exits with status `0` **only** when every known fixture is present and passing.
-Tests live under `test_suite/tests/` and run with the stdlib `unittest` runner (no pytest dependency yet);
-there is no linter or CI configured. The framework prescribes a fuller layout under `test_suite/tests/`
-(see `reference/08-evaluation/evaluation-framework.md` → "Suggested Test Layout").
+Tests live under `test_suite/tests/` and run with the stdlib `unittest` runner (no pytest
+dependency yet). Ruff, mypy, packaging, and unit checks are configured in
+`.github/workflows/ci.yml`. The framework prescribes the public/blind split in
+`reference/08-evaluation/evaluation-framework.md`.
 
 ## Canonical conventions (do not violate)
 
@@ -248,7 +261,7 @@ history. One dated entry per work session (`YYYY-MM-DD-topic.md`); entries are a
 when a decision is later revised, add a new entry instead of rewriting an old one.
 
 - **Writing tone is fixed by `reference/research-journal/style.md`.** Write each entry in the
-  register of the project's anchor paper (Jelinčić et al. 2025, arXiv:2510.23972): direct,
+  register of the project's anchor paper (Jelinčič et al. 2025, arXiv:2510.23972): direct,
   detailed, declarative present tense, every claim tied to a mechanism, a measurement, or a
   primary-reference identifier. State the positive fact; do not define something by what it is
   not, and do not use the "not X but Y" contrast as a sentence pattern. No emojis and no

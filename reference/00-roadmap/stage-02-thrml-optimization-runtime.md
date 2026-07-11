@@ -1,6 +1,7 @@
 # Stage 2 - THRML Optimization Runtime
 
-**Status: Complete (2026-07-01).** Stage 1 provided the canonical Ising model and `SampleResult`.
+**Status: Core complete; PT exit criterion under corrective audit (2026-07-11).** Stage 1
+provided the canonical Ising model and `SampleResult`.
 Stage 2 has connected that model to THRML. The runtime lowers an Ising instance into THRML
 nodes, factors, graph-colored blocks, sampling schedules, initialization state, and a
 sampling program, returning a `SampleResult` containing raw samples, recomputed energies,
@@ -11,7 +12,9 @@ schedule, and `num_reads` support; independent energy evaluator; trace capture w
 identifiers and beta schedules; runtime metadata (THRML/JAX versions, device, timing split,
 block stats). Exhaustive small-instance empirical-vs-analytic validation passes in the test
 suite (four-variable dense instance, full state space against analytic Boltzmann
-probabilities). Open exit criterion: parallel-tempering execution.
+probabilities). Opt-in parallel-tempering code exists; the 2026-07-11 audit requires corrected
+exchange and local-transition behavior to pass targeted invariants and the full optional THRML
+suite before the exit criterion closes.
 
 The immediate validation target is a tiny Ising run whose empirical frequencies match
 analytic Boltzmann probabilities within a declared statistical interval. This test checks
@@ -49,6 +52,8 @@ recomputation.
 - Exhaustive small-instance validation passes.
 - Two-spin conditional sign is verified against THRML behavior.
 - Output artifacts contain enough raw data for Stage 3 diagnostics without rerunning THRML.
+- Parallel-tempering swap decisions satisfy EVAL-EQ-014, every configured sampling interval
+  advances each replica locally, and two-replica exchange attempts are not skipped by parity.
 
 ## Implementation Notes
 

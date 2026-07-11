@@ -1,9 +1,8 @@
-"""Structural integrity checks for the ground-truth benchmark corpus.
+"""Structural integrity checks for the ground-truth benchmark corpus."""
 
-These tests do not prove the optima; they prove that the artifact is suitable
-for verifiable rewards: unique IDs, stable checksum, explicit provenance, and a
-family-specific schema that an external scorer can validate before execution.
-"""
+# Doesn't prove the optima -- proves the artifact is fit for verifiable
+# rewards: unique IDs, a stable checksum, explicit provenance, and a
+# family-specific schema an external scorer can validate before execution.
 
 from __future__ import annotations
 
@@ -39,13 +38,13 @@ class BenchmarkCorpusIntegrityTest(unittest.TestCase):
         self.corpus = load_corpus()
         self.fixtures = self.corpus["fixtures"]
 
-    def test_top_level_metadata_is_stable_and_traceable(self) -> None:
+    def test_top_level_metadata_fields(self) -> None:
         self.assertEqual(self.corpus["schema_version"], "2026-05-31")
         self.assertEqual(self.corpus["generator"], "tools/generate_ground_truth.py")
         self.assertIn("E(s) = offset", self.corpus["energy_convention"])
         self.assertEqual(self.corpus["content_sha256"], canonical_sha256(self.corpus))
 
-    def test_fixture_ids_are_unique_stable_and_well_formed(self) -> None:
+    def test_fixture_id_format_uniqueness(self) -> None:
         fixture_ids = [fixture["id"] for fixture in self.fixtures]
         self.assertEqual(len(fixture_ids), 27)
         self.assertEqual(len(fixture_ids), len(set(fixture_ids)))
@@ -58,7 +57,7 @@ class BenchmarkCorpusIntegrityTest(unittest.TestCase):
         self.assertEqual(declared, observed)
         self.assertEqual(observed, set(FAMILY_SPECS))
 
-    def test_every_fixture_has_provenance_for_blind_reproduction(self) -> None:
+    def test_fixture_provenance_is_complete(self) -> None:
         for fixture in self.fixtures:
             provenance = fixture.get("provenance", {})
             with self.subTest(fixture=fixture["id"]):
@@ -72,7 +71,7 @@ class BenchmarkCorpusIntegrityTest(unittest.TestCase):
                 if provenance["method"] == "exhaustive_enumeration":
                     self.assertIn("seed", provenance)
 
-    def test_family_specific_required_keys_are_present(self) -> None:
+    def test_family_required_keys_present(self) -> None:
         for fixture in self.fixtures:
             spec = FAMILY_SPECS[fixture["family"]]
             expected = fixture["expected"]

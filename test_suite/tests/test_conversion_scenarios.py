@@ -100,7 +100,7 @@ class ConversionScenarioTest(unittest.TestCase):
             )
             self.assertAlmostEqual(model.energy(spins), expected, places=12)
 
-    def test_symmetric_qubo_matrix_entries_preserve_energy_after_pair_folding(self) -> None:
+    def test_symmetric_qubo_pair_folding_preserves_energy(self) -> None:
         variables = ["z", "a", "m"]
         flat_qubo = {
             ("a", "a"): -3.0,
@@ -124,7 +124,7 @@ class ConversionScenarioTest(unittest.TestCase):
             )
             self.assertAlmostEqual(model.energy(spins), expected, places=12)
 
-    def test_structured_qubo_keeps_isolated_variables_and_string_pair_keys(self) -> None:
+    def test_structured_qubo_isolated_variables_string_keys(self) -> None:
         model = compile_qubo(
             {
                 "variables": ["isolated", "left", "right"],
@@ -142,7 +142,7 @@ class ConversionScenarioTest(unittest.TestCase):
             expected = qubo_energy({"left": -2.0}, {("right", "left"): 8.0}, bits, offset=1.0)
             self.assertAlmostEqual(model.energy(spins), expected, places=12)
 
-    def test_compile_ising_sums_reversed_pairs_and_diagonal_self_terms(self) -> None:
+    def test_compile_ising_reversed_pairs_diagonal_self_terms(self) -> None:
         model = compile_ising(
             {"a": 1.0, "b": -2.0, "c": 0.5},
             {("b", "a"): 3.0, ("a", "b"): -1.25, ("c", "c"): 4.0},
@@ -171,7 +171,7 @@ class ConversionScenarioTest(unittest.TestCase):
             expected = qubo_energy(bqm.linear, bqm.quadratic, bits, offset=bqm.offset)
             self.assertAlmostEqual(model.energy(bits, vartype="BINARY"), expected, places=12)
 
-    def test_mixed_hashable_variable_labels_do_not_break_energy_equivalence(self) -> None:
+    def test_mixed_hashable_labels_preserve_energy(self) -> None:
         variables = [1, "1", ("tuple", 1)]
         model = compile_qubo(
             {
@@ -196,7 +196,7 @@ class ConversionScenarioTest(unittest.TestCase):
             )
             self.assertAlmostEqual(model.energy(spins), expected, places=12)
 
-    def test_explicit_validation_errors_are_raised_for_ambiguous_inputs(self) -> None:
+    def test_ambiguous_inputs_raise_validation_errors(self) -> None:
         with self.assertRaisesRegex(ValueError, "variables must be unique"):
             compile_qubo({("a", "a"): 1.0}, variables=["a", "a"])
         with self.assertRaisesRegex(ValueError, "terms reference variables"):
@@ -214,7 +214,7 @@ class ConversionScenarioTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "finite"):
             compile_ising({"a": 0.0}, {("a", "a"): float("nan")})
 
-    def test_spin_binary_helpers_round_trip_and_validate_values(self) -> None:
+    def test_spin_binary_helpers_round_trip_validation(self) -> None:
         spins = {"b": -1, "a": 1}
         binary = spin_to_binary(spins, variables=("a", "b"))
 
@@ -225,7 +225,7 @@ class ConversionScenarioTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "spin value"):
             spin_to_binary({"a": 0}, variables=("a",))
 
-    def test_benchmark_sk_ising_inputs_compile_and_recompute_witness_energy(self) -> None:
+    def test_sk_benchmark_fixtures_witness_energy(self) -> None:
         sk_fixtures = [fixture for fixture in benchmark_fixtures() if fixture["family"] == "sk_spin_glass"]
         self.assertEqual(len(sk_fixtures), 3)
 
@@ -242,7 +242,7 @@ class ConversionScenarioTest(unittest.TestCase):
                     model.energy(witness), fixture["expected"]["ground_state_energy"], places=12
                 )
 
-    def test_benchmark_maxcut_inputs_lower_to_project_ising_convention(self) -> None:
+    def test_maxcut_benchmark_fixtures_ising_convention(self) -> None:
         maxcut_fixtures = [fixture for fixture in benchmark_fixtures() if fixture["family"] == "maxcut"]
         self.assertEqual(len(maxcut_fixtures), 14)
 
@@ -323,7 +323,7 @@ class DimodConformanceTest(unittest.TestCase):
         for spins in spin_assignments(model.variables):
             self.assertAlmostEqual(bqm.energy(spins), model.energy(spins), places=12)
 
-    def test_sample_result_to_dimod_preserves_samples_energies_and_metadata(self) -> None:
+    def test_sample_result_to_dimod_round_trip(self) -> None:
         model = compile_qubo(
             {
                 "variables": ["a", "b"],

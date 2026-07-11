@@ -252,7 +252,7 @@ class Stage01ReferenceContractTest(unittest.TestCase):
         self.assertEqual(model["offset"], -7.0)
         self.assertEqual(model["variable_order"], [0, 1, 2])
 
-    def test_stage_1_ir_and_result_schema_minimum_fields_are_explicit(self) -> None:
+    def test_stage_1_schema_required_fields(self) -> None:
         self.assertEqual(
             REQUIRED_IR_FIELDS,
             {

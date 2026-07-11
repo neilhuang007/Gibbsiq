@@ -74,6 +74,10 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertEqual(total, expected["num_reads"])
         self.assertEqual(len(sample_counts), expected["unique_states"])
         self.assertEqual(len(sample_counts) / total, expected["unique_fraction"])
+        self.assertEqual(
+            len(sample_counts) / min(total, 2 ** len(fixture["input"]["variables"])),
+            expected["occupancy_efficiency"],
+        )
         self.assertEqual(counts[0] / total, expected["top1_mass"])
         self.assertEqual(sum(counts[:3]) / total, expected["top3_mass"])
         self.assertAlmostEqual(entropy, expected["entropy_nats"], places=12)
@@ -83,7 +87,8 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
             expected["normalized_mean_pairwise_hamming_distance"],
             places=12,
         )
-        self.assertCountEqual(expected["required_flags"], ["mode_collapse", "low_diversity"])
+        self.assertEqual(expected["required_flags"], ["mode_collapse"])
+        self.assertEqual(expected["observations"], [])
 
     def test_constant_energy_trace_stats(self) -> None:
         fixture = self.fixtures["constant_energy_trace"]
@@ -109,9 +114,10 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertEqual(best_so_far, trace)
         self.assertEqual(expected["autocorrelation_status"], "constant_trace")
         self.assertEqual(expected["ess_status"], "undefined_constant_trace")
-        self.assertCountEqual(expected["required_flags"], ["no_recent_improvement", "zero_energy_variance"])
+        self.assertEqual(expected["required_flags"], [])
+        self.assertCountEqual(expected["observations"], ["no_recent_improvement", "zero_energy_variance"])
 
-    def test_chain_disagreement_between_chain_variance(self) -> None:
+    def test_chain_disagreement_zero_within_variance(self) -> None:
         fixture = self.fixtures["chain_disagreement_zero_within_variance"]
         chains = fixture["input"]["chains"]
         expected = fixture["expected"]
@@ -128,11 +134,10 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertEqual(within, expected["within_chain_variances"])
         self.assertEqual(between, expected["between_chain_variance"])
         self.assertEqual(expected["rhat_status"], "undefined_or_infinite_zero_within_variance")
-        self.assertCountEqual(
-            expected["required_flags"], ["chain_disagreement", "zero_within_chain_variance"]
-        )
+        self.assertEqual(expected["required_flags"], ["chain_disagreement"])
+        self.assertEqual(expected["observations"], ["zero_within_chain_variance"])
 
-    def test_chain_disagreement_numeric_rhat_hand_exact(self) -> None:
+    def test_chain_disagreement_numeric_rhat(self) -> None:
         fixture = self.fixtures["chain_disagreement_numeric_rhat"]
         chains = sorted(fixture["input"]["chains"], key=lambda row: row["chain_id"])
         expected = fixture["expected"]
@@ -162,7 +167,7 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertAlmostEqual(rhat, math.sqrt(627.0 / 28.0), places=12)
         self.assertCountEqual(expected["required_flags"], ["chain_disagreement"])
 
-    def test_healthy_multichain_pooled_and_chain_statistics(self) -> None:
+    def test_healthy_multichain_pooled_statistics(self) -> None:
         fixture = self.fixtures["healthy_multichain_energy_trace"]
         chains = sorted(fixture["input"]["chains"], key=lambda row: row["chain_id"])
         expected = fixture["expected"]
@@ -186,7 +191,7 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertGreater(expected["ess"], 400.0)
         self.assertEqual(expected["required_flags"], [])
 
-    def test_autocorrelated_ar1_pooled_statistics_and_flags(self) -> None:
+    def test_autocorrelated_ar1_flags_poor_mixing(self) -> None:
         fixture = self.fixtures["autocorrelated_energy_trace_ar1"]
         trace = fixture["input"]["energy_trace"]
         expected = fixture["expected"]
@@ -201,7 +206,8 @@ class DiagnosticFixtureMathTest(unittest.TestCase):
         self.assertAlmostEqual(min(trace), expected["best_energy"], places=9)
         self.assertEqual(improvements, expected["best_improvement_count"])
 
-        self.assertCountEqual(expected["required_flags"], ["low_ess", "poor_mixing"])
+        self.assertEqual(expected["required_flags"], ["poor_mixing"])
+        # Raw ESS remains evidence; only the uncalibrated health threshold is removed.
         self.assertLess(expected["ess"], 400.0)
         self.assertLess(expected["count"], 50 * expected["tau_hat"])
 

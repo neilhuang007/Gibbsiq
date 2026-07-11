@@ -61,7 +61,7 @@ def ar1_chains(seed: int, num_chains: int, num_draws: int, phi: float) -> list[l
 
 @unittest.skipUnless(ARVIZ_AVAILABLE, "arviz not installed")
 class ArvizCrosscheckTest(unittest.TestCase):
-    def test_ess_matches_arviz_for_fixtures_our_functions_call_ok(self) -> None:
+    def test_ess_matches_arviz_for_ok_fixtures(self) -> None:
         for fixture in load_diagnostic_fixtures():
             chains = chains_from_fixture_input(fixture["input"])
             if chains is None:
@@ -72,7 +72,7 @@ class ArvizCrosscheckTest(unittest.TestCase):
             arviz_ess = float(arviz.ess(numpy.asarray(chains, dtype=float), method="mean"))
             self.assertAlmostEqual(result["ess"] / arviz_ess, 1.0, delta=1e-9, msg=fixture["id"])
 
-    def test_rhat_matches_arviz_for_fixtures_our_functions_call_ok(self) -> None:
+    def test_rhat_matches_arviz_for_ok_fixtures(self) -> None:
         for fixture in load_diagnostic_fixtures():
             chains = chains_from_fixture_input(fixture["input"])
             if chains is None or len(chains) < 2:
@@ -111,7 +111,7 @@ class ArvizCrosscheckTest(unittest.TestCase):
                     msg=f"seed={seed} shape=({num_chains}, {num_draws})",
                 )
 
-    def test_rank_rhat_matches_arviz_for_fixtures_our_functions_call_ok(self) -> None:
+    def test_rank_rhat_matches_arviz_for_ok_fixtures(self) -> None:
         for fixture in load_diagnostic_fixtures():
             chains = chains_from_fixture_input(fixture["input"])
             if chains is None or len(chains) < 2:
@@ -154,7 +154,7 @@ class ArvizCrosscheckTest(unittest.TestCase):
                 result["rank_normalized_rhat"], arviz_rhat, delta=RANK_TOLERANCE, msg=str(levels)
             )
 
-    def test_rank_rhat_folded_collapse_matches_arviz_bulk_only_result(self) -> None:
+    def test_rank_rhat_folded_collapse_matches_arviz_bulk(self) -> None:
         # Balanced two-valued chains symmetric around the pooled median fold
         # to a constant: arviz's max(bulk, NaN) silently returns the bulk
         # component, and Gibbsiq's explicit folded-collapse rule

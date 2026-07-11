@@ -2,14 +2,15 @@
 
 ## Scope
 
-Gibbsiq is THRML-native optimization infrastructure for QUBO, Ising, and BQM models. It is
-being built to provide the path from a standard quadratic optimization model to an auditable
-THRML sampling run. A model enters through a stable interface, is converted into the
-canonical Ising convention, will be lowered into THRML nodes, factors, blocks, and sampling
-programs, and will produce a result artifact containing raw samples, traces, diagnostics,
-metadata, and benchmark evidence. In the current repository, the model interface,
-conversion layer, result schema, evaluator, and benchmark oracle are implemented; the THRML
-runtime and later reporting layers remain target behavior.
+Gibbsiq is THRML-native optimization infrastructure for QUBO, Ising, and BQM models. It
+provides a path from a standard quadratic optimization model to an auditable THRML sampling
+run. A model enters through a stable interface, is converted into the canonical Ising
+convention, is lowered into THRML nodes, factors, blocks, and sampling programs, and produces
+a result artifact containing raw samples, traces, diagnostics, metadata, and benchmark
+evidence. The model interface, fixed-beta THRML runtime, diagnostics, evaluator, and strict
+benchmark oracle are implemented. Parallel tempering is under corrective verification, and
+diagnostic threshold/flag semantics are under corrective audit. Inspector,
+constraint-encoding, and classical-baseline layers remain target behavior.
 
 The project is not a backend-agnostic diagnostics package. dimod compatibility, classical
 baselines, and diagnostic fixtures are included because THRML-backed optimization needs
@@ -60,7 +61,8 @@ P(s_i = +1 | s_-i) = sigmoid(-2 * beta * gamma_i)
 2. **THRML optimization runtime**
    - Lower the internal Ising model into THRML nodes, factors, blocks, and programs.
    - Build graph-aware block partitions from nonzero couplings.
-   - Support seeds, initialization policies, fixed-beta schedules, and later beta ladders.
+   - Support seeds, initialization policies, fixed-beta schedules, warmup ladders, and an
+     independently verified parallel-tempering path.
    - Capture raw samples, energy traces, schedule metadata, block metadata, versions, device,
      and timing.
    - Recompute energies under Gibbsiq's convention instead of trusting backend output.
@@ -101,6 +103,9 @@ Boltzmann distributions. Benchmark reports are checked by witness recomputation.
 
 - No THRML speedup is claimed until measured against classical and GPU baselines under
   recorded fixed-work or fixed-time budgets.
+- Public THRML execution is a JAX/GPU simulation path. A production TSU result requires
+  backend-specific hardware evidence and cannot be inferred from simulator output or the
+  Jelinčič system-level energy model.
 - Fixed-beta Gibbs is a validation target, not a claim of competitive optimization quality.
 - R-hat, ESS, diversity, and related diagnostics are warnings about sampler behavior, not
   proofs of optimality.
@@ -109,10 +114,10 @@ Boltzmann distributions. Benchmark reports are checked by witness recomputation.
 - Best-known benchmark values are not correctness oracles unless the source and witness are
   independently verified.
 
-## Stage 2 Target
+## Stage 2 Corrective Target
 
-The current implementation target is the first THRML optimization runtime. It must provide
-the smallest reliable path from model input to THRML execution:
+The fixed-beta THRML path is implemented. The current Stage 2 target is to close the
+parallel-tempering exit criterion while preserving these runtime contracts:
 
 - `THRMLSampler.sample`;
 - `THRMLSampler.sample_qubo`;
@@ -124,9 +129,11 @@ the smallest reliable path from model input to THRML execution:
 - raw sample and trace capture;
 - analytic validation on tiny Ising fixtures.
 
-The API must leave room for batched independent chains and parallel tempering. Fixed-beta
-Gibbs is the first correctness target because it is easiest to validate against exact
-probabilities; it is not the final optimization strategy.
+Parallel tempering must use the EVAL-EQ-014 exchange ratio, advance every replica by the
+configured number of local sweeps between exchange opportunities, attempt the sole adjacent
+pair at every interval for a two-replica ladder, and preserve cold-slot and per-beta traces.
+Targeted invariants and the full optional THRML suite are required before the exit criterion
+closes.
 
 ## Evidence Standard
 
@@ -145,6 +152,8 @@ recorded. At minimum, record:
 
 ## Current Status
 
-Stages 0 and 1 are complete. The implemented code provides the canonical Ising model,
-offset-preserving QUBO/BQM/Ising conversion, `SampleResult`, the JSON evaluator, and the
-strict benchmark oracle. Stage 2 remains to be implemented.
+Stages 0-3 have implemented core deliverables: the canonical Ising model, offset-preserving
+QUBO/BQM/Ising conversion, `SampleResult`, fixed-beta THRML lowering, graph-colored blocks,
+multi-chain traces, diagnostics, the JSON evaluator, and the strict benchmark oracle.
+Parallel tempering and diagnostic threshold/flag semantics remain under corrective audit.
+Inspector, constraint-encoding, and classical-baseline layers remain absent.

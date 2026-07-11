@@ -10,7 +10,7 @@ contents and checksums are. Entries are append-only; if a decision is later
 revised, add a new entry rather than rewriting an old one.
 
 Write every entry in the tone fixed by [`style.md`](style.md): the register of the
-project's anchor paper (Jelinčić et al. 2025, arXiv:2510.23972), direct and
+project's anchor paper (Jelinčič et al. 2025, arXiv:2510.23972), direct and
 detailed, with each claim tied to a mechanism, a measurement, or a
 primary-reference identifier. That file gives the voice, the section skeleton, and
 a checklist.

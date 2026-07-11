@@ -43,9 +43,10 @@ STATUS_INSUFFICIENT_DATA = "insufficient_data"
 STATUS_NOT_AVAILABLE = "not_available"
 
 RHAT_THRESHOLD = 1.01
-LOW_ESS_THRESHOLD = 400.0
 MODE_COLLAPSE_TOP1_MASS_THRESHOLD = 0.9
-LOW_DIVERSITY_UNIQUE_FRACTION_THRESHOLD = 0.05
+LOW_DIVERSITY_OCCUPANCY_EFFICIENCY_THRESHOLD = 0.05
+# Compatibility alias for callers that imported the Stage 3 constant.
+LOW_DIVERSITY_UNIQUE_FRACTION_THRESHOLD = LOW_DIVERSITY_OCCUPANCY_EFFICIENCY_THRESHOLD
 NO_RECENT_IMPROVEMENT_WINDOW_FRACTION = 0.5
 POOR_MIXING_MIN_TAU_MULTIPLES = 50.0
 LOW_FEASIBILITY_RATE_THRESHOLD = 0.5
@@ -57,13 +58,14 @@ MIN_CHAINS_FOR_RHAT = 2
 FLAG_ORDER = (
     "mode_collapse",
     "low_diversity",
-    "low_ess",
     "poor_mixing",
     "chain_disagreement",
+    "insufficient_diagnostic_data",
+)
+OBSERVATION_ORDER = (
     "no_recent_improvement",
     "zero_energy_variance",
     "zero_within_chain_variance",
-    "insufficient_diagnostic_data",
 )
 RESERVED_FLAGS = ("low_feasibility", "bad_schedule", "block_stuck", "conversion_unverified")
 
@@ -75,9 +77,8 @@ def thresholds_summary() -> dict[str, float]:
     """Threshold constants echoed into every diagnostics payload."""
     return {
         "rhat": RHAT_THRESHOLD,
-        "low_ess": LOW_ESS_THRESHOLD,
         "mode_collapse_top1_mass": MODE_COLLAPSE_TOP1_MASS_THRESHOLD,
-        "low_diversity_unique_fraction": LOW_DIVERSITY_UNIQUE_FRACTION_THRESHOLD,
+        "low_diversity_occupancy_efficiency": LOW_DIVERSITY_OCCUPANCY_EFFICIENCY_THRESHOLD,
         "no_recent_improvement_window_fraction": NO_RECENT_IMPROVEMENT_WINDOW_FRACTION,
         "poor_mixing_min_tau_multiples": POOR_MIXING_MIN_TAU_MULTIPLES,
         "low_feasibility_rate": LOW_FEASIBILITY_RATE_THRESHOLD,
@@ -463,12 +464,24 @@ def diversity_section(
     top_k: Sequence[int] = (1, 3, 10),
 ) -> dict[str, Any]:
     """Diversity metrics per EVAL-EQ-011 over distinct-state counts."""
+    if num_variables < 0:
+        raise ValueError("num_variables must be non-negative")
     total = sum(counts.values())
     ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    if total:
+        # Once 2**num_variables is at least num_reads, the minimum is known;
+        # avoid constructing a needlessly large integer for external inputs.
+        support_bound = total
+        if num_variables < (total - 1).bit_length():
+            support_bound = 1 << num_variables
+        occupancy_efficiency = len(ordered) / support_bound
+    else:
+        occupancy_efficiency = None
     section: dict[str, Any] = {
         "num_reads": total,
         "unique_states": len(ordered),
         "unique_fraction": len(ordered) / total if total else None,
+        "occupancy_efficiency": occupancy_efficiency,
     }
     masses = [count / total for _, count in ordered] if total else []
     for k in top_k:
@@ -505,24 +518,24 @@ def energy_flags(energy: Mapping[str, Any]) -> list[str]:
     """Energy-family flags; evaluated only against the energy section."""
     flags = []
     if (
-        energy.get("ess_status") == STATUS_OK
-        and energy.get("ess") is not None
-        and energy["ess"] < LOW_ESS_THRESHOLD
-    ):
-        flags.append("low_ess")
-    if (
         energy.get("autocorrelation_status") == STATUS_OK
         and energy.get("tau_hat") is not None
         and energy.get("draws_per_chain", 0) < POOR_MIXING_MIN_TAU_MULTIPLES * energy["tau_hat"]
     ):
         flags.append("poor_mixing")
-    if energy.get("recent_improvement") is False:
-        flags.append("no_recent_improvement")
-    if energy.get("variance") == 0.0 and energy.get("count", 0) > 0:
-        flags.append("zero_energy_variance")
     if energy.get("ess_status") == STATUS_INSUFFICIENT_DATA:
         flags.append("insufficient_diagnostic_data")
     return _canonical_order(flags)
+
+
+def energy_observations(energy: Mapping[str, Any]) -> list[str]:
+    """Energy-family facts that are informative but not health failures."""
+    observations = []
+    if energy.get("recent_improvement") is False:
+        observations.append("no_recent_improvement")
+    if energy.get("variance") == 0.0 and energy.get("count", 0) > 0:
+        observations.append("zero_energy_variance")
+    return _canonical_observation_order(observations)
 
 
 def _disagreement_signals(section: Mapping[str, Any]) -> bool:
@@ -550,17 +563,23 @@ def chain_flags(chains: Mapping[str, Any]) -> list[str]:
     ``chain_disagreement`` fires from the energy-trace R-hat variants or, when
     the ``magnetization`` subsection is present (EVAL-EQ-007 magnetization
     wiring), from the same estimators on the magnetization trace — the only
-    flag that subsection contributes. ``zero_within_chain_variance`` and
-    ``insufficient_diagnostic_data`` stay energy-trace-scoped.
+    flag that subsection contributes. ``insufficient_diagnostic_data`` stays
+    energy-trace-scoped.
     """
     flags = []
     if _disagreement_signals(chains) or _disagreement_signals(chains.get("magnetization") or {}):
         flags.append("chain_disagreement")
-    if chains.get("split_within_chain_variance") == 0.0:
-        flags.append("zero_within_chain_variance")
     if chains.get("rhat_status") == STATUS_INSUFFICIENT_DATA:
         flags.append("insufficient_diagnostic_data")
     return _canonical_order(flags)
+
+
+def chain_observations(chains: Mapping[str, Any]) -> list[str]:
+    """Chain-family facts that are informative but not health failures."""
+    observations = []
+    if chains.get("split_within_chain_variance") == 0.0:
+        observations.append("zero_within_chain_variance")
+    return _canonical_observation_order(observations)
 
 
 def diversity_flags(diversity: Mapping[str, Any]) -> list[str]:
@@ -569,8 +588,12 @@ def diversity_flags(diversity: Mapping[str, Any]) -> list[str]:
     top1 = diversity.get("top1_mass")
     if top1 is not None and top1 >= MODE_COLLAPSE_TOP1_MASS_THRESHOLD:
         flags.append("mode_collapse")
-    unique_fraction = diversity.get("unique_fraction")
-    if unique_fraction is not None and unique_fraction <= LOW_DIVERSITY_UNIQUE_FRACTION_THRESHOLD:
+    occupancy = diversity.get("occupancy_efficiency")
+    if "occupancy_efficiency" not in diversity:
+        # Legacy direct mappings predate occupancy normalization. Preserve their
+        # old threshold behavior without weakening the canonical payload.
+        occupancy = diversity.get("unique_fraction")
+    if occupancy is not None and occupancy <= LOW_DIVERSITY_OCCUPANCY_EFFICIENCY_THRESHOLD:
         flags.append("low_diversity")
     return _canonical_order(flags)
 
@@ -578,6 +601,11 @@ def diversity_flags(diversity: Mapping[str, Any]) -> list[str]:
 def _canonical_order(flags: Sequence[str]) -> list[str]:
     present = set(flags)
     return [flag for flag in FLAG_ORDER if flag in present]
+
+
+def _canonical_observation_order(observations: Sequence[str]) -> list[str]:
+    present = set(observations)
+    return [observation for observation in OBSERVATION_ORDER if observation in present]
 
 
 def magnetization_trace(
@@ -630,6 +658,7 @@ def compute_diagnostics(
     if magnetization_chains is not None:
         chains["magnetization"] = _combined_split_rhat(magnetization_chains)
     flags = set(energy_flags(energy)) | set(chain_flags(chains))
+    observations = set(energy_observations(energy)) | set(chain_observations(chains))
     if samples is not None and variables is not None:
         diversity = diversity_section(state_counts(samples, variables), len(variables))
         flags |= set(diversity_flags(diversity))
@@ -647,6 +676,7 @@ def compute_diagnostics(
         "constraints": {"status": STATUS_NOT_AVAILABLE},
         "runtime": runtime,
         "flags": _canonical_order(list(flags)),
+        "observations": _canonical_observation_order(list(observations)),
         "thresholds": thresholds_summary(),
     }
 
@@ -667,15 +697,19 @@ def diagnostic_candidate_from_input(fixture_input: Mapping[str, Any]) -> dict[st
             counts[state] = counts.get(state, 0) + int(row["count"])
         section = diversity_section(counts, len(variables))
         flags = diversity_flags(section)
+        observations: list[str] = []
     elif "chains" in fixture_input:
         rows = sorted(fixture_input["chains"], key=lambda row: row["chain_id"])
         section = chain_section([row["energy_trace"] for row in rows])
         flags = chain_flags(section)
+        observations = chain_observations(section)
     elif "energy_trace" in fixture_input:
         section = energy_section([fixture_input["energy_trace"]])
         flags = energy_flags(section)
+        observations = energy_observations(section)
     else:
         raise ValueError("fixture input must contain one of 'sample_counts', 'chains', or 'energy_trace'")
     candidate = dict(section)
     candidate["required_flags"] = flags
+    candidate["observations"] = observations
     return candidate

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -153,10 +152,6 @@ def normalize_candidate(candidate: Any) -> dict[str, Any]:
     return {key: value for key, value in candidate.items() if key not in _CANDIDATE_METADATA_KEYS}
 
 
-def comparable(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-
-
 def _mismatch(
     path: str, expected: Any, actual: Any, message: str = "value does not match"
 ) -> list[Difference]:
@@ -245,7 +240,7 @@ def compare_values(
                 )
             ]
         if key in UNORDERED_LIST_KEYS:
-            return compare_unordered_lists(expected, actual, path)
+            return compare_unordered_lists(expected, actual, path, tolerance)
         return compare_ordered_lists(expected, actual, path, tolerance)
 
     return [] if expected == actual else _mismatch(path, expected, actual)
@@ -270,10 +265,43 @@ def compare_ordered_lists(
     return differences
 
 
-def compare_unordered_lists(expected: list[Any], actual: list[Any], path: str) -> list[Difference]:
-    expected_counts = Counter(comparable(value) for value in expected)
-    actual_counts = Counter(comparable(value) for value in actual)
-    if expected_counts == actual_counts:
+def compare_unordered_lists(
+    expected: list[Any],
+    actual: list[Any],
+    path: str,
+    tolerance: float,
+) -> list[Difference]:
+    """Compare an unordered multiset without discarding deep float tolerance.
+
+    A bipartite maximum matching is used instead of greedy pairing because
+    tolerance neighborhoods can overlap.  Multiplicity is preserved and each
+    actual item can satisfy at most one expected item.
+    """
+    if len(expected) == len(actual):
+        compatible = [
+            [
+                not compare_values(expected_item, actual_item, f"{path}[*]", tolerance)
+                for actual_item in actual
+            ]
+            for expected_item in expected
+        ]
+        matched_expected = [-1] * len(actual)
+
+        def augment(expected_index: int, seen_actual: set[int]) -> bool:
+            for actual_index, is_compatible in enumerate(compatible[expected_index]):
+                if not is_compatible or actual_index in seen_actual:
+                    continue
+                seen_actual.add(actual_index)
+                previous = matched_expected[actual_index]
+                if previous == -1 or augment(previous, seen_actual):
+                    matched_expected[actual_index] = expected_index
+                    return True
+            return False
+
+        if all(augment(index, set()) for index in range(len(expected))):
+            return []
+
+    if expected == actual:
         return []
     return [
         Difference(

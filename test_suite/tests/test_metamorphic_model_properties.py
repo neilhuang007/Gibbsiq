@@ -83,7 +83,7 @@ class OffsetShiftTests(unittest.TestCase):
                     msg=f"seed={seed} sample={sample}",
                 )
 
-    def test_offset_does_not_affect_gibbs_conditionals(self) -> None:
+    def test_offset_shift_preserves_gibbs_conditionals(self) -> None:
         variables = tuple(f"x{i}" for i in range(VARIABLE_COUNT))
         for seed in SEEDS:
             h, J, offset = random_ising_fields(seed, variables)
@@ -102,20 +102,15 @@ class OffsetShiftTests(unittest.TestCase):
 
 
 class SpinGaugeTests(unittest.TestCase):
-    """Flipping spins in a set F, with h and boundary couplings negated, preserves energy.
-
-    For the gauge transform over a flip set F: ``h'_i = -h_i`` for ``i`` in F,
-    ``J'_ij = -J_ij`` when exactly one endpoint is in F, and the transformed
-    sample flips exactly the spins in F. The audited energy convention demands
-    ``E'(gauge(s)) == E(s)`` for every assignment; a sign error in either the
-    linear or quadratic term breaks it.
-    """
+    """Flipping spins in a set F, with h and boundary couplings negated, preserves energy."""
 
     def test_energy_is_invariant_under_spin_gauge_transform(self) -> None:
         variables = tuple(f"x{i}" for i in range(VARIABLE_COUNT))
         flip_sets = ({"x0"}, {"x1", "x3"}, set(variables))
         for seed, flipped in itertools.product(SEEDS, flip_sets):
             h, J, offset = random_ising_fields(seed, variables)
+            # gauge transform: h'_i = -h_i for i in F; J'_ij = -J_ij when exactly one endpoint is in F;
+            # E'(gauge(s)) == E(s) is the audited energy convention, so a sign error here breaks it
             gauged_h = {variable: -bias if variable in flipped else bias for variable, bias in h.items()}
             gauged_J = {
                 (u, v): -coupling if (u in flipped) != (v in flipped) else coupling

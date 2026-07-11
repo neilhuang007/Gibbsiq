@@ -1,10 +1,8 @@
 """Metamorphic invariants and sensitivity checks for ``gibbsiq.diagnostics``.
 
-Unit tests pin exact values for hand-picked instances; these property checks
-assert relations that must hold (or must NOT hold, for the order-sensitivity
-case) across seeded random inputs, catching implementations that are
-order-blind, non-invariant under a location/scale change of the energy axis,
-or that silently fail to detect multi-chain disagreement.
+Property checks across seeded random inputs, complementing the hand-picked
+unit tests: order-blindness, location/scale invariance, multi-chain
+disagreement detection.
 """
 
 from __future__ import annotations
@@ -42,7 +40,7 @@ def ar1_trace(rng: random.Random, phi: float, num_draws: int, x0: float = 0.0) -
 
 
 class SampleOrderPermutationTests(unittest.TestCase):
-    def test_diversity_section_is_invariant_under_sample_shuffling(self) -> None:
+    def test_diversity_section_invariant_to_shuffling(self) -> None:
         variables = ["a", "b", "c"]
         rng = random.Random(101)
         samples = [{variable: rng.choice((1, -1)) for variable in variables} for _ in range(200)]
@@ -55,11 +53,9 @@ class SampleOrderPermutationTests(unittest.TestCase):
 
         self.assertEqual(original_section, shuffled_section)
 
-    def test_tau_hat_changes_when_an_autocorrelated_trace_is_shuffled(self) -> None:
-        # AR(1) with coefficient 0.9 is strongly autocorrelated; an order-blind
-        # ESS estimator (e.g. one built only from marginal counts) would report
-        # the same tau before and after shuffling. The real Geyer estimator
-        # must not.
+    def test_autocorrelated_trace_shuffle_changes_tau(self) -> None:
+        # phi=0.9 is strongly autocorrelated; an order-blind estimator built
+        # only from marginal counts would report the same tau either way.
         trace = ar1_trace(random.Random(303), phi=0.9, num_draws=256)
         unshuffled = ess_mean([trace])
 
@@ -77,7 +73,7 @@ class LocationScaleInvarianceTests(unittest.TestCase):
         rng = random.Random(505)
         return [[rng.gauss(0.0, 1.0) for _ in range(200)] for _ in range(4)]
 
-    def test_energy_shift_preserves_autocorrelation_and_rhat_but_shifts_mean(self) -> None:
+    def test_energy_shift_preserves_autocorrelation_shifts_mean(self) -> None:
         chains = self._seeded_chains()
         shifted = [[value + 7.5 for value in chain] for chain in chains]
 
@@ -91,7 +87,7 @@ class LocationScaleInvarianceTests(unittest.TestCase):
         self.assertAlmostEqual(base_chains["rhat"], shifted_chains["rhat"], places=9)
         self.assertAlmostEqual(shifted_energy["mean"], base_energy["mean"] + 7.5, places=9)
 
-    def test_energy_scale_preserves_autocorrelation_and_rhat_but_scales_variance(self) -> None:
+    def test_energy_scale_preserves_autocorrelation_scales_variance(self) -> None:
         chains = self._seeded_chains()
         scaled = [[value * 3.0 for value in chain] for chain in chains]
 
@@ -107,7 +103,7 @@ class LocationScaleInvarianceTests(unittest.TestCase):
 
 
 class ChainRelabelTests(unittest.TestCase):
-    def test_reversing_chain_order_leaves_rhat_and_ess_identical(self) -> None:
+    def test_reversed_chain_order_keeps_rhat_ess(self) -> None:
         rng = random.Random(606)
         chains = [[rng.gauss(0.0, 1.0) for _ in range(150)] for _ in range(4)]
 
@@ -119,7 +115,7 @@ class ChainRelabelTests(unittest.TestCase):
 
 
 class GlobalSpinFlipTests(unittest.TestCase):
-    def test_magnetization_negates_and_diversity_is_invariant(self) -> None:
+    def test_spin_flip_negates_magnetization(self) -> None:
         variables = ["a", "b", "c", "d"]
         rng = random.Random(707)
         chain = [{variable: rng.choice((1, -1)) for variable in variables} for _ in range(40)]
@@ -157,7 +153,7 @@ class VariableRelabelTests(unittest.TestCase):
 
 
 class TrendingChainTests(unittest.TestCase):
-    def test_two_identical_trending_chains_produce_a_large_rhat(self) -> None:
+    def test_trending_identical_chains_yield_large_rhat(self) -> None:
         trend = list(range(1, 41))
         section = chain_section([trend, list(trend)])
         self.assertGreater(section["rhat"], 1.5)
@@ -255,13 +251,13 @@ class BehaviorTrioTests(unittest.TestCase):
         self.assertGreater(section["ess"], 1000.0)
         self.assertEqual(chain_flags(section), [])
 
-    def test_two_region_chains_disagree_and_have_low_ess(self) -> None:
+    def test_two_region_chains_disagree_low_ess(self) -> None:
         section = self._two_region_section()
         self.assertGreater(section["rhat"], 2.0)
         self.assertIn("chain_disagreement", chain_flags(section))
         self.assertLess(section["ess"], 100.0)
 
-    def test_stuck_chain_rhat_is_between_healthy_and_two_region(self) -> None:
+    def test_stuck_chain_rhat_falls_between_regimes(self) -> None:
         rng = random.Random(3333)
         chains = [[rng.gauss(0.0, 1.0) for _ in range(500)] for _ in range(3)]
         chains.append([rng.gauss(0.0, 0.05) for _ in range(500)])

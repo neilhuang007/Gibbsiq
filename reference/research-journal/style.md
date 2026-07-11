@@ -8,25 +8,16 @@ history. Write each entry as if it were a section of that paper.
 
 ## Where the style comes from
 
-The reference tone is the project's own anchor paper, Jelinčić et al. 2025, "An
+The reference tone follows the project's anchor paper, Jelinčič et al. 2025, "An
 Efficient Probabilistic Hardware Architecture for Diffusion-like Models"
-(arXiv:2510.23972), transcribed in
-`reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.md`.
-Read a few of its sentences for the register:
+(arXiv:2510.23972v2). Read the primary PDF for its register. The local Markdown at
+`reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.md`
+is a source guide and withdrawal notice; it is not a quotation corpus.
 
-- "The central observation motivating this work is that we can exploit this
-  locality to build specialized hardware."
-- "The key property is that this conditional distribution often depends only on
-  $x_i$ and its neighbors in the graphical model."
-- "We demonstrate that such an architecture can be implemented with standard
-  transistor-based circuits and analyze its energy efficiency compared to
-  conventional computing approaches."
-
-The paper states a problem, names the mechanism that addresses it, says what the
-work adds, reports what was measured, and marks what is not yet supported. The
-lab note beside it
-(`jelincic-2025-probabilistic-hardware-architecture.note.md`) applies the same
-register at journal length and is the closest local model to imitate.
+The paper states a problem, names the mechanism that addresses it, distinguishes
+measurement from system-level modeling, and marks limitations. Apply those traits
+without imitating sentences. The companion lab note demonstrates the expected
+source-level distinctions in a shorter local form.
 
 ## Voice and register
 

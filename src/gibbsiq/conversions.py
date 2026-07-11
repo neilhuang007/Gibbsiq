@@ -47,18 +47,19 @@ def compile_qubo(
         linear_spin[right] += coupling
         ising_offset += coupling
 
-    conversion_metadata: dict[str, Any] = {
-        "source_format": source_format,
-        "input_offset": parsed["offset"],
-        "conversion_offset": ising_offset,
-        "variable_order": list(order),
-        "qubo_term_convention": (
-            "linear terms plus upper-triangle quadratic terms; symmetric duplicate "
-            "pair entries are summed before conversion"
-        ),
-    }
-    if metadata:
-        conversion_metadata.update(metadata)
+    conversion_metadata = dict(metadata or {})
+    conversion_metadata.update(
+        {
+            "source_format": source_format,
+            "input_offset": parsed["offset"],
+            "conversion_offset": ising_offset,
+            "variable_order": list(order),
+            "qubo_term_convention": (
+                "linear terms plus upper-triangle quadratic terms; symmetric duplicate "
+                "pair entries are summed before conversion"
+            ),
+        }
+    )
 
     return IsingModel(
         variables=order,
@@ -81,14 +82,15 @@ def compile_ising(
 ) -> IsingModel:
     """Normalize Ising fields and couplings into canonical variable order."""
     parsed = _parse_ising(h, J, offset=offset, variables=variables)
-    model_metadata: dict[str, Any] = {
-        "source_format": source_format,
-        "input_offset": parsed["offset"],
-        "conversion_offset": parsed["offset"],
-        "variable_order": list(parsed["variables"]),
-    }
-    if metadata:
-        model_metadata.update(metadata)
+    model_metadata = dict(metadata or {})
+    model_metadata.update(
+        {
+            "source_format": source_format,
+            "input_offset": parsed["offset"],
+            "conversion_offset": parsed["offset"],
+            "variable_order": list(parsed["variables"]),
+        }
+    )
 
     return IsingModel(
         variables=parsed["variables"],
@@ -107,9 +109,8 @@ def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> Ising
     ``to_ising()``, that method is used. Otherwise, a duck-typed object with
     ``linear``, ``quadratic``, ``offset``, and ``vartype`` attributes is accepted.
     """
-    model_metadata: dict[str, Any] = {"source_format": "bqm"}
-    if metadata:
-        model_metadata.update(metadata)
+    model_metadata = dict(metadata or {})
+    model_metadata["source_format"] = "bqm"
 
     if hasattr(bqm, "to_ising"):
         h, J, ising_offset = bqm.to_ising()
@@ -122,13 +123,18 @@ def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> Ising
                 "variable_order": list(variables),
             }
         )
-        return compile_ising(
+        model = compile_ising(
             h,
             J,
             offset=float(ising_offset),
             variables=variables,
             metadata=model_metadata,
             source_format="bqm",
+        )
+        return _with_bqm_provenance(
+            model,
+            bqm_vartype=_vartype_name(bqm),
+            input_offset=float(getattr(bqm, "offset", ising_offset)),
         )
 
     vartype = normalize_vartype(getattr(bqm, "vartype", None))
@@ -139,7 +145,7 @@ def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> Ising
     model_metadata.update({"bqm_vartype": vartype, "input_offset": input_offset})
 
     if vartype == "SPIN":
-        return compile_ising(
+        model = compile_ising(
             linear,
             quadratic,
             offset=input_offset,
@@ -147,10 +153,44 @@ def compile_bqm(bqm: Any, *, metadata: Mapping[str, Any] | None = None) -> Ising
             metadata=model_metadata,
             source_format="bqm",
         )
-    return compile_qubo(
-        {"variables": list(variables), "linear": linear, "quadratic": quadratic, "offset": input_offset},
-        metadata=model_metadata,
+    else:
+        model = compile_qubo(
+            {
+                "variables": list(variables),
+                "linear": linear,
+                "quadratic": quadratic,
+                "offset": input_offset,
+            },
+            metadata=model_metadata,
+            source_format="bqm",
+        )
+    return _with_bqm_provenance(model, bqm_vartype=vartype, input_offset=input_offset)
+
+
+def _with_bqm_provenance(
+    model: IsingModel,
+    *,
+    bqm_vartype: str,
+    input_offset: float,
+) -> IsingModel:
+    """Reassert source-BQM provenance after the shared Ising/QUBO conversion."""
+    metadata = dict(model.metadata)
+    metadata.update(
+        {
+            "source_format": "bqm",
+            "bqm_vartype": bqm_vartype,
+            "input_offset": input_offset,
+            "conversion_offset": model.offset,
+            "variable_order": list(model.variables),
+        }
+    )
+    return IsingModel(
+        variables=model.variables,
+        linear=model.linear,
+        quadratic=model.quadratic,
+        offset=model.offset,
         source_format="bqm",
+        metadata=metadata,
     )
 
 
@@ -218,7 +258,18 @@ def _parse_ising(
 
 
 def _is_structured_model(value: Mapping[Any, Any]) -> bool:
-    return any(key in value for key in ("linear", "quadratic", "variables", "offset"))
+    """Distinguish schema containers from flat models with reserved-word labels.
+
+    A scalar variable named ``"linear"`` or ``"offset"`` is valid.  Treat the
+    mapping as structured only when at least one schema field has the container
+    shape that the structured representation requires.  An offset-only model
+    remains expressible as ``{"linear": {}, "offset": value}``.
+    """
+    return (
+        isinstance(value.get("linear"), Mapping)
+        or isinstance(value.get("quadratic"), Mapping)
+        or isinstance(value.get("variables"), (list, tuple))
+    )
 
 
 def _finish(

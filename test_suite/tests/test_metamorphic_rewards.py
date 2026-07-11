@@ -42,21 +42,21 @@ class MetamorphicRewardTest(unittest.TestCase):
     def setUp(self) -> None:
         self.fixtures = load_fixtures()
 
-    def test_maxcut_global_spin_flip_is_still_an_optimal_witness(self) -> None:
+    def test_maxcut_global_spin_flip_stays_optimal(self) -> None:
         fixture = self.fixtures["gt_maxcut_petersen"]
         actual = correct_actual(fixture)
         actual["witness_spin_samples"] = [spin_flip(actual["witness_spin_samples"][0])]
 
         self.assertEqual(verify_benchmark_fixture(fixture, actual, 1e-9), [])
 
-    def test_zero_field_spin_glass_global_spin_flip_is_still_optimal(self) -> None:
+    def test_zero_field_spin_glass_spin_flip_stays_optimal(self) -> None:
         fixture = self.fixtures["gt_sk_n12_s15"]
         actual = correct_actual(fixture)
         actual["witness_spin_samples"] = [spin_flip(actual["witness_spin_samples"][0])]
 
         self.assertEqual(verify_benchmark_fixture(fixture, actual, 1e-9), [])
 
-    def test_partition_side_swap_is_still_an_optimal_witness(self) -> None:
+    def test_partition_side_swap_stays_optimal(self) -> None:
         fixture = self.fixtures["gt_partition_frustrated_n13_v7_s17"]
         actual = correct_actual(fixture)
         witness = actual["witness_partitions"][0]
@@ -64,14 +64,14 @@ class MetamorphicRewardTest(unittest.TestCase):
 
         self.assertEqual(verify_benchmark_fixture(fixture, actual, 1e-9), [])
 
-    def test_knapsack_selection_order_is_not_part_of_the_reward(self) -> None:
+    def test_knapsack_selection_order_is_irrelevant(self) -> None:
         fixture = self.fixtures["gt_knapsack_n14_s9"]
         actual = correct_actual(fixture)
         actual["witness_selections"] = [list(reversed(actual["witness_selections"][0]))]
 
         self.assertEqual(verify_benchmark_fixture(fixture, actual, 1e-9), [])
 
-    def test_tsp_rotation_and_reversal_are_equivalent_witnesses(self) -> None:
+    def test_tsp_rotation_reversal_equivalent_witnesses(self) -> None:
         fixture = self.fixtures["gt_tsp_n8_s11"]
         base_actual = correct_actual(fixture)
         tour = base_actual["witness_tours"][0]
@@ -86,7 +86,7 @@ class MetamorphicRewardTest(unittest.TestCase):
             with self.subTest(tour=variant):
                 self.assertEqual(verify_benchmark_fixture(fixture, actual, 1e-9), [])
 
-    def test_one_bad_witness_fails_even_when_another_witness_is_valid(self) -> None:
+    def test_one_invalid_witness_fails_verification(self) -> None:
         fixture = self.fixtures["gt_knapsack_n10_s8"]
         actual = correct_actual(fixture)
         actual["witness_selections"].append(list(range(len(fixture["input"]["weights"]))))
@@ -94,7 +94,7 @@ class MetamorphicRewardTest(unittest.TestCase):
         diffs = verify_benchmark_fixture(fixture, actual, 1e-9)
         self.assertTrue(any(diff["code"] == "witness_not_optimal" for diff in diffs))
 
-    def test_every_required_scalar_is_mandatory_for_each_family(self) -> None:
+    def test_missing_scalar_key_fails_verification(self) -> None:
         for family in FAMILY_SPECS:
             fixture = next(fixture for fixture in self.fixtures.values() if fixture["family"] == family)
             for key in FAMILY_SPECS[family]["scalar_keys"]:

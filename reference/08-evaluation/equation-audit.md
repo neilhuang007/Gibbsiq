@@ -304,9 +304,18 @@ frequencies `p_k = c_k / R`):
 
 ```text
 unique_fraction = num_distinct_states / R
+occupancy_efficiency = num_distinct_states / min(R, 2^n)
 top_k_mass      = sum of the k largest p_k                    (reported for k = 1, 3, 10)
 entropy_nats    = -sum_k p_k * ln(p_k)                        (natural log, in nats)
 ```
+
+`unique_fraction` remains a raw occupancy statistic. It MUST NOT drive
+`low_diversity`: for a finite binary support it converges to zero as `R` grows,
+even under perfect sampling. `low_diversity` uses `occupancy_efficiency` instead.
+This is efficiency relative to the largest number of distinct states observable
+with `R` reads, NOT the fraction of the full support covered. Constraints,
+target concentration, and birthday collisions can make a low value legitimate,
+so the flag remains a warning and never evidence of incorrect sampling.
 
 Mean pairwise Hamming distance is averaged over ALL C(R, 2) unordered read pairs, including
 pairs of reads that landed in the same state (which contribute distance 0). With
@@ -325,8 +334,15 @@ normalized_mean_pairwise_hamming_distance = 0.06822096456692914. Common wrong va
 these pins kill: log2 entropy, distinct-state-only Hamming (excluding same-state pairs),
 and ordered-pair denominators.
 
-Use: diversity section of the diagnostics contract; `mode_collapse` and `low_diversity`
-flags.
+Use: diversity section of the diagnostics contract; `mode_collapse` and
+`low_diversity` warning flags.
+
+Classification rule audited 2026-07-11: `no_recent_improvement`,
+`zero_energy_variance`, and `zero_within_chain_variance` are observations, not
+sampler-health flags. A flat Hamiltonian sampled exactly has constant energy and
+no possible energy improvement while its states may mix perfectly. The raw
+metrics and statuses remain in the payload, and the three facts are echoed in a
+separate `observations` list so no evidence is discarded.
 
 ## EVAL-EQ-012: Magnetization and Distance-to-Best Traces
 
@@ -450,3 +466,75 @@ estimator's statistical noise).
 Use: chain-disagreement warnings alongside EVAL-EQ-007, on energy and magnetization traces.
 Same caveat as EVAL-EQ-007: a disagreement flag, never a convergence or optimality proof.
 
+## EVAL-EQ-014: Replica-Exchange Acceptance Ratio
+
+Source: derived from the fixed-beta Boltzmann law in EVAL-EQ-005 by taking the ratio of
+the joint target density after and before swapping two replica states. Audited 2026-07-10.
+
+Let the left and right temperature slots have inverse temperatures `beta_left` and
+`beta_right`, and let their current states have canonical Gibbsiq energies `energy_left`
+and `energy_right`. Before a proposed state swap, the two-replica density is proportional
+to
+
+```text
+exp(-beta_left * energy_left - beta_right * energy_right).
+```
+
+After swapping the states (not the temperature labels), it is proportional to
+
+```text
+exp(-beta_left * energy_right - beta_right * energy_left).
+```
+
+Therefore the log Metropolis ratio `log(target_after / target_before)` is
+
+```text
+log_ratio = (beta_left - beta_right) * (energy_left - energy_right)
+accept if log(U) < min(0, log_ratio), where U ~ Uniform(0, 1).
+```
+
+The implementation may use the equivalent numerically stable branch
+`log_ratio >= 0 or log(U) < log_ratio`. A common sign bug is to use
+`(beta_left - beta_right) * (energy_right - energy_left)`; that is the reciprocal ratio
+and preferentially moves high-energy states toward the colder (larger-beta) slot.
+
+Adding the same finite offset `c` to both energies leaves the ratio unchanged because
+`(beta_left - beta_right) * ((energy_left + c) - (energy_right + c))` equals `log_ratio`.
+This cancellation does not relax the project-wide requirement to preserve offsets in
+reported energies.
+
+Use: parallel-tempering swap decisions and deterministic swap-trace tests. Replica
+exchange improves communication between temperature slots; its acceptance rate is sampler
+health evidence, not proof of convergence or optimality.
+
+When the backend rounds coefficients or beta, slot `k` instead targets a recorded
+lowered log density `ell_k(s)`. Detailed balance then requires the general ratio
+
+```text
+log_ratio = ell_left(state_right) + ell_right(state_left)
+          - ell_left(state_left)  - ell_right(state_right).
+```
+
+Using canonical host energies in that case mixes two different targets: local
+moves preserve the lowered law while swaps preserve the host law. The canonical
+formula above is only the special case `ell_k(s) = -beta_k E(s) + constant`.
+
+## EVAL-EQ-015: Backend Local-Logit Error Bound
+
+For effective (already beta-scaled) host and backend coefficients, let `delta h_i`
+and `delta J_ij` be their differences. For backend unit roundoff `u`, node degree
+`d_i`, and `A_i = |h_i_backend| + sum_j |J_ij_backend|`, use
+
+```text
+gamma_d = d_i * u / (1 - d_i * u)
+field_error_i <= |delta h_i| + sum_j |delta J_ij| + gamma_d * A_i
+logit_error_i <= 2 * field_error_i.
+```
+
+The first terms bound coefficient conversion for every neighboring spin state;
+the standard `gamma_d` term conservatively bounds THRML's floating reduction and
+bias addition. Reject a lowering when the maximum logit bound exceeds `1e-4`.
+The rejected `1e-6` alternative was too strict for ordinary float32 sparse models
+once conservative accumulation error was included; `1e-4` still bounds the
+corresponding sigmoid-probability perturbation by at most `2.5e-5`. This is an
+approximation guarantee, not a claim of exact sampling from the host Hamiltonian.

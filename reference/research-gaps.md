@@ -1,6 +1,8 @@
 # Research Gaps and Integration Risks
 
-These are explicit gaps found during the first research pass. Do not assume they are solved by THRML unless later source inspection proves otherwise.
+These are explicit gaps found during research and implementation audits. THRML's public
+documentation currently describes a JAX-based GPU simulator for future Extropic hardware;
+hardware execution requires separate evidence.
 
 ## THRML Does Provide
 
@@ -58,10 +60,16 @@ ecosystem.
 - Block construction: bad block partitioning can destroy mixing or waste GPU work through padding.
 - Diagnostic interpretation: optimization runs are not posterior inference; ESS/R-hat ideas need careful adaptation to energy, objective, and state features.
 - Benchmark fairness: comparing THRML to SA/SQA/SB requires fixed seeds, fixed time budgets, repeated trials, and honest reporting of wall-clock plus quality.
-- Python version: local `pyproject.toml` currently says Python `>=3.13`, while THRML docs state Python `>=3.10`; verify THRML compatibility with Python 3.13 before choosing dependencies.
+- Python version: `pyproject.toml` and THRML's installation docs both state Python `>=3.10`;
+  optional runtime tests must continue to cover the Python/JAX/THRML version matrix actually
+  used by CI and benchmark runs.
 - Ecosystem timing: THRML is young. Avoid unverified speed claims. Build the optimization
   layer while the API surface is still small enough to influence.
 - Ingestion commoditization: model ingestion and IR-to-THRML lowering could be absorbed by an
   Extropic-owned optimization SDK. Keep the independent verification and diagnostics
   contracts, which a vendor cannot self-certify, as the durable differentiator, and keep those
   contracts backend-portable.
+- Novelty scope: current dimod documentation exposes ESS helpers for arrays and `SampleSet`
+  objects. Gibbsiq's defensible contribution is the combined optimization audit contract:
+  conversion checks, explicit degenerate diagnostic states, raw evidence, anti-echo evaluation,
+  and witness recomputation. The presence of ESS alone is not novel.

@@ -1,70 +1,51 @@
-# Lab note — Probabilistic hardware for diffusion-like models
+# Lab Note - Probabilistic Hardware for Diffusion-Like Models
 
-> **Paper.** A. Jelinčič, O. Lockwood, A. Garlapati, P. Schillinger, I. Chuang,
-> G. Verdon, and T. McCourt. "An efficient probabilistic hardware architecture for
-> diffusion-like models." arXiv preprint, 2025.
-> arXiv:[2510.23972](https://arxiv.org/abs/2510.23972) · BibTeX `jelincic2025`.
-> Transcript: [`jelincic-2025-probabilistic-hardware-architecture.md`](./jelincic-2025-probabilistic-hardware-architecture.md).
+> Paper: A. Jelinčič et al., "An efficient probabilistic hardware architecture for
+> diffusion-like models," arXiv:2510.23972v2, 2025.
+>
+> Primary source: [local PDF](./jelincic-2025-probabilistic-hardware-architecture.pdf).
+> Verified source guide:
+> [`jelincic-2025-probabilistic-hardware-architecture.md`](./jelincic-2025-probabilistic-hardware-architecture.md).
 
-## What the paper does
+## What The Paper Establishes
 
-The paper proposes a transistor-level hardware accelerator that performs Gibbs
-sampling for energy-based and diffusion-like generative models by exploiting the
-locality of sparse probabilistic graphical models. An EBM defines
-$p(\mathbf{x}) = \tfrac{1}{Z}\exp(-\beta E(\mathbf{x}))$, and Gibbs sampling updates
-each variable from its conditional, which for a sparse model depends only on a
-variable and its graph neighbors:
-$p(x_i \mid \mathbf{x}_{\neg i}) \propto \exp\!\big(-\beta\,\tfrac{\partial E}{\partial x_i}\,x_i\big)$.
-The design instantiates one sampling cell per variable — each holding state,
-receiving neighbor states, computing a local bias, and emitting a stochastic bit —
-so cells run in parallel with only nearest-neighbor communication, optionally
-synchronized by graph color classes. For a Boltzmann machine the cell realizes the
-binary conditional $p(x_i = 1 \mid \mathbf{x}_{\text{neighbors}}) = \sigma(\theta_i)$,
-where the bias $\theta_i$ is a linear combination of neighbor states and weights. A
-resistor-network biasing circuit computes the multiply-accumulate
-$V_b = \sum_j G_j V_{dd}\, y_j$ (with $y_j = x_j \oplus s_j$ encoding signed weights),
-and a comparator fed by a Gaussian noise source produces a bit with probability
-$P(\text{out}=1) = \sigma(V_b / V_T)$, matching the sigmoid conditional in silicon.
+The paper proposes a denoising thermodynamic computer architecture built from sparse
+Boltzmann-machine layers and all-transistor random-bit circuits. PDF page 5 describes a GPU
+simulator used to study a future device. Its common experimental topology is an `L = 70`
+grid with degree-12 connectivity and two-color block-Gibbs updates. PDF page 6 combines
+measured RNG behavior with modeled bias, clock, and communication costs to estimate a future
+device's energy.
 
-The authors give a full energy model,
-$E = T(E_{\text{samp}} + E_{\text{init}} + E_{\text{read}})$ with
-$E_{\text{samp}} = KN(E_{\text{rng}} + E_{\text{bias}} + E_{\text{clock}} + E_{\text{nb}})$,
-finding neighbor communication and biasing dominate, and report fJ-scale energy per
-sample for a 1024-node denoising model — orders of magnitude below GPU sampling.
-Appendix G ties sampler quality to spectral mixing: the normalized autocorrelation
-decays asymptotically as $r_{yy}[k] \approx C\,\sigma_2^{k}$ in the second-largest
-transition-matrix eigenvalue, and an Adaptive Correlation Penalty tunes the energy
-landscape during training using the measured autocorrelation so the chain mixes
-within the available number of Gibbs steps.
+The evidence has distinct levels. The approximately 100 ns RNG autocorrelation on PDF page 6
+and the approximately 10 MHz, 350 aJ-per-bit values in Appendix J are circuit measurements.
+The approximately 2 fJ `E_cell` value and the approximately `1.6 * T nJ` complete-program
+value are outputs of a system-level physical model. The abstract's approximately 10,000-fold
+energy comparison is therefore a projection for a simple generative-model benchmark.
 
-## Why it matters to Gibbsiq
+## Connection To Gibbsiq
 
-- **It is the hardware statement of the THRML block-Gibbs runtime (layer 2).** The
-  per-variable cell with local-field bias, neighbor messaging, and color-class
-  synchronization is exactly the lowering Gibbsiq's runtime performs onto THRML
-  nodes/blocks/factors; the color-synchronized update maps to block Gibbs over a
-  graph coloring.
-- **The cell conditional is the audited Gibbs sign.** The Boltzmann cell draws
-  $x_i = 1$ with probability $\sigma(\theta_i)$ where $\theta_i$ is the local bias —
-  the same single-site conditional Gibbsiq fixes as `sigmoid(-2 * beta * gamma_i)`
-  with $\gamma_i = h_i + \sum_j J_{ij} s_j$. Reconciling the $\{0,1\}$ hardware
-  convention and signed-weight encoding ($y_j = x_j \oplus s_j$) against Gibbsiq's
-  $\{-1,+1\}$ upper-triangle energy is the kind of sign/factor check the equation
-  audit exists to catch.
-- **Autocorrelation and $\sigma_2$ mixing are the diagnostics contract (layer 3).**
-  The paper's $r_{yy}[k] \approx C\,\sigma_2^{k}$ analysis and its mixing-time-driven
-  penalty are the physical-side justification for Gibbsiq's autocorrelation / ESS /
-  mode-collapse diagnostics: a slowly decaying autocorrelation (large $\sigma_2$) is
-  precisely the unhealthy-mixing condition Gibbsiq must flag.
+- Sparse neighbor interactions and two-color updates motivate graph-aware blocks in the
+  THRML runtime.
+- The paper's local Gibbs conditional makes sign and factor auditing essential. Its Equation
+  10 uses a different sign, beta placement, and pair-sum convention from Gibbsiq, so
+  [`../../08-evaluation/equation-audit.md`](../../08-evaluation/equation-audit.md) remains the
+  implementation authority.
+- The paper links autocorrelation to mixing behavior. Gibbsiq records autocorrelation, ESS,
+  chain disagreement, and diversity as health telemetry rather than optimality evidence.
 
-## Reading-list hooks
+## Limits On Transfer
 
-- THRML lowering and block-Gibbs schedule/seed/color controls →
-  [`../thrml-runtime.md`](../thrml-runtime.md).
-- Single-site Gibbs conditional and sign convention → `CLAUDE.md` → "Canonical
-  conventions", audited in
+The paper supplies no QUBO benchmark, witness-verified optimum, fixed-work comparison,
+fixed-time comparison, or production TSU result. Gibbsiq must establish those claims through
+its own runtime artifacts, exact oracles, and independently configured classical baselines.
+THRML's official documentation currently describes the public library as a JAX-based GPU
+simulator for programs intended for future Extropic hardware.
+
+## Reading Hooks
+
+- THRML lowering and block controls: [`../thrml-runtime.md`](../thrml-runtime.md).
+- Canonical energy and Gibbs sign:
   [`../../08-evaluation/equation-audit.md`](../../08-evaluation/equation-audit.md).
-- p-bit / probabilistic-computing lineage this hardware extends →
-  [`../../05-theory/papers/camsari-2018-probabilistic-spin-logic.note.md`](../../05-theory/papers/camsari-2018-probabilistic-spin-logic.note.md).
-- Autocorrelation / ESS / R-hat mixing diagnostics this informs →
-  [`../../04-diagnostics/`](../../04-diagnostics/).
+- Sampler health diagnostics: [`../../04-diagnostics/`](../../04-diagnostics/).
+- Primary-source audit record:
+  [`../../research-journal/2026-07-11-primary-source-integrity-audit.md`](../../research-journal/2026-07-11-primary-source-integrity-audit.md).

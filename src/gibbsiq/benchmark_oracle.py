@@ -86,13 +86,23 @@ def _normalize_spins(model: dict[str, Any], witness: Any) -> dict[str, int]:
     if not isinstance(witness, dict):
         raise ValueError("spin witness must be an object of variable -> +-1")
     variables = [str(v) for v in model["variables"]]
+    if len(set(variables)) != len(variables):
+        raise ValueError("model variables are not unique after string normalization")
     spins: dict[str, int] = {}
-    raw = {str(key): value for key, value in witness.items()}
+    raw: dict[str, Any] = {}
+    for key, value in witness.items():
+        normalized_key = str(key)
+        if normalized_key in raw:
+            raise ValueError(f"spin witness duplicates normalized variable {normalized_key!r}")
+        raw[normalized_key] = value
+    extra = sorted(set(raw) - set(variables))
+    if extra:
+        raise ValueError(f"spin witness contains unknown variables {extra!r}")
     for var in variables:
         if var not in raw:
             raise ValueError(f"spin witness missing variable {var!r}")
         value = raw[var]
-        if value not in (-1, 1):
+        if isinstance(value, bool) or not isinstance(value, int) or value not in (-1, 1):
             raise ValueError(f"spin for {var!r} must be -1 or +1, got {value!r}")
         spins[var] = int(value)
     return spins
@@ -148,6 +158,8 @@ def _verify_number_partition(
         return False, "partition witness needs 'set_plus' and 'set_minus' lists", None
     plus = list(witness["set_plus"])
     minus = list(witness["set_minus"])
+    if any(isinstance(value, bool) or not isinstance(value, int) for value in plus + minus):
+        return False, "partition witness values must be integers, not booleans", None
     if sorted(plus + minus) != sorted(model["numbers"]):
         return False, "partition does not use each input number exactly once", None
     diff = abs(sum(plus) - sum(minus))
@@ -163,7 +175,7 @@ def _verify_knapsack(model: dict[str, Any], witness: Any, optimum: Any, toleranc
     n = len(model["weights"])
     if len(set(selection)) != len(selection):
         return False, "knapsack witness has duplicate indices", None
-    if any(not isinstance(i, int) or i < 0 or i >= n for i in selection):
+    if any(isinstance(i, bool) or not isinstance(i, int) or i < 0 or i >= n for i in selection):
         return False, f"knapsack witness indices must be within 0..{n - 1}", None
     weight = sum(model["weights"][i] for i in selection)
     value = sum(model["values"][i] for i in selection)
@@ -180,6 +192,8 @@ def _verify_tsp(model: dict[str, Any], witness: Any, optimum: Any, tolerance: fl
         return False, "tsp witness must be a list (a tour permutation)", None
     tour = list(witness)
     n = model["num_cities"]
+    if any(isinstance(city, bool) or not isinstance(city, int) for city in tour):
+        return False, "tsp witness cities must be integers, not booleans", None
     if sorted(tour) != list(range(n)):
         return False, f"tsp witness must be a permutation of 0..{n - 1}", None
     distance = model["distance_matrix"]
