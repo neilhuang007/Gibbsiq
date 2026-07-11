@@ -60,7 +60,7 @@ class FakeToIsingBQM:
 
 
 class ModelCompatibilityTest(unittest.TestCase):
-    def test_compile_qubo_matches_exact_fixture_and_preserves_offset(self) -> None:
+    def test_compile_qubo_matches_fixture_and_offset(self) -> None:
         fixture = load_exact_fixture("qubo_two_var_offset_conversion")
         model = compile_qubo(fixture["input"])
         expected_ir = fixture["expected"]["ising_ir"]
@@ -81,7 +81,7 @@ class ModelCompatibilityTest(unittest.TestCase):
             )
             self.assertAlmostEqual(model.energy(bits, vartype="BINARY"), model.energy(spins), places=12)
 
-    def test_compile_qubo_sums_symmetric_duplicate_pairs_before_conversion(self) -> None:
+    def test_compile_qubo_sums_duplicate_pairs(self) -> None:
         model = compile_qubo(
             {
                 ("a", "a"): -1.0,
@@ -110,7 +110,7 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertEqual(model.to_dict()["quadratic"], {"a,b": -1.0})
         self.assertEqual(model.offset, 2.5)
 
-    def test_compile_ising_orders_variables_and_folds_diagonal_terms(self) -> None:
+    def test_compile_ising_orders_variables_folds_diagonals(self) -> None:
         model = compile_ising({"z": 2, "a": -1}, {("z", "a"): 3, ("a", "a"): 4})
 
         self.assertEqual(model.variables, ("a", "z"))
@@ -133,7 +133,7 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertAlmostEqual(prob_plus, fixture["expected"]["when_neighbor_s1_is_plus_1"]["p_s0_plus_1"])
         self.assertAlmostEqual(prob_minus, fixture["expected"]["when_neighbor_s1_is_minus_1"]["p_s0_plus_1"])
 
-    def test_local_field_and_flip_delta_match_independent_recomputation(self) -> None:
+    def test_local_field_and_flip_delta_match_recomputation(self) -> None:
         model = compile_ising(
             {"a": 0.2, "b": -0.4, "c": 0.7},
             {("a", "b"): -1.5, ("a", "c"): 0.25, ("b", "c"): 0.9},
@@ -157,7 +157,7 @@ class ModelCompatibilityTest(unittest.TestCase):
                 places=12,
             )
 
-    def test_compile_bqm_accepts_duck_typed_spin_and_to_ising_objects(self) -> None:
+    def test_compile_bqm_accepts_duck_typed_bqm_objects(self) -> None:
         spin_model = compile_bqm(FakeBQM())
         converted_model = compile_bqm(FakeToIsingBQM())
 
@@ -168,7 +168,7 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertAlmostEqual(spin_model.energy({"a": 1, "b": 1}), 0.0)
         self.assertAlmostEqual(converted_model.energy({"a": 1, "b": 1}), 0.0)
 
-    def test_sample_result_schema_computes_energies_and_best_sample(self) -> None:
+    def test_sample_result_schema_computes_best_sample(self) -> None:
         model = compile_qubo(
             {
                 "variables": ["a", "b"],

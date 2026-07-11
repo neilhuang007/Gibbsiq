@@ -1,8 +1,4 @@
-"""Graph-coloring block partition tests.
-
-These cover the pure-stdlib partitioner, so they run without the optional
-thrml extra installed.
-"""
+"""Graph-coloring block partition tests (pure stdlib; no thrml extra required)."""
 
 from __future__ import annotations
 
@@ -103,10 +99,10 @@ class ColoringStructureTests(unittest.TestCase):
 class DsaturEdgeCaseTests(unittest.TestCase):
     """Canonical coloring instances from the graph-coloring literature."""
 
-    def test_crown_graph_gets_two_colors_despite_adversarial_order(self) -> None:
-        # Crown graph S_3^0 (K_{3,3} minus a perfect matching) with interleaved
+    def test_crown_graph_two_colors_adversarial_order(self) -> None:
+        # Crown graph S_3^0 (K_{3,3} minus a perfect matching): interleaved
         # variable order defeats naive sequential greedy (3 colors); DSATUR
-        # must still find the optimal bipartition.
+        # finds the optimal 2-coloring.
         variables = ("a0", "b0", "a1", "b1", "a2", "b2")
         edges = {(f"a{i}", f"b{j}"): 1.0 for i in range(3) for j in range(3) if i != j}
         model = compile_ising({variable: 0.0 for variable in variables}, edges, variables=variables)
@@ -139,7 +135,7 @@ class DsaturEdgeCaseTests(unittest.TestCase):
         self.assertEqual(partition.num_blocks, 2)
         validate_partition(model, partition)
 
-    def test_coefficients_do_not_change_topology_partition(self) -> None:
+    def test_coefficient_scaling_preserves_partition(self) -> None:
         variables = tuple(range(6))
         edges = {(i, (i + 1) % 6): 1.0 for i in variables}
         scaled_edges = {edge: -7.5 for edge in edges}

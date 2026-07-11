@@ -1,10 +1,4 @@
-"""Stage 2 THRML runtime contract tests.
-
-Config validation runs everywhere; the sampling classes exercise the real
-THRML/JAX stack and skip when the optional thrml extra is not installed.
-The statistical assertions use fixed seeds, so they are deterministic; the
-tolerances leave an order-of-magnitude margin over the observed error.
-"""
+"""Stage 2 THRML runtime contract tests; sampling classes skip without the optional thrml extra."""
 
 from __future__ import annotations
 
@@ -38,6 +32,8 @@ except ImportError:
 if THRML_AVAILABLE:
     from gibbsiq import THRMLSampler
 
+# Fixed seeds make the statistical assertions deterministic; these tolerances
+# leave an order-of-magnitude margin over the observed error.
 DISTRIBUTION_TOLERANCE = 0.025
 DISTRIBUTION_READS = 8000
 
@@ -72,7 +68,7 @@ class SamplerConfigValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SamplerConfig(init="warm")
 
-    def test_rejects_negative_warmup_and_bad_counts(self) -> None:
+    def test_rejects_negative_warmup_bad_counts(self) -> None:
         with self.assertRaises(ValueError):
             SamplerConfig(n_warmup=-1)
         with self.assertRaises(ValueError):
@@ -88,10 +84,20 @@ class SamplerConfigValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SamplerConfig(warmup_beta_ladder=(0.5, -1.0))
 
-    def test_warmup_segments_split_sweeps_with_remainder_on_last(self) -> None:
-        config = SamplerConfig(n_warmup=10, warmup_beta_ladder=(0.5, 1.0, 2.0))
+    def test_warmup_segments_remainder_on_last_sweep(self) -> None:
+        config = SamplerConfig(beta=2.0, n_warmup=10, warmup_beta_ladder=(0.5, 1.0, 2.0))
         self.assertEqual(config.warmup_segments(), ((0.5, 3), (1.0, 3), (2.0, 4)))
         self.assertEqual(SamplerConfig().warmup_segments(), ())
+
+    def test_warmup_ladder_final_beta_mismatch(self) -> None:
+        with self.assertRaisesRegex(ValueError, "must end at beta"):
+            SamplerConfig(beta=2.0, n_warmup=2, warmup_beta_ladder=(0.5, 1.0))
+
+    def test_seed_bounds_for_jax_uint32_key(self) -> None:
+        self.assertEqual(SamplerConfig(seed=2**32 - 1).seed, 2**32 - 1)
+        for seed in (-1, 2**32):
+            with self.subTest(seed=seed), self.assertRaisesRegex(ValueError, "seed"):
+                SamplerConfig(seed=seed)
 
     def test_parallel_tempering_config_validation(self) -> None:
         config = SamplerConfig(beta=2.0, parallel_tempering_betas=(0.5, 1.0, 2.0))
@@ -156,7 +162,7 @@ class ReproducibilityTests(unittest.TestCase):
             {(i, (i + 1) % 6): 0.5 for i in range(6)},
         )
 
-    def test_fixed_seed_reproduces_samples_and_energies(self) -> None:
+    def test_fixed_seed_reproduces_samples_energies(self) -> None:
         config = SamplerConfig(beta=1.0, n_warmup=50, seed=123, num_chains=2)
         first = THRMLSampler(config).sample(self._model(), num_reads=40)
         second = THRMLSampler(config).sample(self._model(), num_reads=40)
@@ -170,7 +176,7 @@ class ReproducibilityTests(unittest.TestCase):
         second = THRMLSampler(SamplerConfig(beta=1.0, n_warmup=50, seed=2)).sample(model, num_reads=50)
         self.assertNotEqual(first.samples, second.samples)
 
-    def test_parallel_tempering_fixed_seed_reproduces_samples_and_swaps(self) -> None:
+    def test_parallel_tempering_fixed_seed_reproduces_samples_swaps(self) -> None:
         config = SamplerConfig(
             beta=2.0,
             n_warmup=8,
@@ -192,7 +198,7 @@ class ReproducibilityTests(unittest.TestCase):
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class ParallelTemperingRuntimeTests(unittest.TestCase):
-    def test_parallel_tempering_records_swap_and_per_beta_traces(self) -> None:
+    def test_parallel_tempering_records_swap_per_beta_traces(self) -> None:
         model = compile_ising({"a": 0.2, "b": -0.1}, {("a", "b"): 0.7})
         config = SamplerConfig(
             beta=2.0,
@@ -218,6 +224,15 @@ class ParallelTemperingRuntimeTests(unittest.TestCase):
         self.assertEqual([len(beta_trace) for beta_trace in tempering["per_beta_energy"][1]], [2, 2])
         for event in tempering["swap_trace"]:
             self.assertEqual(event["right_beta_index"], event["left_beta_index"] + 1)
+            expected_log_acceptance = math.fsum(
+                (
+                    event["right_log_density_left_target"],
+                    event["left_log_density_right_target"],
+                    -event["left_log_density_left_target"],
+                    -event["right_log_density_right_target"],
+                )
+            )
+            self.assertAlmostEqual(event["log_acceptance"], expected_log_acceptance, places=12)
             expected_accept = (
                 event["log_acceptance"] >= 0.0 or math.log(event["uniform"]) < event["log_acceptance"]
             )
@@ -255,7 +270,7 @@ class OptimizationTargetTests(unittest.TestCase):
         config = SamplerConfig(
             beta=2.5,
             n_warmup=40,
-            warmup_beta_ladder=(0.25, 0.5, 1.0, 2.0),
+            warmup_beta_ladder=(0.25, 0.5, 1.0, 2.0, 2.5),
             num_chains=2,
             seed=21,
         )
@@ -272,7 +287,7 @@ class OptimizationTargetTests(unittest.TestCase):
         config = SamplerConfig(
             beta=3.0,
             n_warmup=60,
-            warmup_beta_ladder=(0.2, 0.5, 1.0, 2.0),
+            warmup_beta_ladder=(0.2, 0.5, 1.0, 2.0, 3.0),
             num_chains=2,
             seed=33,
         )
@@ -319,7 +334,13 @@ class FrustrationAndDegeneracyTests(unittest.TestCase):
             {i: 0.0 for i in range(3)},
             {(0, 1): 1.0, (1, 2): 1.0, (0, 2): 1.0},
         )
-        config = SamplerConfig(beta=1.5, n_warmup=40, warmup_beta_ladder=(0.3, 0.8), num_chains=2, seed=13)
+        config = SamplerConfig(
+            beta=1.5,
+            n_warmup=40,
+            warmup_beta_ladder=(0.3, 0.8, 1.5),
+            num_chains=2,
+            seed=13,
+        )
         result = THRMLSampler(config).sample(model, num_reads=120)
         self.assertAlmostEqual(result.best_energy, -1.0, places=9)
         ground_states = {
@@ -342,7 +363,7 @@ class FrustrationAndDegeneracyTests(unittest.TestCase):
         config = SamplerConfig(
             beta=4.0,
             n_warmup=120,
-            warmup_beta_ladder=(0.2, 0.5, 1.0, 2.0),
+            warmup_beta_ladder=(0.2, 0.5, 1.0, 2.0, 4.0),
             num_chains=4,
             seed=29,
         )
@@ -368,11 +389,12 @@ class ResultSchemaTests(unittest.TestCase):
         config = SamplerConfig(beta=1.0, n_warmup=30, num_chains=num_chains, seed=4)
         return THRMLSampler(config).sample(model, num_reads=num_reads)
 
-    def test_num_reads_and_chain_traces_align(self) -> None:
+    def test_num_reads_chain_traces_align(self) -> None:
         result = self._sample(num_reads=7, num_chains=3)
         self.assertEqual(len(result.samples), 7)
-        self.assertEqual(result.traces["sample_chain_ids"], [0, 0, 0, 1, 1, 1, 2])
-        self.assertEqual([len(chain) for chain in result.traces["energy"]], [3, 3, 1])
+        self.assertEqual(result.traces["sample_chain_ids"], [0, 0, 0, 1, 1, 2, 2])
+        self.assertEqual([len(chain) for chain in result.traces["energy"]], [3, 2, 2])
+        self.assertEqual(result.metadata["reads_by_chain"], [3, 2, 2])
         flattened = [energy for chain in result.traces["energy"] for energy in chain]
         self.assertEqual(tuple(flattened), result.energies)
         for chain in result.traces["best_energy_so_far"]:
@@ -437,7 +459,7 @@ class DiagnosticsWiringTests(unittest.TestCase):
         config = SamplerConfig(beta=1.0, n_warmup=30, num_chains=num_chains, seed=4)
         return THRMLSampler(config).sample(model, num_reads=num_reads)
 
-    def test_payload_sections_thresholds_and_timing_present(self) -> None:
+    def test_payload_sections_thresholds_timing_present(self) -> None:
         result = self._sample()
         diagnostics = result.diagnostics
         for key in ("energy", "diversity", "chains", "constraints", "runtime", "flags", "thresholds"):
@@ -456,7 +478,7 @@ class DiagnosticsWiringTests(unittest.TestCase):
         self.assertGreaterEqual(runtime["diagnostics_seconds"], 0.0)
         self.assertEqual(result.metadata["diagnostics_seconds"], runtime["diagnostics_seconds"])
 
-    def test_new_traces_shaped_like_energy_and_independently_recomputed(self) -> None:
+    def test_magnetization_distance_traces_match_recomputation(self) -> None:
         result = self._sample(num_reads=7, num_chains=3)
         magnetization = result.traces["magnetization"]
         distance = result.traces["distance_to_best"]
@@ -473,10 +495,8 @@ class DiagnosticsWiringTests(unittest.TestCase):
             self.assertEqual(distance[chain_id][position], hamming)
             positions[chain_id] += 1
 
-    def test_embedded_diagnostics_equal_recomputation_from_result(self) -> None:
-        # The recomputation mirrors the runtime call exactly, including the
-        # magnetization trace (EVAL-EQ-007 magnetization wiring): everything
-        # the payload contains must be reproducible from the result alone.
+    def test_embedded_diagnostics_match_recomputation(self) -> None:
+        # Mirrors the runtime call exactly, including the magnetization trace (EVAL-EQ-007).
         result = self._sample()
         recomputed = compute_diagnostics(
             energy_chains=result.traces["energy"],
@@ -487,7 +507,7 @@ class DiagnosticsWiringTests(unittest.TestCase):
         for section in ("energy", "diversity", "chains", "flags", "thresholds"):
             self.assertEqual(result.diagnostics[section], recomputed[section], msg=section)
 
-    def test_single_read_with_many_chains_reports_insufficient_data(self) -> None:
+    def test_single_read_many_chains_insufficient_data(self) -> None:
         result = self._sample(num_reads=1, num_chains=4)
         chains = result.diagnostics["chains"]
         self.assertEqual(chains["num_chains"], 4)
@@ -496,10 +516,9 @@ class DiagnosticsWiringTests(unittest.TestCase):
         self.assertEqual([len(chain) for chain in result.traces["magnetization"]], [1, 0, 0, 0])
 
     def test_trapped_ferromagnet_flags_chain_disagreement(self) -> None:
-        # Asymmetric two-well: the strong ferromagnetic ring locks each chain
-        # into the all-up or all-down well; the small field separates the well
-        # energies, so trapped chains disagree with zero within-chain variance
-        # (seed 1 puts chains in both wells).
+        # Asymmetric two-well: the ferromagnetic ring traps each chain in a well; the
+        # small field separates well energies, so chains disagree with zero within-chain
+        # variance (seed 1 puts chains in both wells).
         model = compile_ising(
             {i: 0.05 for i in range(6)},
             {(i, (i + 1) % 6): -2.0 for i in range(6)},
@@ -512,10 +531,9 @@ class DiagnosticsWiringTests(unittest.TestCase):
             "undefined_or_infinite_zero_within_variance",
         )
 
-    def test_well_mixed_hot_run_has_no_disagreement_or_collapse(self) -> None:
-        # low_diversity and no_recent_improvement fire legitimately on a small
-        # stationary state space, so assert specific flags absent, never
-        # flags == [].
+    def test_well_mixed_hot_run_stays_healthy(self) -> None:
+        # low_diversity/no_recent_improvement fire legitimately here; assert specific
+        # flags absent rather than flags == [].
         model = compile_ising({"a": 0.1, "b": -0.1}, {("a", "b"): 0.2})
         config = SamplerConfig(beta=0.5, n_warmup=100, steps_per_sample=2, num_chains=4, seed=0)
         result = THRMLSampler(config).sample(model, num_reads=400)

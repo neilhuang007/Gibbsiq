@@ -91,7 +91,7 @@ class ExactFixtureMathTest(unittest.TestCase):
     def setUp(self) -> None:
         self.fixtures = load_exact()
 
-    def test_qubo_two_var_conversion_and_energy_table(self) -> None:
+    def test_qubo_two_var_conversion_energy_table(self) -> None:
         fixture = self.fixtures["qubo_two_var_offset_conversion"]
         model = fixture["input"]
         expected = fixture["expected"]
@@ -174,7 +174,7 @@ class ExactFixtureMathTest(unittest.TestCase):
         self.assertEqual(gamma, expected["when_neighbor_s1_is_minus_1"]["gamma"])
         self.assertAlmostEqual(prob, expected["when_neighbor_s1_is_minus_1"]["p_s0_plus_1"], places=12)
 
-    def test_maxcut_tiny_graphs_are_exhaustively_correct(self) -> None:
+    def test_maxcut_tiny_graphs_match_brute_force(self) -> None:
         for fixture_id in ("maxcut_triangle_unweighted", "maxcut_cycle4_unweighted"):
             fixture = self.fixtures[fixture_id]
             model = fixture["input"]

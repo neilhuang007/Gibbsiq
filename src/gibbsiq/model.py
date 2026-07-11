@@ -9,7 +9,10 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Literal, TypeAlias
+
+from gibbsiq._frozen import freeze, thaw
 
 Variable: TypeAlias = Any
 SpinSample: TypeAlias = Mapping[Variable, int]
@@ -45,6 +48,15 @@ def finite_float(value: Any, *, name: str) -> float:
     return coerced
 
 
+def finite_sum(values: Sequence[float], *, name: str) -> float:
+    """Accurately sum finite terms and normalize overflow to ``ValueError``."""
+    try:
+        total = math.fsum(values)
+    except OverflowError as error:
+        raise ValueError(f"{name} must be finite; summation overflowed") from error
+    return finite_float(total, name=name)
+
+
 def sample_to_spin(
     sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
 ) -> dict[Variable, int]:
@@ -55,6 +67,8 @@ def sample_to_spin(
         if variable not in sample:
             raise ValueError(f"sample is missing variable {variable!r}")
         value = sample[variable]
+        if isinstance(value, bool):
+            raise ValueError(f"sample value for {variable!r} must not be boolean")
         if normalized == "SPIN":
             if value not in (-1, 1):
                 raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
@@ -79,6 +93,8 @@ def sample_to_spin_values(
             value = sample[variable]
         except KeyError as error:
             raise ValueError(f"sample is missing variable {variable!r}") from error
+        if isinstance(value, bool):
+            raise ValueError(f"sample value for {variable!r} must not be boolean")
         if normalized == "SPIN":
             if value != -1 and value != 1:
                 raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
@@ -158,20 +174,25 @@ class IsingModel:
         # Re-check the accumulated coefficients while sorting into canonical
         # order: summing finite duplicates can still overflow to +/-inf (e.g.
         # 1e308 + 1e308), which the per-term guard above cannot catch.
-        ordered_quadratic = {
-            pair: finite_float(coefficient, name=f"quadratic bias for {pair!r}")
-            for pair, coefficient in sorted(
-                quadratic.items(), key=lambda item: (index[item[0][0]], index[item[0][1]])
-            )
-        }
+        ordered_quadratic: dict[tuple[Variable, Variable], float] = {}
+        for pair, coefficient in sorted(
+            quadratic.items(), key=lambda item: (index[item[0][0]], index[item[0][1]])
+        ):
+            canonical = finite_float(coefficient, name=f"quadratic bias for {pair!r}")
+            if canonical != 0.0:
+                ordered_quadratic[pair] = canonical
 
         object.__setattr__(self, "variables", variables)
-        object.__setattr__(self, "linear", linear)
-        object.__setattr__(self, "quadratic", ordered_quadratic)
+        object.__setattr__(self, "linear", MappingProxyType(linear))
+        object.__setattr__(self, "quadratic", MappingProxyType(ordered_quadratic))
         object.__setattr__(self, "offset", finite_float(self.offset, name="offset"))
         object.__setattr__(self, "variable_order", variables)
-        object.__setattr__(self, "metadata", dict(self.metadata))
-        object.__setattr__(self, "_variable_index", index)
+        object.__setattr__(
+            self,
+            "metadata",
+            freeze(dict(self.metadata)),
+        )
+        object.__setattr__(self, "_variable_index", MappingProxyType(index))
         object.__setattr__(self, "_linear_values", None)
         object.__setattr__(self, "_quadratic_edges", None)
         object.__setattr__(self, "_neighbors", None)
@@ -218,12 +239,28 @@ class IsingModel:
     def energy(self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN") -> float:
         """Evaluate the model energy for a spin or binary assignment."""
         spins = sample_to_spin_values(sample, self.variables, vartype)
-        energy = self.offset
-        for position, coefficient in enumerate(self._linear_cache()):
-            energy += coefficient * spins[position]
-        for left_index, right_index, coefficient in self._edge_cache():
-            energy += coefficient * spins[left_index] * spins[right_index]
-        return energy
+        return finite_sum(
+            [self.offset, self._interaction_energy_from_spins(spins)],
+            name="computed energy",
+        )
+
+    def interaction_energy(
+        self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
+    ) -> float:
+        """Evaluate the offset-free Ising terms for numerically stable differences."""
+        spins = sample_to_spin_values(sample, self.variables, vartype)
+        return self._interaction_energy_from_spins(spins)
+
+    def _interaction_energy_from_spins(self, spins: tuple[int, ...]) -> float:
+        terms = [
+            coefficient * spins[position]
+            for position, coefficient in enumerate(self._linear_cache())
+        ]
+        terms.extend(
+            coefficient * spins[left_index] * spins[right_index]
+            for left_index, right_index, coefficient in self._edge_cache()
+        )
+        return finite_sum(terms, name="computed interaction energy")
 
     def local_field(
         self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
@@ -234,10 +271,12 @@ class IsingModel:
         except KeyError as error:
             raise ValueError(f"unknown variable {variable!r}") from error
         spins = sample_to_spin_values(sample, self.variables, vartype)
-        gamma = self._linear_cache()[position]
-        for neighbor_index, coefficient in self._neighbor_cache()[position]:
-            gamma += coefficient * spins[neighbor_index]
-        return gamma
+        terms = [self._linear_cache()[position]]
+        terms.extend(
+            coefficient * spins[neighbor_index]
+            for neighbor_index, coefficient in self._neighbor_cache()[position]
+        )
+        return finite_sum(terms, name=f"local field for {variable!r}")
 
     def flip_energy_delta(
         self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
@@ -248,10 +287,18 @@ class IsingModel:
         except KeyError as error:
             raise ValueError(f"unknown variable {variable!r}") from error
         spins = sample_to_spin_values(sample, self.variables, vartype)
-        gamma = self._linear_cache()[position]
-        for neighbor_index, coefficient in self._neighbor_cache()[position]:
-            gamma += coefficient * spins[neighbor_index]
-        return -2.0 * spins[position] * gamma
+        gamma = finite_sum(
+            [self._linear_cache()[position]]
+            + [
+                coefficient * spins[neighbor_index]
+                for neighbor_index, coefficient in self._neighbor_cache()[position]
+            ],
+            name=f"local field for {variable!r}",
+        )
+        return finite_float(
+            -2.0 * spins[position] * gamma,
+            name=f"flip energy delta for {variable!r}",
+        )
 
     def conditional_probability(
         self,
@@ -262,8 +309,14 @@ class IsingModel:
         vartype: Vartype = "SPIN",
     ) -> float:
         """Return ``P(s_i=+1 | s_-i)`` under the audited Gibbs sign."""
+        canonical_beta = finite_float(beta, name="beta")
+        if canonical_beta < 0.0:
+            raise ValueError(f"beta must be non-negative, got {beta!r}")
         gamma = self.local_field(variable, sample, vartype=vartype)
-        argument = -2.0 * float(beta) * gamma
+        argument = finite_float(
+            -2.0 * canonical_beta * gamma,
+            name="Gibbs conditional logit",
+        )
         if argument >= 0:
             return 1.0 / (1.0 + math.exp(-argument))
         exp_arg = math.exp(argument)
@@ -282,7 +335,7 @@ class IsingModel:
             "graph": [[left, right] for left, right in self.graph],
             "source_format": self.source_format,
             "variable_order": list(self.variables),
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dimod(self) -> Any:

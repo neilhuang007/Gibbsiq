@@ -1,14 +1,8 @@
-"""Strict-scoring tests for the ground-truth benchmark oracle.
+"""Strict-scoring tests for the ground-truth benchmark oracle."""
 
-Run with the stdlib test runner (no third-party dependency):
-
-    python -m unittest discover -s test_suite/tests
-
-The corpus stores proven witnesses, so a candidate built from the fixtures'
-own ``expected`` block must pass. The mutation tests confirm the oracle is not
-fooled by a candidate that reports the right number while supplying a wrong or
-missing witness -- i.e. it independently recomputes the objective.
-"""
+# The corpus stores proven witnesses, so a candidate built from the fixtures'
+# own `expected` block must pass. Mutation tests confirm the oracle recomputes
+# the objective independently rather than trusting a candidate's reported number.
 
 from __future__ import annotations
 
@@ -52,7 +46,7 @@ class BenchmarkOracleTest(unittest.TestCase):
             self.assertEqual(diffs, [], f"{fixture['id']} should pass: {diffs}")
 
     def test_every_stored_witness_is_optimal(self) -> None:
-        # Each witness the generator stored must independently re-verify.
+        # Every witness the generator stored must independently re-verify.
         for fixture in self.fixtures:
             spec = FAMILY_SPECS[fixture["family"]]
             actual = {key: fixture["expected"][key] for key in spec["scalar_keys"]}
@@ -87,8 +81,8 @@ class BenchmarkOracleTest(unittest.TestCase):
         self.assertTrue(any(d["code"] == "missing_witness" for d in diffs))
 
     def test_tampered_witness_fails(self) -> None:
-        # Report the correct optimum but supply a suboptimal tour: the oracle
-        # recomputes the tour length and rejects it.
+        # Correct optimum, suboptimal tour: the oracle recomputes the tour
+        # length itself and rejects it.
         fixture = self.by_family["tsp"]
         actual = correct_actual(fixture)
         good = actual["witness_tours"][0]
@@ -96,8 +90,7 @@ class BenchmarkOracleTest(unittest.TestCase):
         bad[0], bad[1] = bad[1], bad[0]  # adjacent swap -> different (worse) tour
         actual["witness_tours"] = [bad]
         diffs = verify_benchmark_fixture(fixture, actual, 1e-9)
-        # Either it is a different length (not_optimal) or, if the swap happened
-        # to tie, it still re-verifies; assert the corpus instance is discriminating.
+        # Confirms the corpus instance is discriminating even if the swap tied.
         self.assertTrue(
             any(d["code"] == "witness_not_optimal" for d in diffs),
             f"expected a non-optimal witness rejection, got {diffs}",
@@ -119,6 +112,52 @@ class BenchmarkOracleTest(unittest.TestCase):
         actual["witness_partitions"] = [tampered]
         diffs = verify_benchmark_fixture(fixture, actual, 1e-9)
         self.assertTrue(any(d["code"] == "witness_not_optimal" for d in diffs))
+
+    def test_boolean_witness_values_rejected(self) -> None:
+        spin_fixture = self.by_family["maxcut"]
+        spin_actual = correct_actual(spin_fixture)
+        spin_witness = copy.deepcopy(spin_actual["witness_spin_samples"][0])
+        if 1 not in spin_witness.values():
+            spin_witness = {key: -value for key, value in spin_witness.items()}
+        plus_key = next(key for key, value in spin_witness.items() if value == 1)
+        spin_witness[plus_key] = True
+        spin_actual["witness_spin_samples"] = [spin_witness]
+
+        knapsack_fixture = self.by_family["knapsack"]
+        knapsack_actual = correct_actual(knapsack_fixture)
+        selection = list(knapsack_actual["witness_selections"][0])
+        selection[selection.index(0)] = False
+        knapsack_actual["witness_selections"] = [selection]
+
+        tsp_fixture = self.by_family["tsp"]
+        tsp_actual = correct_actual(tsp_fixture)
+        tour = list(tsp_actual["witness_tours"][0])
+        tour[tour.index(0)] = False
+        tsp_actual["witness_tours"] = [tour]
+
+        for fixture, actual in (
+            (spin_fixture, spin_actual),
+            (knapsack_fixture, knapsack_actual),
+            (tsp_fixture, tsp_actual),
+        ):
+            with self.subTest(family=fixture["family"]):
+                differences = verify_benchmark_fixture(fixture, actual, 1e-9)
+                self.assertTrue(
+                    any(
+                        difference["code"] in {"invalid_witness", "witness_not_optimal"}
+                        for difference in differences
+                    ),
+                    differences,
+                )
+
+    def test_spin_witness_rejects_unknown_key(self) -> None:
+        fixture = self.by_family["maxcut"]
+        actual = correct_actual(fixture)
+        witness = copy.deepcopy(actual["witness_spin_samples"][0])
+        witness["unknown"] = 1
+        actual["witness_spin_samples"] = [witness]
+        differences = verify_benchmark_fixture(fixture, actual, 1e-9)
+        self.assertTrue(any(difference["code"] == "invalid_witness" for difference in differences))
 
 
 if __name__ == "__main__":

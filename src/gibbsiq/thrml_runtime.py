@@ -23,7 +23,9 @@ from __future__ import annotations
 
 import functools
 import math
+import platform
 import random
+import sys
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -36,6 +38,8 @@ from gibbsiq.model import IsingModel, Variable, finite_float
 from gibbsiq.result import SampleResult, best_index
 
 INIT_POLICIES = ("hinton", "random", "all_up", "all_down")
+_BACKEND_RELATIVE_ERROR_LIMIT = 1e-6
+_LOCAL_LOGIT_ERROR_LIMIT = 1e-4
 
 
 def _require_thrml() -> tuple[Any, Any, Any, Any]:
@@ -99,6 +103,10 @@ class SamplerConfig:
             raise ValueError(f"steps_per_sample must be >= 1, got {self.steps_per_sample}")
         if self.num_chains < 1:
             raise ValueError(f"num_chains must be >= 1, got {self.num_chains}")
+        if not 0 <= self.seed <= 2**32 - 1:
+            raise ValueError(
+                f"seed must be in JAX's uint32 key domain [0, {2**32 - 1}], got {self.seed}"
+            )
         if self.parallel_tempering_swap_interval < 1:
             raise ValueError(
                 f"parallel_tempering_swap_interval must be >= 1, got {self.parallel_tempering_swap_interval}"
@@ -117,6 +125,12 @@ class SamplerConfig:
                 raise ValueError(
                     f"n_warmup={self.n_warmup} cannot cover a {len(ladder)}-entry warmup_beta_ladder; "
                     "each ladder beta needs at least one sweep"
+                )
+            if ladder[-1] != beta:
+                raise ValueError(
+                    "warmup_beta_ladder must end at beta so warmup hands the chain to the "
+                    f"sampling distribution without an unrecorded temperature jump; got beta={beta!r}, "
+                    f"ladder={ladder!r}"
                 )
             object.__setattr__(self, "warmup_beta_ladder", ladder)
         if self.parallel_tempering_betas is not None:
@@ -179,26 +193,208 @@ class _Lowering:
         self._jax = jax
         self._jnp = jnp
         self._thrml_models = thrml_models
+        self.variables = model.variables
         self.nodes = [thrml.SpinNode() for _ in model.variables]
         node_of = dict(zip(model.variables, self.nodes))
+        position_of = {variable: index for index, variable in enumerate(model.variables)}
         self.edges = [(node_of[left], node_of[right]) for left, right in model.quadratic]
+        self.edge_positions = tuple(
+            (position_of[left], position_of[right]) for left, right in model.quadratic
+        )
         # THRML sign mapping (see module docstring): biases = -h, weights = -J.
-        self.biases = jnp.asarray([-model.linear[variable] for variable in model.variables])
-        self.weights = jnp.asarray([-coefficient for coefficient in model.quadratic.values()])
+        self.bias_values = tuple(-model.linear[variable] for variable in model.variables)
+        self.weight_values = tuple(-coefficient for coefficient in model.quadratic.values())
+        self.biases = jnp.asarray(self.bias_values)
+        self.weights = jnp.asarray(self.weight_values)
+        self._validate_backend_values(self.bias_values, self.biases, name="linear biases")
+        self._validate_backend_values(self.weight_values, self.weights, name="quadratic weights")
+        self.lowered_coefficient_dtype = str(self.biases.dtype)
+        self.lowered_beta_dtype = self.lowered_coefficient_dtype
+        self.max_local_logit_error_bound = 0.0
+        self.lowered_targets: dict[float, dict[str, Any]] = {}
         self.free_blocks = [
             thrml.Block([node_of[variable] for variable in block]) for block in partition.blocks
         ]
-        position_of = {variable: index for index, variable in enumerate(model.variables)}
         self.block_positions = tuple(
             tuple(position_of[variable] for variable in block) for block in partition.blocks
         )
         self.observed_blocks = [thrml.Block(self.nodes)]
 
+    def _validate_backend_values(
+        self,
+        source_values: Sequence[float],
+        backend_values: Any,
+        *,
+        name: str,
+        require_nonzero: Sequence[bool] | None = None,
+    ) -> None:
+        """Reject finite host values that the active JAX dtype cannot represent."""
+        host_values = self._jax.device_get(backend_values).reshape(-1).tolist()
+        nonzero_flags = (
+            [source != 0.0 for source in source_values]
+            if require_nonzero is None
+            else list(require_nonzero)
+        )
+        for index, (source, backend, must_be_nonzero) in enumerate(
+            zip(source_values, host_values, nonzero_flags)
+        ):
+            backend_float = float(backend)
+            if not math.isfinite(source):
+                raise ValueError(
+                    f"{name}[{index}] overflows in host arithmetic; rescale the model or beta"
+                )
+            if not math.isfinite(backend_float):
+                raise ValueError(
+                    f"{name}[{index}]={source!r} becomes non-finite when lowered to "
+                    f"JAX dtype {backend_values.dtype}; enable JAX x64 or rescale the model"
+                )
+            if must_be_nonzero and backend_float == 0.0:
+                raise ValueError(
+                    f"{name}[{index}]={source!r} becomes zero when lowered to JAX dtype "
+                    f"{backend_values.dtype}; enable JAX x64 or rescale the model"
+                )
+            if source != 0.0 and not math.isclose(
+                source,
+                backend_float,
+                rel_tol=_BACKEND_RELATIVE_ERROR_LIMIT,
+                abs_tol=0.0,
+            ):
+                relative_error = abs((backend_float - source) / source)
+                raise ValueError(
+                    f"{name}[{index}]={source!r} changes by relative error "
+                    f"{relative_error:.3g} when lowered to JAX dtype {backend_values.dtype}; "
+                    "enable JAX x64 or rescale the model"
+                )
+
+    def _validate_local_logit_error(
+        self,
+        source_biases: Sequence[float],
+        source_weights: Sequence[float],
+        backend_biases: Any,
+        backend_weights: Any,
+    ) -> None:
+        """Bound lowering error in every conditional logit, including cancellation.
+
+        For node ``i``, coefficient conversion contributes at most
+        ``|delta h_i| + sum_j |delta J_ij|`` for every neighboring spin state.
+        A standard ``gamma_k`` floating-summation term also covers THRML's
+        backend reduction. The Gibbs logit has a factor of two. This catches
+        cases where conversion or accumulation cancellation changes the
+        conditional distribution materially.
+        """
+        lowered_biases = [float(value) for value in self._jax.device_get(backend_biases).tolist()]
+        lowered_weights = [float(value) for value in self._jax.device_get(backend_weights).tolist()]
+        coefficient_error_bounds = [
+            abs(source - lowered)
+            for source, lowered in zip(source_biases, lowered_biases)
+        ]
+        absolute_term_sums = [abs(value) for value in lowered_biases]
+        degrees = [0] * len(lowered_biases)
+        for (left, right), source, lowered in zip(
+            self.edge_positions,
+            source_weights,
+            lowered_weights,
+        ):
+            error = abs(source - lowered)
+            coefficient_error_bounds[left] += error
+            coefficient_error_bounds[right] += error
+            absolute_term_sums[left] += abs(lowered)
+            absolute_term_sums[right] += abs(lowered)
+            degrees[left] += 1
+            degrees[right] += 1
+
+        # THRML computes each coupling contribution with jnp.sum and then adds
+        # the linear contribution.  The standard floating-point summation bound
+        # gamma_k * sum(abs(terms)), gamma_k=k*u/(1-k*u), is conservative for
+        # any reduction tree with at most k additions.  Include it so exactly
+        # representable coefficients cannot still cancel incorrectly in the
+        # backend accumulator.
+        unit_roundoff = float(self._jnp.finfo(backend_biases.dtype).eps) / 2.0
+        field_error_bounds: list[float] = []
+        for coefficient_error, absolute_sum, degree in zip(
+            coefficient_error_bounds,
+            absolute_term_sums,
+            degrees,
+        ):
+            denominator = 1.0 - degree * unit_roundoff
+            accumulation_error = (
+                math.inf
+                if denominator <= 0.0
+                else (degree * unit_roundoff / denominator) * absolute_sum
+            )
+            field_error_bounds.append(coefficient_error + accumulation_error)
+        logit_error_bound = 2.0 * max(field_error_bounds, default=0.0)
+        self.max_local_logit_error_bound = max(
+            self.max_local_logit_error_bound,
+            logit_error_bound,
+        )
+        if logit_error_bound > _LOCAL_LOGIT_ERROR_LIMIT:
+            raise ValueError(
+                "JAX lowering can change a local Gibbs logit by up to "
+                f"{logit_error_bound:.6g}, exceeding the audited limit "
+                f"{_LOCAL_LOGIT_ERROR_LIMIT:.6g}; enable JAX x64 or rescale the model"
+            )
+
     def program(self, beta: float) -> tuple[Any, Any]:
         """Build the ``(ebm, program)`` pair for one inverse temperature."""
+        beta_array = self._jnp.asarray(beta, dtype=self.biases.dtype)
+        self._validate_backend_values([beta], beta_array.reshape((1,)), name="beta")
+        effective_biases = beta_array * self.biases
+        effective_weights = beta_array * self.weights
+        source_effective_biases = [beta * value for value in self.bias_values]
+        source_effective_weights = [beta * value for value in self.weight_values]
+        self._validate_backend_values(
+            source_effective_biases,
+            effective_biases,
+            name="beta-scaled linear biases",
+            require_nonzero=[value != 0.0 for value in self.bias_values],
+        )
+        self._validate_backend_values(
+            source_effective_weights,
+            effective_weights,
+            name="beta-scaled quadratic weights",
+            require_nonzero=[value != 0.0 for value in self.weight_values],
+        )
+        self._validate_local_logit_error(
+            source_effective_biases,
+            source_effective_weights,
+            effective_biases,
+            effective_weights,
+        )
+        lowered_beta = float(self._jax.device_get(beta_array))
+        lowered_biases = tuple(
+            float(value) for value in self._jax.device_get(effective_biases).tolist()
+        )
+        lowered_weights = tuple(
+            float(value) for value in self._jax.device_get(effective_weights).tolist()
+        )
+        self.lowered_targets[beta] = {
+            "requested_beta": beta,
+            "lowered_beta": lowered_beta,
+            "effective_biases": lowered_biases,
+            "effective_weights": lowered_weights,
+        }
+        self.lowered_beta_dtype = str(beta_array.dtype)
         ebm_class = self._thrml_models.IsingEBM if self.edges else _edgeless_ising_ebm_class()
-        ebm = ebm_class(self.nodes, self.edges, self.biases, self.weights, self._jnp.asarray(beta))
+        ebm = ebm_class(self.nodes, self.edges, self.biases, self.weights, beta_array)
         return ebm, self._thrml_models.IsingSamplingProgram(ebm, self.free_blocks, clamped_blocks=[])
+
+    def lowered_log_density(self, beta: float, sample: Mapping[Variable, int]) -> float:
+        """Evaluate the ideal log density represented by one lowered beta slot."""
+        target = self.lowered_targets[beta]
+        spins = tuple(int(sample[variable]) for variable in self.variables)
+        terms = [
+            coefficient * spins[index]
+            for index, coefficient in enumerate(target["effective_biases"])
+        ]
+        terms.extend(
+            coefficient * spins[left] * spins[right]
+            for (left, right), coefficient in zip(
+                self.edge_positions,
+                target["effective_weights"],
+            )
+        )
+        return finite_float(math.fsum(terms), name="lowered target log density")
 
     def initial_state(self, key: Any, ebm: Any, policy: str) -> list[Any]:
         """Build per-block boolean initial states for one chain."""
@@ -265,12 +461,17 @@ class _DecodedTempering:
     swap_accepts_by_pair: dict[str, int]
 
 
+def _reads_by_chain(num_reads: int, num_chains: int) -> tuple[int, ...]:
+    """Distribute reads with chain lengths differing by at most one."""
+    base, remainder = divmod(num_reads, num_chains)
+    return tuple(base + (chain_index < remainder) for chain_index in range(num_chains))
+
+
 def _decode_sample_chains(
     spins: Any,
     model: IsingModel,
     *,
-    num_reads: int,
-    num_chains: int,
+    reads_by_chain: Sequence[int],
 ) -> _DecodedChains:
     """Convert THRML spin arrays into Gibbsiq samples and aligned traces."""
     samples: list[dict[Variable, int]] = []
@@ -278,18 +479,24 @@ def _decode_sample_chains(
     energy_trace: list[list[float]] = []
     best_trace: list[list[float]] = []
     sample_chains: list[list[dict[Variable, int]]] = []
-    for chain_index in range(num_chains):
-        remaining = num_reads - len(samples)
+    for chain_index, chain_reads in enumerate(reads_by_chain):
         chain_energies: list[float] = []
         chain_best: list[float] = []
         chain_samples: list[dict[Variable, int]] = []
-        for row in spins[chain_index][:remaining]:
+        best_interaction: float | None = None
+        best_total: float | None = None
+        for row in spins[chain_index][:chain_reads]:
             sample = {variable: int(value) for variable, value in zip(model.variables, row)}
             energy = model.energy(sample)
+            interaction = model.interaction_energy(sample)
             samples.append(sample)
             chain_ids.append(chain_index)
             chain_energies.append(energy)
-            chain_best.append(energy if not chain_best else min(chain_best[-1], energy))
+            if best_interaction is None or interaction < best_interaction:
+                best_interaction = interaction
+                best_total = energy
+            assert best_total is not None
+            chain_best.append(best_total)
             chain_samples.append(sample)
         energy_trace.append(chain_energies)
         best_trace.append(chain_best)
@@ -307,13 +514,36 @@ def _advance_block_state(
     sweeps: int,
 ) -> list[Any]:
     """Run ``sweeps`` Gibbs sweeps and return the final free-block state."""
-    schedule = thrml.SamplingSchedule(n_warmup=sweeps - 1, n_samples=1, steps_per_sample=1)
+    if sweeps < 1:
+        raise ValueError(f"sweeps must be >= 1, got {sweeps!r}")
+    # THRML 0.1.3 records the post-warmup state directly when n_samples=1;
+    # there is no additional steps_per_sample update in that case.
+    schedule = thrml.SamplingSchedule(n_warmup=sweeps, n_samples=1, steps_per_sample=1)
     observed = thrml.sample_states(key, program, schedule, state, [], free_blocks)
     return [block_states[-1] for block_states in observed]
 
 
 def _pair_key(left_index: int, right_index: int) -> str:
     return f"{left_index}-{right_index}"
+
+
+def _replica_exchange_log_ratio(
+    beta_left: float,
+    beta_right: float,
+    energy_left: float,
+    energy_right: float,
+) -> float:
+    """Return ``log(target_after / target_before)`` for a replica swap."""
+    return finite_float(
+        (beta_left - beta_right) * (energy_left - energy_right),
+        name="replica-exchange log ratio",
+    )
+
+
+def _replica_exchange_pairs(replica_count: int, swap_round: int) -> tuple[tuple[int, int], ...]:
+    """Return the non-overlapping adjacent pairs for one exchange round."""
+    parity = 0 if replica_count == 2 else swap_round % 2
+    return tuple((left, left + 1) for left in range(parity, replica_count - 1, 2))
 
 
 def _run_tempering_chain(
@@ -350,7 +580,9 @@ def _run_tempering_chain(
                 sweeps=config.n_warmup,
             )
 
-    energies = [model.energy(lowering.sample_from_state(state, model.variables)) for state in states]
+    state_samples = [lowering.sample_from_state(state, model.variables) for state in states]
+    energies = [model.energy(sample) for sample in state_samples]
+    interaction_energies = [model.interaction_energy(sample) for sample in state_samples]
     swap_rng = random.Random(f"{config.seed}:pt:{chain_index}")
     swap_attempts = 0
     swap_accepts = 0
@@ -361,6 +593,8 @@ def _run_tempering_chain(
     samples: list[dict[Variable, int]] = []
     energy_trace: list[float] = []
     best_trace: list[float] = []
+    best_interaction: float | None = None
+    best_total: float | None = None
     swap_round = 0
 
     for read_index in range(num_reads):
@@ -374,20 +608,38 @@ def _run_tempering_chain(
                 free_blocks=lowering.free_blocks,
                 sweeps=config.steps_per_sample,
             )
-            energies[beta_index] = model.energy(
-                lowering.sample_from_state(states[beta_index], model.variables)
-            )
+            state_sample = lowering.sample_from_state(states[beta_index], model.variables)
+            state_samples[beta_index] = state_sample
+            energies[beta_index] = model.energy(state_sample)
+            interaction_energies[beta_index] = model.interaction_energy(state_sample)
 
         if (read_index + 1) % config.parallel_tempering_swap_interval == 0:
-            parity = swap_round % 2
+            exchange_pairs = _replica_exchange_pairs(len(programs), swap_round)
             swap_round += 1
-            for left_index in range(parity, len(programs) - 1, 2):
-                right_index = left_index + 1
+            for left_index, right_index in exchange_pairs:
                 beta_left = beta_ladder[left_index]
                 beta_right = beta_ladder[right_index]
                 energy_left = energies[left_index]
                 energy_right = energies[right_index]
-                log_acceptance = (beta_left - beta_right) * (energy_right - energy_left)
+                interaction_energy_left = interaction_energies[left_index]
+                interaction_energy_right = interaction_energies[right_index]
+                sample_left = state_samples[left_index]
+                sample_right = state_samples[right_index]
+                left_log_density_left = lowering.lowered_log_density(beta_left, sample_left)
+                left_log_density_right = lowering.lowered_log_density(beta_left, sample_right)
+                right_log_density_left = lowering.lowered_log_density(beta_right, sample_left)
+                right_log_density_right = lowering.lowered_log_density(beta_right, sample_right)
+                log_acceptance = finite_float(
+                    math.fsum(
+                        (
+                            left_log_density_right,
+                            right_log_density_left,
+                            -left_log_density_left,
+                            -right_log_density_right,
+                        )
+                    ),
+                    name="lowered replica-exchange log ratio",
+                )
                 uniform = swap_rng.random()
                 accepted = log_acceptance >= 0.0 or math.log(uniform) < log_acceptance
                 pair = _pair_key(left_index, right_index)
@@ -397,7 +649,15 @@ def _run_tempering_chain(
                     swap_accepts += 1
                     swap_accepts_by_pair[pair] = swap_accepts_by_pair.get(pair, 0) + 1
                     states[left_index], states[right_index] = states[right_index], states[left_index]
+                    state_samples[left_index], state_samples[right_index] = (
+                        state_samples[right_index],
+                        state_samples[left_index],
+                    )
                     energies[left_index], energies[right_index] = energies[right_index], energies[left_index]
+                    interaction_energies[left_index], interaction_energies[right_index] = (
+                        interaction_energies[right_index],
+                        interaction_energies[left_index],
+                    )
                 swap_trace.append(
                     {
                         "chain_id": chain_index,
@@ -408,6 +668,15 @@ def _run_tempering_chain(
                         "right_beta": beta_right,
                         "left_energy_before": energy_left,
                         "right_energy_before": energy_right,
+                        "left_interaction_energy_before": interaction_energy_left,
+                        "right_interaction_energy_before": interaction_energy_right,
+                        "left_sample_before": dict(sample_left),
+                        "right_sample_before": dict(sample_right),
+                        "left_log_density_left_target": left_log_density_left,
+                        "right_log_density_left_target": left_log_density_right,
+                        "left_log_density_right_target": right_log_density_left,
+                        "right_log_density_right_target": right_log_density_right,
+                        "acceptance_target": "lowered_backend_coefficients",
                         "log_acceptance": log_acceptance,
                         "uniform": uniform,
                         "accepted": accepted,
@@ -418,9 +687,14 @@ def _run_tempering_chain(
             per_beta_energy[beta_index].append(energy)
         cold_sample = lowering.sample_from_state(states[-1], model.variables)
         cold_energy = energies[-1]
+        cold_interaction = interaction_energies[-1]
         samples.append(cold_sample)
         energy_trace.append(cold_energy)
-        best_trace.append(cold_energy if not best_trace else min(best_trace[-1], cold_energy))
+        if best_interaction is None or cold_interaction < best_interaction:
+            best_interaction = cold_interaction
+            best_total = cold_energy
+        assert best_total is not None
+        best_trace.append(best_total)
 
     return _TemperingChain(
         samples=samples,
@@ -504,19 +778,46 @@ def _build_metadata(
     thrml: Any,
     jax: Any,
     device: Any,
+    lowering: _Lowering,
     *,
     num_reads: int,
     reads_per_chain: int,
+    reads_by_chain: Sequence[int],
     lower_seconds: float,
     sample_seconds: float,
 ) -> dict[str, Any]:
     """Assemble runtime provenance for a ``SampleResult``."""
     metadata = {
         "sampler": "gibbsiq.THRMLSampler",
+        "execution_backend": "THRML JAX simulator",
         "thrml_version": getattr(thrml, "__version__", "unknown"),
         "jax_version": jax.__version__,
+        "jax_enable_x64": bool(jax.config.read("jax_enable_x64")),
+        "lowered_coefficient_dtype": lowering.lowered_coefficient_dtype,
+        "lowered_beta_dtype": lowering.lowered_beta_dtype,
+        "max_local_logit_error_bound": lowering.max_local_logit_error_bound,
+        "local_logit_error_limit": _LOCAL_LOGIT_ERROR_LIMIT,
+        "lowered_edge_order": [[left, right] for left, right in model.quadratic],
+        "lowered_targets": [
+            {
+                "requested_beta": target["requested_beta"],
+                "lowered_beta": target["lowered_beta"],
+                "effective_biases": list(target["effective_biases"]),
+                "effective_weights": list(target["effective_weights"]),
+            }
+            for target in lowering.lowered_targets.values()
+        ],
+        "sampling_target_semantics": (
+            "THRML backend-coefficient approximation to the canonical Ising target; "
+            "local conditional-logit error is bounded by local_logit_error_limit"
+        ),
         "device_platform": device.platform,
         "device_kind": device.device_kind,
+        "python_version": platform.python_version(),
+        "python_implementation": platform.python_implementation(),
+        "operating_system": platform.platform(),
+        "local_transition_rng": "jax.random key splitting",
+        "python_executable": sys.executable,
         "seed": config.seed,
         "beta": config.beta,
         "warmup_beta_ladder": None if config.warmup_beta_ladder is None else list(config.warmup_beta_ladder),
@@ -530,9 +831,12 @@ def _build_metadata(
         "num_chains": config.num_chains,
         "num_reads": num_reads,
         "reads_per_chain": reads_per_chain,
+        "reads_by_chain": list(reads_by_chain),
         "init": config.init,
         "graph_density": graph_density(model),
         "energy_convention": "E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j",
+        "best_sample_selection_basis": "offset-free Ising interaction energy",
+        "diagnostic_energy_basis": "offset-free Ising interaction energy",
         "thrml_sign_mapping": "biases = -h, weights = -J; boolean True state = +1",
         "lower_seconds": lower_seconds,
         "sample_seconds": sample_seconds,
@@ -582,16 +886,15 @@ class THRMLSampler:
         for beta in config.parallel_tempering_betas:
             ebm, program = lowering.program(beta)
             programs.append((beta, program, ebm))
-        reads_per_chain = -(-num_reads // config.num_chains)
+        reads_by_chain = _reads_by_chain(num_reads, config.num_chains)
+        reads_per_chain = max(reads_by_chain)
         lower_seconds = time.perf_counter() - lower_started
 
         sample_started = time.perf_counter()
         root_key = jax.random.key(config.seed)
         chain_keys = jax.random.split(root_key, config.num_chains)
         chains: list[_TemperingChain] = []
-        for chain_index in range(config.num_chains):
-            remaining = num_reads - chain_index * reads_per_chain
-            chain_reads = max(0, min(reads_per_chain, remaining))
+        for chain_index, chain_reads in enumerate(reads_by_chain):
             if chain_reads <= 0:
                 break
             chains.append(
@@ -616,8 +919,14 @@ class THRMLSampler:
         sample_seconds = time.perf_counter() - sample_started
 
         diagnostics_started = time.perf_counter()
-        flat_energies = [energy for chain in decoded.energy_trace for energy in chain]
-        best_sample = decoded.samples[best_index(flat_energies)]
+        interaction_energy_chains = [
+            [model.interaction_energy(sample) for sample in chain]
+            for chain in decoded.sample_chains
+        ]
+        flat_interaction_energies = [
+            energy for chain in interaction_energy_chains for energy in chain
+        ]
+        best_sample = decoded.samples[best_index(flat_interaction_energies)]
         beta_schedule = [
             {
                 "phase": "warmup",
@@ -631,6 +940,7 @@ class THRMLSampler:
                 "target_beta": config.beta,
                 "beta_ladder": list(config.parallel_tempering_betas),
                 "n_samples": reads_per_chain,
+                "reads_by_chain": list(reads_by_chain),
                 "steps_per_sample": config.steps_per_sample,
                 "swap_interval": config.parallel_tempering_swap_interval,
             },
@@ -639,6 +949,7 @@ class THRMLSampler:
         distance_chains = distance_to_best_trace(decoded.sample_chains, best_sample, model.variables)
         traces: dict[str, Any] = {
             "energy": decoded.energy_trace,
+            "interaction_energy": interaction_energy_chains,
             "best_energy_so_far": decoded.best_trace,
             "sample_chain_ids": decoded.chain_ids,
             "beta_schedule": beta_schedule,
@@ -667,8 +978,10 @@ class THRMLSampler:
             thrml,
             jax,
             device,
+            lowering,
             num_reads=num_reads,
             reads_per_chain=reads_per_chain,
+            reads_by_chain=reads_by_chain,
             lower_seconds=lower_seconds,
             sample_seconds=sample_seconds,
         )
@@ -680,11 +993,12 @@ class THRMLSampler:
                     decoded.swap_accepts / decoded.swap_attempts if decoded.swap_attempts else None
                 ),
                 "parallel_tempering_swap_rng": "python.random.Random(seed='seed:pt:chain_id')",
+                "parallel_tempering_swap_target": "recorded lowered per-beta log densities",
             }
         )
 
         diagnostics = compute_diagnostics(
-            energy_chains=decoded.energy_trace,
+            energy_chains=interaction_energy_chains,
             samples=decoded.samples,
             variables=model.variables,
             magnetization_chains=magnetization_chains,
@@ -712,9 +1026,9 @@ class THRMLSampler:
     ) -> SampleResult:
         """Run block Gibbs on ``model`` and return exactly ``num_reads`` samples.
 
-        Reads are split evenly across chains (``ceil(num_reads / num_chains)``
-        per chain); surplus samples are dropped from the end of the last chain
-        and the per-chain traces are truncated to match, so the flat
+        Reads are balanced across chains with ``divmod``; earlier chains receive
+        at most one extra read. Backend arrays use the maximum chain length and
+        per-chain traces are sliced to their declared allocations, so the flat
         ``energies`` tuple always equals the concatenated ``traces["energy"]``.
         """
         if isinstance(num_reads, bool) or not isinstance(num_reads, int) or num_reads < 1:
@@ -752,7 +1066,8 @@ class THRMLSampler:
             if not segment_programs:
                 init_ebm = ebm
             segment_programs.append((program, sweeps))
-        reads_per_chain = -(-num_reads // config.num_chains)
+        reads_by_chain = _reads_by_chain(num_reads, config.num_chains)
+        reads_per_chain = max(reads_by_chain)
         final_warmup = 0 if segments else config.n_warmup
         sampling_schedule = thrml.SamplingSchedule(
             n_warmup=final_warmup,
@@ -765,15 +1080,14 @@ class THRMLSampler:
             keys = jax.random.split(chain_key, len(segment_programs) + 2)
             state = lowering.initial_state(keys[0], init_ebm, config.init)
             for (program, sweeps), segment_key in zip(segment_programs, keys[1:-1]):
-                # One segment = `sweeps` full sweeps at that beta; the last
-                # sweep doubles as the observation that carries the state out.
-                segment_schedule = thrml.SamplingSchedule(
-                    n_warmup=sweeps - 1, n_samples=1, steps_per_sample=1
+                state = _advance_block_state(
+                    thrml=thrml,
+                    key=segment_key,
+                    program=program,
+                    state=state,
+                    free_blocks=lowering.free_blocks,
+                    sweeps=sweeps,
                 )
-                observed = thrml.sample_states(
-                    segment_key, program, segment_schedule, state, [], lowering.free_blocks
-                )
-                state = [block_states[-1] for block_states in observed]
             return thrml.sample_states(
                 keys[-1], sampling_program, sampling_schedule, state, [], lowering.observed_blocks
             )[0]
@@ -791,15 +1105,20 @@ class THRMLSampler:
         decoded = _decode_sample_chains(
             spins,
             model,
-            num_reads=num_reads,
-            num_chains=config.num_chains,
+            reads_by_chain=reads_by_chain,
         )
 
         # Trace post-processing and diagnostics share one timing bucket
         # (EVAL-EQ-010 resource split): everything after decode is telemetry.
         diagnostics_started = time.perf_counter()
-        flat_energies = [energy for chain in decoded.energy_trace for energy in chain]
-        best_sample = decoded.samples[best_index(flat_energies)]
+        interaction_energy_chains = [
+            [model.interaction_energy(sample) for sample in chain]
+            for chain in decoded.sample_chains
+        ]
+        flat_interaction_energies = [
+            energy for chain in interaction_energy_chains for energy in chain
+        ]
+        best_sample = decoded.samples[best_index(flat_interaction_energies)]
 
         beta_schedule = [
             {"phase": "warmup", "beta": beta, "sweeps": sweeps} for beta, sweeps in segments
@@ -809,6 +1128,7 @@ class THRMLSampler:
                 "phase": "sampling",
                 "beta": config.beta,
                 "n_samples": reads_per_chain,
+                "reads_by_chain": list(reads_by_chain),
                 "steps_per_sample": config.steps_per_sample,
             }
         )
@@ -816,6 +1136,7 @@ class THRMLSampler:
         distance_chains = distance_to_best_trace(decoded.sample_chains, best_sample, model.variables)
         traces: dict[str, Any] = {
             "energy": decoded.energy_trace,
+            "interaction_energy": interaction_energy_chains,
             "best_energy_so_far": decoded.best_trace,
             "sample_chain_ids": decoded.chain_ids,
             "beta_schedule": beta_schedule,
@@ -831,14 +1152,16 @@ class THRMLSampler:
             thrml,
             jax,
             device,
+            lowering,
             num_reads=num_reads,
             reads_per_chain=reads_per_chain,
+            reads_by_chain=reads_by_chain,
             lower_seconds=lower_seconds,
             sample_seconds=sample_seconds,
         )
 
         diagnostics = compute_diagnostics(
-            energy_chains=decoded.energy_trace,
+            energy_chains=interaction_energy_chains,
             samples=decoded.samples,
             variables=model.variables,
             magnetization_chains=magnetization_chains,

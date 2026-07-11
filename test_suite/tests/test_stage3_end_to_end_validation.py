@@ -1,19 +1,9 @@
 """Stage 3 end-to-end validation: brute-forceable models through the real sampler.
 
-Every assertion here is anchored to an independently computable ground truth:
-exhaustive state enumeration for distributions and optima, and hand-analyzable
-sampler regimes (frozen, trapped, well-mixed) for the diagnostics flags. The
-degenerate double-well tests pin the closed blind spot of the energy-only
-chain-disagreement family: two chains frozen in distinct ground states of
-EQUAL energy are invisible to R-hat over energy, and since 2026-07-03 the
-runtime wires the magnetization trace into the chain-disagreement flag
-(EVAL-EQ-007 magnetization wiring), so the payload itself now reports the
-trap. The formerly-flipping blind-spot assertions were flipped when that
-wiring landed.
-
-Statistical assertions use fixed seeds, so they are deterministic; tolerances
-keep an order-of-magnitude margin over the observed error (frustrated-triangle
-total variation measured at 0.013 with the pinned seed, asserted below 0.03).
+Assertions are anchored to exhaustive state enumeration (distributions, optima) and
+hand-analyzable sampler regimes (frozen, trapped, well-mixed) for the diagnostics flags.
+Seeds are fixed, so results are deterministic; tolerances keep an order-of-magnitude
+margin over observed error.
 """
 
 from __future__ import annotations
@@ -59,8 +49,7 @@ def boltzmann_probabilities(
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class FrustratedTriangleGroundTruthTests(unittest.TestCase):
-    """One well-mixed run on a frustrated triangle with fields and offset,
-    validated against exhaustive enumeration and shared across tests."""
+    """One well-mixed run on a frustrated triangle, validated against exhaustive enumeration."""
 
     BETA = 0.8
 
@@ -116,23 +105,20 @@ class FrustratedTriangleGroundTruthTests(unittest.TestCase):
             delta=0.05,
         )
 
-    def test_small_state_space_dilutes_diversity_flags_known_limitation(self) -> None:
-        # CHARACTERIZATION, not an endorsement: a 3-variable model has 8
-        # reachable states, so unique_fraction <= 8/8000 and low_diversity
-        # fires on this provably well-mixed run; the long plateau after the
-        # optimum is found on an early read likewise fires
-        # no_recent_improvement. Any future fix (e.g. normalizing
-        # unique_fraction by min(num_reads, 2**num_variables)) must flip this
-        # test and update EVAL-EQ-011 first.
-        flags = self.result.diagnostics["flags"]
-        self.assertIn("low_diversity", flags)
-        self.assertIn("no_recent_improvement", flags)
+    def test_finite_support_plateau_stays_healthy(self) -> None:
+        diagnostics = self.result.diagnostics
+        # All 8 states are observed: the raw unique fraction is diluted by
+        # 8000 reads, while finite-support occupancy remains complete.
+        self.assertEqual(diagnostics["diversity"]["unique_states"], 8)
+        self.assertEqual(diagnostics["diversity"]["occupancy_efficiency"], 1.0)
+        self.assertNotIn("low_diversity", diagnostics["flags"])
+        self.assertNotIn("no_recent_improvement", diagnostics["flags"])
+        self.assertEqual(diagnostics["observations"], ["no_recent_improvement"])
 
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class FrozenSamplerTests(unittest.TestCase):
-    """At beta=20 on a strong-field model the sampler freezes into the unique
-    ground state; the payload must report pathology, never a healthy ESS."""
+    """At beta=20 on a strong-field model the sampler freezes into the unique ground state."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -144,17 +130,15 @@ class FrozenSamplerTests(unittest.TestCase):
         self.assertAlmostEqual(self.result.best_energy, -2.5, places=9)
         self.assertEqual(self.result.best_sample, {"a": -1, "b": -1, "c": -1})
 
-    def test_frozen_run_flags_collapse_and_reports_constant_statuses(self) -> None:
+    def test_frozen_run_flags_mode_collapse(self) -> None:
         diagnostics = self.result.diagnostics
         self.assertEqual(
             diagnostics["flags"],
-            [
-                "mode_collapse",
-                "low_diversity",
-                "no_recent_improvement",
-                "zero_energy_variance",
-                "zero_within_chain_variance",
-            ],
+            ["mode_collapse"],
+        )
+        self.assertEqual(
+            diagnostics["observations"],
+            ["no_recent_improvement", "zero_energy_variance", "zero_within_chain_variance"],
         )
         self.assertEqual(diagnostics["energy"]["ess_status"], "undefined_constant_trace")
         self.assertEqual(diagnostics["energy"]["autocorrelation_status"], "constant_trace")
@@ -165,9 +149,7 @@ class FrozenSamplerTests(unittest.TestCase):
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class DegenerateDoubleWellBlindSpotTests(unittest.TestCase):
-    """Two-spin ferromagnet at beta=15: both ground states (++ and --) share
-    energy -1. With seed 0 and random init the two chains freeze in OPPOSITE
-    wells (verified during calibration), the archetypal multimodal trap."""
+    """Two-spin ferromagnet at beta=15; both ground states (++ and --) share energy -1."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -176,26 +158,19 @@ class DegenerateDoubleWellBlindSpotTests(unittest.TestCase):
         cls.result = THRMLSampler(config).sample(cls.model, num_reads=100)
         cls.magnetization = cls.result.traces["magnetization"]
 
-    def test_chains_are_actually_trapped_in_opposite_wells(self) -> None:
-        # Guard assertion: if a thrml/jax upgrade reseeds the trap away, the
-        # blind-spot tests below become vacuous; re-pin the seed instead.
+    def test_chains_trap_in_opposite_wells(self) -> None:
+        # Guard: if a thrml/jax upgrade reseeds the trap away, re-pin the seed
+        # rather than let the tests below go vacuous.
         first, second = self.magnetization
         self.assertEqual(set(first), {1.0})
         self.assertEqual(set(second), {-1.0})
         self.assertEqual(self.result.diagnostics["diversity"]["unique_states"], 2)
 
-    def test_equal_energy_wells_now_fire_chain_disagreement_via_magnetization(self) -> None:
-        # FLIPPED 2026-07-03 (was
-        # test_energy_only_chain_disagreement_is_blind_to_equal_energy_wells)
-        # when the EVAL-EQ-007 magnetization wiring landed. Both wells sit at
-        # energy -1, so the energy traces of the two trapped chains are still
-        # IDENTICAL constants and the ENERGY-trace R-hat keys still report the
-        # constant-trace status -- no statistic of the energy trace can
-        # distinguish this pathological run from a frozen unimodal one. The
-        # payload nevertheless flags chain_disagreement, because the runtime
-        # now feeds the magnetization trace into the chains.magnetization
-        # subsection where constant +1 vs constant -1 chains hit the
-        # zero-within-variance (infinite R-hat) path.
+    def test_equal_energy_wells_fire_chain_disagreement(self) -> None:
+        # Both wells sit at energy -1, so the energy-trace R-hat is still
+        # constant-trace and can't see the trap. Since the EVAL-EQ-007
+        # magnetization wiring (2026-07-03), chains.magnetization catches it:
+        # constant +1 vs constant -1 hits the zero-within-variance path.
         diagnostics = self.result.diagnostics
         self.assertTrue(all(energy == -1.0 for chain in self.result.traces["energy"] for energy in chain))
         self.assertEqual(diagnostics["chains"]["rhat_status"], "undefined_constant_trace")
@@ -206,16 +181,18 @@ class DegenerateDoubleWellBlindSpotTests(unittest.TestCase):
             magnetization["rank_normalized_rhat_status"],
             "undefined_or_infinite_zero_within_variance",
         )
-        # The rest of the pathology report is unchanged by the wiring.
+        # Flat-energy facts stay recorded as observations, not flags.
         self.assertNotIn("mode_collapse", diagnostics["flags"])
-        self.assertIn("zero_energy_variance", diagnostics["flags"])
-        self.assertIn("zero_within_chain_variance", diagnostics["flags"])
-        self.assertIn("low_diversity", diagnostics["flags"])
+        self.assertNotIn("zero_energy_variance", diagnostics["flags"])
+        self.assertNotIn("zero_within_chain_variance", diagnostics["flags"])
+        self.assertNotIn("low_diversity", diagnostics["flags"])
+        self.assertEqual(
+            diagnostics["observations"],
+            ["no_recent_improvement", "zero_energy_variance", "zero_within_chain_variance"],
+        )
 
-    def test_magnetization_trace_carries_the_disagreement_signal_standalone(self) -> None:
-        # The payload wiring above is built from exactly this signal: the
-        # chain-disagreement estimators applied directly to the captured
-        # magnetization trace expose the trap with zero new estimator code.
+    def test_magnetization_trace_holds_disagreement_signal(self) -> None:
+        # Same estimators as the energy-trace path, applied to magnetization directly.
         section = chain_section(self.magnetization)
         self.assertEqual(section["rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertIn("chain_disagreement", chain_flags(section))

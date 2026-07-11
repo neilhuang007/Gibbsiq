@@ -1,9 +1,5 @@
-"""Independent exhaustive checks for every benchmark optimum.
-
-The generator and oracle have their own implementations. This module keeps a
-third, compact set of enumerators in the public tests so the fixture corpus is
-not trusted just because the same code produced it.
-"""
+"""Independent exhaustive checks for every benchmark optimum, via a third enumerator
+separate from the generator and the oracle."""
 
 from __future__ import annotations
 
@@ -151,7 +147,7 @@ FAMILY_SOLVERS = {
 
 
 class GroundTruthExactnessTest(unittest.TestCase):
-    def test_all_benchmark_scalars_are_independently_enumerated(self) -> None:
+    def test_benchmark_scalars_match_independent_enumeration(self) -> None:
         for fixture in load_fixtures():
             expected = fixture["expected"]
             actual = FAMILY_SOLVERS[fixture["family"]](fixture["input"])
@@ -159,10 +155,9 @@ class GroundTruthExactnessTest(unittest.TestCase):
                 for key, value in actual.items():
                     self.assertEqual(value, expected[key])
 
-    def test_stored_witness_lists_are_representative_not_completeness_claims(self) -> None:
-        # The public corpus intentionally caps serialized witnesses. Degeneracy
-        # is the exact count; witness lists only provide enough examples for
-        # verification and should never be interpreted as a full state table.
+    def test_stored_witnesses_are_representative(self) -> None:
+        # The corpus caps serialized witnesses; degeneracy is the exact count, and
+        # witness lists only provide enough examples to verify, not a full state table.
         for fixture in load_fixtures():
             expected = fixture["expected"]
             witness_key = next(key for key in expected if key.startswith("witness_"))

@@ -103,11 +103,12 @@ def optimal_spin_witnesses(
     Witness states are keyed by string variable name to match the fixture
     witness schema; first-seen sample order is preserved.
     """
-    best_energy = result.best_energy
+    assert result.interaction_energies is not None
+    best_interaction_energy = min(result.interaction_energies)
     witnesses: list[dict[str, int]] = []
     seen: set[tuple[int, ...]] = set()
-    for sample, energy in zip(result.samples, result.energies):
-        if abs(energy - best_energy) > tolerance:
+    for sample, interaction_energy in zip(result.samples, result.interaction_energies):
+        if abs(interaction_energy - best_interaction_energy) > tolerance:
             continue
         key = tuple(int(sample[variable]) for variable in result.variables)
         if key in seen:

@@ -77,14 +77,33 @@ class EvaluationHarnessTest(unittest.TestCase):
 
         self.assertEqual(compare_values(expected, actual, "fixture", 1e-9), [])
 
-    def test_bool_and_int_are_not_interchangeable(self) -> None:
+    def test_unordered_nested_numbers_honor_float_tolerance(self) -> None:
+        expected = {
+            "best_spin_samples": [
+                {"sample": {"a": -1}, "energy": -1.0},
+                {"sample": {"a": 1}, "energy": 2.0},
+            ]
+        }
+        actual = {
+            "best_spin_samples": [
+                {"sample": {"a": 1}, "energy": 2.0 + 5e-10},
+                {"sample": {"a": -1}, "energy": -1.0 - 5e-10},
+            ]
+        }
+
+        self.assertEqual(compare_values(expected, actual, "fixture", 1e-9), [])
+        differences = compare_values(expected, actual, "fixture", 1e-12)
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0].code, "unordered_list_mismatch")
+
+    def test_bool_and_int_not_interchangeable(self) -> None:
         for expected, actual in ((True, 1), (False, 0), (1, True), (0, False)):
             with self.subTest(expected=expected, actual=actual):
                 differences = compare_values(expected, actual, "fixture.scalar", 1e-9)
                 self.assertEqual(len(differences), 1)
                 self.assertEqual(differences[0].code, "value_mismatch")
 
-    def test_example_candidate_matches_public_exact_and_diagnostic_fixtures(self) -> None:
+    def test_example_candidate_matches_golden_fixtures(self) -> None:
         candidate = normalize_candidate(load_json("test_suite/examples/evaluation-candidate.example.json"))
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -119,7 +138,7 @@ class EvaluationHarnessTest(unittest.TestCase):
             )
         )
 
-    def test_unknown_fixture_outputs_make_the_submission_fail(self) -> None:
+    def test_unknown_fixture_ids_fail_evaluation(self) -> None:
         candidate = complete_candidate_from_fixtures()
         candidate["results"].append({"id": "unknown_fixture", "actual": {"answer": 1}})
 
@@ -129,7 +148,7 @@ class EvaluationHarnessTest(unittest.TestCase):
         self.assertEqual(report["summary"]["unknown"], 1)
         self.assertEqual(report["unknown_fixture_ids"], ["unknown_fixture"])
 
-    def test_candidate_strings_are_compared_as_data_not_executed(self) -> None:
+    def test_candidate_strings_are_data_not_code(self) -> None:
         differences = compare_values(
             {"energy": 1},
             {"energy": "__import__('pathlib').Path('should_not_exist').write_text('x')"},

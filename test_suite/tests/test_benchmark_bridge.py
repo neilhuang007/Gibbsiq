@@ -1,19 +1,12 @@
-"""Benchmark-bridge tests: lowering fidelity, anti-cheat scoring, end-to-end runs.
+"""Benchmark-bridge tests: lowering fidelity, anti-cheat scoring, end-to-end runs."""
 
-Three layers of anti-cheat coverage:
-
-1. Lowering fidelity -- ``compile_fixture`` is proven to encode the *same*
-   problem as the fixture by independent exhaustive enumeration on every
-   brute-forceable instance, and works with the ``expected`` block stripped.
-2. Adversarial candidates -- echoed optima with doctored, missing, or invalid
-   witnesses must fail ``verify_optimum_claim``.
-3. End-to-end -- the THRML sampler solves famous published instances (Petersen
-   Max-Cut 12 per Barahona 1983, complete bipartite K_{3,3}, odd cycle C7, a
-   Sherrington-Kirkpatrick glass) and its candidate passes the strict oracle;
-   the same candidate with one flipped witness spin fails.
-
-The end-to-end classes skip without the optional ``thrml`` extra.
-"""
+# Three layers: (1) compile_fixture is checked against independent exhaustive
+# enumeration on every brute-forceable instance, with the expected block
+# stripped; (2) doctored/missing/invalid witnesses must fail
+# verify_optimum_claim; (3) THRML solves published instances (Petersen
+# Max-Cut 12 per Barahona 1983, K_{3,3}, odd cycle C7, an SK glass) and a
+# flipped witness spin still fails. The end-to-end classes skip without the
+# optional thrml extra.
 
 from __future__ import annotations
 
@@ -102,8 +95,8 @@ class CompileFixtureFidelityTests(unittest.TestCase):
             self.assertEqual(with_expected.offset, without_expected.offset, msg=fixture["id"])
 
     def test_expected_spin_witnesses_attain_expected_energy(self) -> None:
-        # Every corpus witness, evaluated through the lowered model, must land
-        # exactly on the proven optimum -- ties the lowering to the corpus.
+        # Ties the lowering to the corpus: every stored witness must land
+        # exactly on the proven optimum once evaluated through the lowered model.
         for fixture in supported_fixtures():
             if fixture["family"] == "number_partition":
                 continue  # partition witnesses are set pairs, not spin states
@@ -119,9 +112,8 @@ class CompileFixtureFidelityTests(unittest.TestCase):
                 )
 
     def test_independent_enumeration_confirms_lowered_optimum(self) -> None:
-        # The strongest fidelity proof: re-enumerate the *lowered* model and
-        # require its true minimum to equal the fixture's proven optimum. A
-        # lowering that solves a different (easier) problem fails here.
+        # Strongest fidelity proof: re-enumerate the lowered model and require
+        # its true minimum to match the fixture's proven optimum.
         checked = 0
         for fixture in supported_fixtures():
             model = compile_fixture(fixture)
@@ -144,7 +136,7 @@ class CompileFixtureFidelityTests(unittest.TestCase):
 
 
 class VerifyOptimumClaimAntiCheatTests(unittest.TestCase):
-    """Adversarial candidates against the famous Petersen Max-Cut fixture."""
+    """Adversarial candidates against the Petersen Max-Cut fixture."""
 
     def setUp(self) -> None:
         self.fixture = FIXTURES["gt_maxcut_petersen"]
@@ -152,15 +144,15 @@ class VerifyOptimumClaimAntiCheatTests(unittest.TestCase):
             key: value for key, value in self.fixture["expected"].items() if key not in ENUMERATION_ONLY_KEYS
         }
 
-    def test_honest_candidate_passes(self) -> None:
+    def test_valid_candidate_passes(self) -> None:
         self.assertEqual(verify_optimum_claim(self.fixture, self.honest, TOLERANCE), [])
 
-    def test_degeneracy_may_be_omitted_but_full_oracle_still_requires_it(self) -> None:
+    def test_full_oracle_requires_degeneracy(self) -> None:
         self.assertEqual(verify_optimum_claim(self.fixture, self.honest, TOLERANCE), [])
         full = verify_benchmark_fixture(self.fixture, self.honest, TOLERANCE)
         self.assertTrue(any(diff["code"] == "missing_key" for diff in full))
 
-    def test_volunteered_degeneracy_is_still_checked(self) -> None:
+    def test_extra_degeneracy_is_checked(self) -> None:
         candidate = dict(self.honest)
         candidate["ground_state_degeneracy"] = 999
         differences = verify_optimum_claim(self.fixture, candidate, TOLERANCE)
@@ -176,8 +168,8 @@ class VerifyOptimumClaimAntiCheatTests(unittest.TestCase):
         self.assertTrue(any(diff["code"] == "witness_not_optimal" for diff in differences))
 
     def test_inflated_optimum_claim_is_rejected(self) -> None:
-        # Claim a better cut than the published optimum of 12: the scalar check
-        # fails against the proven value even though the witness is genuine.
+        # Claims a better cut than the published optimum of 12; the scalar
+        # check fails even though the witness itself is genuine.
         candidate = dict(self.honest)
         candidate["best_cut_value"] = 13
         candidate["best_ising_energy"] = -11.0
@@ -259,7 +251,7 @@ class CandidateFromResultTests(unittest.TestCase):
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
 
     def test_witness_cap(self) -> None:
-        # A coupling-free model makes every state optimal; the witness list
+        # Coupling-free model: every state is optimal, so the witness list
         # must cap at MAX_WITNESSES distinct states.
         from gibbsiq import compile_ising
 
@@ -329,8 +321,8 @@ class ThrmlFamousInstanceTests(unittest.TestCase):
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
 
     def test_doctored_thrml_candidate_fails(self) -> None:
-        # Even a candidate generated by the real sampler is rejected when its
-        # witness is tampered with after the fact.
+        # A real-sampler candidate is still rejected once its witness is
+        # tampered with after the fact.
         config = SamplerConfig(
             beta=2.5,
             n_warmup=200,

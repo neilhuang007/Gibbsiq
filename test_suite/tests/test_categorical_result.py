@@ -20,11 +20,11 @@ class DimodStyleDiscrete:
 
 
 class NormalizeResultVartypeTests(unittest.TestCase):
-    def test_spin_and_binary_pass_through(self) -> None:
+    def test_spin_binary_vartypes_pass_through(self) -> None:
         self.assertEqual(normalize_result_vartype("SPIN"), "SPIN")
         self.assertEqual(normalize_result_vartype("binary"), "BINARY")
 
-    def test_categorical_and_dimod_discrete_alias(self) -> None:
+    def test_categorical_dimod_discrete_alias(self) -> None:
         self.assertEqual(normalize_result_vartype("CATEGORICAL"), "CATEGORICAL")
         self.assertEqual(normalize_result_vartype("discrete"), "CATEGORICAL")
         self.assertEqual(normalize_result_vartype(DimodStyleDiscrete()), "CATEGORICAL")
@@ -48,7 +48,7 @@ class CategoricalSampleResultTests(unittest.TestCase):
         self.assertEqual(result.best_sample, {"a": 1, "b": 0})
         self.assertEqual(result.best_energy, -0.5)
 
-    def test_per_variable_num_states_supports_heterogeneous_domains(self) -> None:
+    def test_per_variable_num_states_heterogeneous_domains(self) -> None:
         result = SampleResult(
             samples=({"site": 4, "flag": 1},),
             variables=("site", "flag"),
@@ -157,7 +157,7 @@ class IsingBoundaryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SampleResult.from_model(model, [{"a": 0}], vartype="CATEGORICAL")
 
-    def test_spin_and_binary_results_are_unchanged(self) -> None:
+    def test_spin_binary_results_unchanged(self) -> None:
         model = compile_ising({"a": 0.5}, {})
         result = SampleResult.from_model(model, [{"a": -1}, {"a": 1}])
         self.assertEqual(result.vartype, "SPIN")

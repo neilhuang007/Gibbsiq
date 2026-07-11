@@ -39,7 +39,7 @@ class GroundTruthGeneratorTest(unittest.TestCase):
         generated = with_checksum(self.generator, self.generator.build_corpus())
         self.assertEqual(generated, self.fixture_document)
 
-    def test_main_writes_requested_output_without_touching_fixture_path(self) -> None:
+    def test_main_write_output_preserves_fixture_path(self) -> None:
         before = CORPUS_PATH.read_text(encoding="utf-8-sig")
         with tempfile.TemporaryDirectory() as tmpdir:
             out_path = Path(tmpdir) / "ground-truth-small.json"

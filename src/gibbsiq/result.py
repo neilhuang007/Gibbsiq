@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Literal, TypeAlias
 
-from gibbsiq.model import IsingModel, Variable, Vartype, normalize_vartype
+from gibbsiq._frozen import freeze, thaw
+from gibbsiq.model import IsingModel, Variable, Vartype, finite_float, normalize_vartype
 
 ResultVartype: TypeAlias = Literal["SPIN", "BINARY", "CATEGORICAL"]
 
@@ -72,6 +74,7 @@ class SampleResult:
     variables: tuple[Variable, ...]
     energies: tuple[float, ...]
     vartype: ResultVartype = "SPIN"
+    interaction_energies: tuple[float, ...] | None = None
     traces: Mapping[str, Any] = field(default_factory=dict)
     diagnostics: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -81,10 +84,23 @@ class SampleResult:
         vartype = normalize_result_vartype(self.vartype)
         variables = tuple(self.variables)
         samples = tuple(dict(sample) for sample in self.samples)
-        energies = tuple(float(energy) for energy in self.energies)
+        energies = tuple(
+            finite_float(energy, name=f"energy at index {index}")
+            for index, energy in enumerate(self.energies)
+        )
+        interaction_energies = (
+            energies
+            if self.interaction_energies is None
+            else tuple(
+                finite_float(energy, name=f"interaction energy at index {index}")
+                for index, energy in enumerate(self.interaction_energies)
+            )
+        )
 
         if len(samples) != len(energies):
             raise ValueError("samples and energies must have the same length")
+        if len(interaction_energies) != len(energies):
+            raise ValueError("interaction_energies and energies must have the same length")
         if not samples:
             raise ValueError("SampleResult requires at least one sample")
         if len(set(variables)) != len(variables):
@@ -99,23 +115,48 @@ class SampleResult:
             shared = (-1, 1) if vartype == "SPIN" else (0, 1)
             domains = {variable: shared for variable in variables}
         kind = vartype.lower()
+        variable_set = set(variables)
         for index, sample in enumerate(samples):
             missing = [variable for variable in variables if variable not in sample]
             if missing:
                 raise ValueError(f"sample {index} is missing variables {missing!r}")
+            extra = [variable for variable in sample if variable not in variable_set]
+            if extra:
+                raise ValueError(f"sample {index} has unexpected variables {extra!r}")
             for variable in variables:
                 value = sample[variable]
                 if isinstance(value, bool) or value not in domains[variable]:
                     raise ValueError(f"sample {index} has invalid {kind} value {value!r} for {variable!r}")
 
-        object.__setattr__(self, "samples", samples)
+        object.__setattr__(
+            self,
+            "samples",
+            tuple(MappingProxyType(sample) for sample in samples),
+        )
         object.__setattr__(self, "variables", variables)
         object.__setattr__(self, "energies", energies)
+        object.__setattr__(self, "interaction_energies", interaction_energies)
         object.__setattr__(self, "vartype", vartype)
-        object.__setattr__(self, "traces", dict(self.traces))
-        object.__setattr__(self, "diagnostics", dict(self.diagnostics))
-        object.__setattr__(self, "metadata", dict(self.metadata))
-        object.__setattr__(self, "num_states", num_states)
+        object.__setattr__(
+            self,
+            "traces",
+            freeze(dict(self.traces)),
+        )
+        object.__setattr__(
+            self,
+            "diagnostics",
+            freeze(dict(self.diagnostics)),
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            freeze(dict(self.metadata)),
+        )
+        object.__setattr__(
+            self,
+            "num_states",
+            None if num_states is None else freeze(num_states),
+        )
 
     @classmethod
     def from_model(
@@ -133,19 +174,33 @@ class SampleResult:
         # __post_init__ copies each sample defensively, so only materialize here.
         sample_rows = tuple(samples)
         energies = tuple(model.energy(sample, vartype=normalized_vartype) for sample in sample_rows)
-        result_metadata = {
-            "source_model_format": model.source_format,
-            "conversion_offset": model.offset,
-            "variable_order": list(model.variables),
-        }
-        result_metadata.update(model.metadata)
+        interaction_energies = tuple(
+            model.interaction_energy(sample, vartype=normalized_vartype) for sample in sample_rows
+        )
+        interactions_by_total: dict[float, set[float]] = {}
+        for total_energy, interaction_energy in zip(energies, interaction_energies):
+            interactions_by_total.setdefault(total_energy, set()).add(interaction_energy)
+        reported_energy_collision_count = sum(
+            len(interactions) - 1 for interactions in interactions_by_total.values()
+        )
+        result_metadata = dict(model.metadata)
         if metadata:
             result_metadata.update(metadata)
+        result_metadata.update(
+            {
+                "source_model_format": model.source_format,
+                "conversion_offset": model.offset,
+                "variable_order": list(model.variables),
+                "best_sample_selection_basis": "offset-free Ising interaction energy",
+                "reported_energy_collision_count": reported_energy_collision_count,
+            }
+        )
         return cls(
             samples=sample_rows,
             variables=model.variables,
             energies=energies,
             vartype=normalized_vartype,
+            interaction_energies=interaction_energies,
             traces={} if traces is None else traces,
             diagnostics={} if diagnostics is None else diagnostics,
             metadata=result_metadata,
@@ -153,7 +208,8 @@ class SampleResult:
 
     @property
     def best_index(self) -> int:
-        return best_index(self.energies)
+        assert self.interaction_energies is not None
+        return best_index(self.interaction_energies)
 
     @property
     def best_sample(self) -> dict[Variable, int]:
@@ -170,13 +226,14 @@ class SampleResult:
             "samples": [dict(sample) for sample in self.samples],
             "variables": list(self.variables),
             "energies": list(self.energies),
+            "interaction_energies": list(self.interaction_energies or ()),
             "best_sample": self.best_sample,
             "best_energy": self.best_energy,
             "vartype": self.vartype,
             "num_states": None if num_states is None else dict(num_states),
-            "traces": dict(self.traces),
-            "diagnostics": dict(self.diagnostics),
-            "metadata": dict(self.metadata),
+            "traces": thaw(self.traces),
+            "diagnostics": thaw(self.diagnostics),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dimod(self) -> Any:
@@ -186,9 +243,15 @@ class SampleResult:
         except ImportError as error:  # pragma: no cover - exercised only without optional dep
             raise ImportError("SampleResult.to_dimod() requires the optional 'dimod' package") from error
         dimod_vartype = "DISCRETE" if self.vartype == "CATEGORICAL" else self.vartype
+        samples_like = (
+            [[sample[variable] for variable in self.variables] for sample in self.samples],
+            list(self.variables),
+        )
         return dimod.SampleSet.from_samples(
-            [dict(sample) for sample in self.samples],
+            samples_like,
             dimod_vartype,
             list(self.energies),
-            info=dict(self.metadata),
+            info=thaw(self.metadata),
+            sort_labels=False,
+            interaction_energy=list(self.interaction_energies or ()),
         )

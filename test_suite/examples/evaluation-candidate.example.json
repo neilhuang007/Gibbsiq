@@ -84,12 +84,14 @@
         "num_reads": 128,
         "unique_states": 5,
         "unique_fraction": 0.0390625,
+        "occupancy_efficiency": 0.3125,
         "top1_mass": 0.9375,
         "top3_mass": 0.984375,
         "entropy_nats": 0.3096046315802033,
         "mean_pairwise_hamming_distance": 0.27288385826771655,
         "normalized_mean_pairwise_hamming_distance": 0.06822096456692914,
-        "required_flags": ["mode_collapse", "low_diversity"]
+        "required_flags": ["mode_collapse"],
+        "observations": []
       }
     },
     {
@@ -103,7 +105,8 @@
         "best_improvement_count": 0,
         "autocorrelation_status": "constant_trace",
         "ess_status": "undefined_constant_trace",
-        "required_flags": ["no_recent_improvement", "zero_energy_variance"]
+        "required_flags": [],
+        "observations": ["no_recent_improvement", "zero_energy_variance"]
       }
     },
     {
@@ -115,7 +118,8 @@
         "within_chain_variances": [0.0, 0.0, 0.0, 0.0],
         "between_chain_variance": 96.0,
         "rhat_status": "undefined_or_infinite_zero_within_variance",
-        "required_flags": ["chain_disagreement", "zero_within_chain_variance"]
+        "required_flags": ["chain_disagreement"],
+        "observations": ["zero_within_chain_variance"]
       }
     },
     {
@@ -133,7 +137,8 @@
         "ess_status": "ok",
         "ess": 573.9426350857319,
         "tau_hat": 0.8920752157112717,
-        "required_flags": []
+        "required_flags": [],
+        "observations": []
       }
     },
     {
@@ -152,7 +157,8 @@
         "tau_hat": 12.027266222274006,
         "ess_status": "ok",
         "ess": 21.28496993987698,
-        "required_flags": ["low_ess", "poor_mixing"]
+        "required_flags": ["poor_mixing"],
+        "observations": []
       }
     },
     {
@@ -170,7 +176,8 @@
         "ess_status": "ok",
         "ess": 48.16479930623699,
         "tau_hat": 0.6643856189774724,
-        "required_flags": ["chain_disagreement"]
+        "required_flags": ["chain_disagreement"],
+        "observations": []
       }
     },
     {
@@ -189,7 +196,8 @@
         "tau_hat": null,
         "ess_status": "insufficient_data",
         "ess": null,
-        "required_flags": ["insufficient_diagnostic_data"]
+        "required_flags": ["insufficient_diagnostic_data"],
+        "observations": []
       }
     }
   ]
