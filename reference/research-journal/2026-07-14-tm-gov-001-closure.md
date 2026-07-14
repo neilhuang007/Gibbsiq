@@ -115,3 +115,25 @@ TSU calibration remains `blocked_external` until an authorized device/backend, i
 versions, calibration artifacts, timing/energy boundaries, and publication permission exist.
 The honest autonomous terminal state without that external change is the M3 simulator
 research release, not calibrated physical completion.
+
+## Post-Commit Verification Addendum
+
+Paper hook: provides the final immutable-state and checker-correction evidence for the
+reproducibility subsection of the agentic control-plane methodology.
+
+The governance state transition was committed as `74055b9` (`docs: activate next ThermoMap
+work lanes`). The coordinator's final post-commit verification recorded:
+
+- `git status --short` — clean;
+- `python tools/check_markdown_math.py` — passed;
+- `ruff check .` — passed;
+- `ruff format --check .` — 60 files already formatted;
+- `mypy src/gibbsiq` — passed for 19 source files, with the recorded non-failing note that an
+  existing dimod configuration section was unused;
+- task-graph audit — 36 task definitions, 0 unknown dependencies, and no dependency cycle.
+
+The coordinator's first post-commit task-state regex incorrectly expected doubled Markdown
+backticks. It therefore produced the false result `ready_rows=0` while still reporting
+`dependency_blocked_tokens=0`. The corrected matcher used the ledger's actual single-backtick
+table-row syntax and returned `ready_rows=3` and `dependency_blocked_tokens=0`. This was a
+checker-pattern defect, not a defect or transition failure in the ledger state.
