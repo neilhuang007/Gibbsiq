@@ -6,11 +6,12 @@
 | --- | --- |
 | Observed date | 2026-07-14 |
 | Verified implementation base | `c62169e` (`feat: add audited ThermoMap analysis foundation`) |
+| Verified control-plane documentation | `21c2a71` (`docs: add autonomous ThermoMap execution roadmap`) |
 | Implementation score at base | 8/20 ThermoMap rows = 40%, using the equal-row audit in `thermomap-plan-status-2026-07-14.md` |
 | Public backend | THRML JAX simulator; no production TSU artifact is present |
-| Control-plane state | `TM-GOV-001` is `review` during this coordinated documentation pass |
-| Active governance owner | Coordinator `/root` for this pass |
-| Current coding state | No coding lane is `ready` until the coordinator verifies and closes `TM-GOV-001` |
+| Control-plane state | `TM-GOV-001` is `complete`; `21c2a71` verifies the control documents and this ledger transition closes the task |
+| Active governance owner | none |
+| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `ready`; claim the deterministic capacity prefix below |
 | Scratch state observed before this pass | Untracked `tmp/`; excluded from the implementation commit |
 
 The implementation base has a recorded full-suite result of 457 tests in 120.615 seconds at
@@ -37,17 +38,17 @@ prose. Reconcile a conflict before selecting a feature task.
 | --- | --- | --- | --- |
 | `TM-FND-001` | `complete` | none | Canonical model, runtime, diagnostics, and witness oracle are verified at `c62169e`. |
 | `TM-FND-002` | `complete` | none | Target-analysis and finite-state foundation is verified at `c62169e`. |
-| `TM-GOV-001` | `review` | none | Runbook, implementation roadmap, live ledger, links, and root status prose are being reconciled. |
-| `TM-VERIFY-01` | `dependency_blocked` | `TM-FND-001`, `TM-GOV-001` | Foundation is complete; governance review remains open. |
-| `TM-TARGET-01` | `dependency_blocked` | `TM-FND-002`, `TM-GOV-001` | Foundation is complete; governance review remains open. |
-| `GQ-INSPECT-01` | `dependency_blocked` | `TM-FND-001`, `TM-GOV-001` | Foundation is complete; governance review remains open. |
+| `TM-GOV-001` | `complete` | none | Control documents, links, task graph, reader test, and evidence were verified in `21c2a71`; this ledger transition closes the task. |
+| `TM-VERIFY-01` | `ready` | `TM-FND-001`, `TM-GOV-001` | Both dependencies are complete; owner is unclaimed. |
+| `TM-TARGET-01` | `ready` | `TM-FND-002`, `TM-GOV-001` | Both dependencies are complete; owner is unclaimed. |
+| `GQ-INSPECT-01` | `ready` | `TM-FND-001`, `TM-GOV-001` | Both dependencies are complete; owner is unclaimed. |
 
-## Immediate Coordinator Task — Close `TM-GOV-001`
+## Historical Governance Closure — `TM-GOV-001`
 
 Objective: establish one internally consistent control plane from which a context-free agent
 selects the same next task and can state its dependencies, files, oracle, and exit condition.
 
-Owner: coordinator `/root` for this pass.
+Closure owner: coordinator `/root`. Current owner: none.
 
 Owned files for this coordinated pass:
 
@@ -58,24 +59,26 @@ Owned files for this coordinated pass:
 - explicitly assigned root guidance/status files;
 - distinct dated journal entries.
 
-Closure checklist:
+Closure checklist, verified against control-plane documentation commit `21c2a71`:
 
-- [ ] Every current control-document link, command, and pre-existing required input/source path
+- [x] Every current control-document link, command, and pre-existing required input/source path
       exists. Future worker outputs named for creation (new modules, tests, artifacts, and
       dated journals) are excluded from this governance existence check.
-- [ ] Roadmap task IDs and dependencies match this ledger.
-- [ ] Root guidance points to the roadmap and live ledger without preserving a contradictory
+- [x] Roadmap task IDs and dependencies match this ledger.
+- [x] Root guidance points to the roadmap and live ledger without preserving a contradictory
       current-stage claim.
-- [ ] A context-free reader identifies the same three next coding lanes.
-- [ ] `python tools/check_markdown_math.py` passes.
-- [ ] `git diff --check` passes.
-- [ ] The coordinator reads every documentation diff and records the commands and results.
-- [ ] A dated journal entry records choices, rejected alternatives, and a paper hook.
-- [ ] The coordinator commits the verified documentation separately from `c62169e` and records
+- [x] A context-free reader identifies the same three next coding lanes.
+- [x] `python tools/check_markdown_math.py` passes.
+- [x] `git diff --check` passes.
+- [x] The coordinator reads every documentation diff and records the commands and results.
+- [x] A dated journal entry records choices, rejected alternatives, and a paper hook.
+- [x] The coordinator committed the verified documentation separately from `c62169e` and records
       the new SHA here.
 
-After this checklist closes, change `TM-GOV-001` to `complete` and the following three tasks to
-`ready` in the same coordinator patch. Do not claim production work before that transition.
+The checklist is closed. Commit `21c2a71` contains the independently reviewed control-plane
+documents; this subsequent ledger patch records the authorized state transition. The
+state-transition commit cannot contain its own SHA without creating a self-referential content
+cycle, so Git history is the authoritative identity of this transition.
 
 Worker-capacity selection is deterministic after that transition:
 
@@ -91,10 +94,10 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 
 ### `TM-VERIFY-01` — Independent CPU Gibbs And Exact Kernel Verifier
 
-- Gate/state: M1 compiler kernel; `dependency_blocked`.
+- Gate/state: M1 compiler kernel; `ready`.
 - Dependencies: `TM-FND-001`, `TM-GOV-001`.
 - Owner: unclaimed.
-- Blocker: `TM-GOV-001` remains in `review`.
+- Blocker: none; both dependencies are complete.
 - Objective: add a THRML-independent seeded Gibbs reference and capped transition,
   stationarity, detailed-balance, and empirical-interval verification.
 - Sources: EVAL-EQ-001/004/005/014 in `reference/08-evaluation/equation-audit.md`;
@@ -123,14 +126,16 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 - Acceptance commands: focused discovery with patterns `test_reference_sampler.py` and
   `test_statistical_verifier.py`, followed by the shared acceptance commands below.
 - Journal target: `reference/research-journal/YYYY-MM-DD-tm-verify-01.md`.
-- Last verified: not yet run; no task-specific evidence or test count exists at `c62169e`.
+- Last verified: governance inputs supporting readiness were verified in `21c2a71`; this
+  ledger transition marks the task `ready`; task-specific implementation evidence and tests
+  have not yet run.
 
 ### `TM-TARGET-01` — Complete Provenanced Target Specification
 
-- Gate/state: M1 compiler kernel; `dependency_blocked`.
+- Gate/state: M1 compiler kernel; `ready`.
 - Dependencies: `TM-FND-002`, `TM-GOV-001`.
 - Owner: unclaimed.
-- Blocker: `TM-GOV-001` remains in `review`.
+- Blocker: none; both dependencies are complete.
 - Objective: complete the immutable target contract without inventing Z1 defaults.
 - Sources: `src/gibbsiq/hardware.py`, `src/gibbsiq/hardware_assessment.py`,
   `reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.pdf`
@@ -160,14 +165,16 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 - Acceptance commands: focused discovery with patterns `test_target_spec.py`,
   `test_hardware_specs.py`, and `test_hardware_assessment.py`, followed by the shared commands.
 - Journal target: `reference/research-journal/YYYY-MM-DD-tm-target-01.md`.
-- Last verified: not yet run; no complete-target evidence or test count exists at `c62169e`.
+- Last verified: governance inputs supporting readiness were verified in `21c2a71`; this
+  ledger transition marks the task `ready`; task-specific complete-target evidence and tests
+  have not yet run.
 
 ### `GQ-INSPECT-01` — Artifact-Only Inspector Core
 
-- Gate/state: M2 software MVP; `dependency_blocked`.
+- Gate/state: M2 software MVP; `ready`.
 - Dependencies: `TM-FND-001`, `TM-GOV-001`.
 - Owner: unclaimed.
-- Blocker: `TM-GOV-001` remains in `review`.
+- Blocker: none; both dependencies are complete.
 - Objective: implement `Inspector.from_result(result, *, model: IsingModel | None = None)` as
   a deterministic consumer of stored `SampleResult` artifacts without rerunning THRML.
 - Sources: EVAL-EQ-001 in `reference/08-evaluation/equation-audit.md`,
@@ -208,7 +215,9 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 - Acceptance commands: focused discovery with pattern `test_inspector.py`, followed by the
   shared acceptance commands below.
 - Journal target: `reference/research-journal/YYYY-MM-DD-gq-inspect-01.md`.
-- Last verified: not yet run; no Inspector implementation or test count exists at `c62169e`.
+- Last verified: governance inputs supporting readiness were verified in `21c2a71`; this
+  ledger transition marks the task `ready`; task-specific Inspector implementation evidence
+  and tests have not yet run.
 
 ## Shared Acceptance Commands
 
