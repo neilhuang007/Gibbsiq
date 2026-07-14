@@ -55,9 +55,7 @@ class PortedEnergyContractTest(unittest.TestCase):
     def test_binary_offset_ignores_extra_sample_keys(self) -> None:
         # dimod test_bqm.py:1166-1169 -- linear a=1, quad (a,b)=1, offset 1.5;
         # energy({a:1,b:1,c:1})==3.5 and energy({a:1,b:0,c:1})==2.5 (extra key ignored).
-        model = compile_qubo(
-            {"linear": {"a": 1.0}, "quadratic": {("a", "b"): 1.0}, "offset": 1.5}
-        )
+        model = compile_qubo({"linear": {"a": 1.0}, "quadratic": {("a", "b"): 1.0}, "offset": 1.5})
         self.assertAlmostEqual(model.energy({"a": 1, "b": 1, "c": 1}, vartype="BINARY"), 3.5, places=12)
         self.assertAlmostEqual(model.energy({"a": 1, "b": 0, "c": 1}, vartype="BINARY"), 2.5, places=12)
 

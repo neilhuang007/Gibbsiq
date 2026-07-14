@@ -15,7 +15,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from gibbsiq.benchmark_oracle import FAMILY_SPECS, verify_benchmark_fixture  # noqa: E402
+from gibbsiq.benchmark_oracle import (  # noqa: E402
+    FAMILY_SPECS,
+    _scalar_diffs,
+    verify_benchmark_fixture,
+)
 
 
 def load_corpus() -> list[dict]:
@@ -39,6 +43,23 @@ class BenchmarkOracleTest(unittest.TestCase):
 
     def test_corpus_covers_all_families(self) -> None:
         self.assertEqual(set(self.by_family), set(FAMILY_SPECS))
+
+    def test_large_integer_is_not_rounded_through_float_comparison(self) -> None:
+        expected = 2**53 + 1
+        rounded_actual = float(2**53)
+
+        differences = _scalar_diffs(expected, rounded_actual, "$.count", 1e-9)
+
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0]["code"], "value_mismatch")
+
+    def test_exact_int_float_equality_remains_accepted(self) -> None:
+        self.assertEqual(_scalar_diffs(12, 12.0, "$.count", 1e-9), [])
+
+    def test_boolean_is_not_accepted_as_integer(self) -> None:
+        differences = _scalar_diffs(1, True, "$.count", 1e-9)
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0]["code"], "value_mismatch")
 
     def test_proven_witnesses_pass(self) -> None:
         for fixture in self.fixtures:

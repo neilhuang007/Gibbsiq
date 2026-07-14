@@ -53,6 +53,7 @@ OBSERVATION_ORDER = (
     "zero_within_chain_variance",
 )
 RESERVED_FLAGS = ("low_feasibility", "bad_schedule", "block_stuck", "conversion_unverified")
+MAX_REPORTED_OFFENDING_VARIABLES = 100
 
 # Matches numpy's finfo(float).resolution, used by arviz's constant-array check.
 _CONSTANT_RESOLUTION = 1e-15
@@ -482,12 +483,134 @@ def _disagreement_signals(section: Mapping[str, Any]) -> bool:
     return False
 
 
+def spin_chain_section(
+    samples: Sequence[Mapping[Variable, int]],
+    variables: Sequence[Variable],
+    energy_chains: Sequence[Sequence[float]],
+) -> dict[str, Any]:
+    """Detect chains frozen in different complete spin states.
+
+    The flat sample order is partitioned using the energy-chain boundaries.
+    If those sources are not aligned, the subsection is explicitly unavailable
+    rather than guessing chain membership. This O(variables * reads) state-chain
+    screen is deliberately narrower than a general per-variable R-hat scan.
+    """
+    variable_order = list(variables)
+    draws_by_chain = [len(chain) for chain in energy_chains]
+    expected_samples = sum(draws_by_chain)
+    if not variable_order:
+        return {
+            "status": STATUS_NOT_AVAILABLE,
+            "reason": "spin diagnostics are not applicable to a zero-variable model",
+            "chain_disagreement": False,
+            "offending_variables": [],
+        }
+    if len(samples) != expected_samples:
+        return {
+            "status": STATUS_NOT_AVAILABLE,
+            "reason": "flat samples do not align with energy-chain boundaries",
+            "expected_samples": expected_samples,
+            "actual_samples": len(samples),
+            "draws_by_chain": draws_by_chain,
+            "chain_disagreement": False,
+            "offending_variables": [],
+        }
+
+    sample_chains: list[Sequence[Mapping[Variable, int]]] = []
+    start = 0
+    for chain_draws in draws_by_chain:
+        sample_chains.append(samples[start : start + chain_draws])
+        start += chain_draws
+
+    for sample_index, sample in enumerate(samples):
+        missing = [variable for variable in variable_order if variable not in sample]
+        if missing:
+            return {
+                "status": STATUS_NOT_AVAILABLE,
+                "reason": "sample is missing variables required for spin diagnostics",
+                "sample_index": sample_index,
+                "missing_variables": missing,
+                "chain_disagreement": False,
+                "offending_variables": [],
+            }
+        invalid = [
+            variable
+            for variable in variable_order
+            if isinstance(sample[variable], bool) or sample[variable] not in (-1, 1)
+        ]
+        if invalid:
+            return {
+                "status": STATUS_NOT_AVAILABLE,
+                "reason": "spin diagnostics require non-boolean values in {-1, +1}",
+                "sample_index": sample_index,
+                "invalid_variables": invalid,
+                "chain_disagreement": False,
+                "offending_variables": [],
+            }
+
+    representatives: list[tuple[int, ...]] = []
+    all_active_chains_frozen = True
+    for chain in sample_chains:
+        if not chain:
+            continue
+        representative = tuple(chain[0][variable] for variable in variable_order)
+        if any(
+            tuple(sample[variable] for variable in variable_order) != representative for sample in chain[1:]
+        ):
+            all_active_chains_frozen = False
+            break
+        representatives.append(representative)
+
+    active_chain_lengths = [len(chain) for chain in sample_chains if chain]
+    enough_evidence = (
+        len(active_chain_lengths) >= MIN_CHAINS_FOR_RHAT and min(active_chain_lengths) >= MIN_DRAWS_FOR_RHAT
+    )
+    frozen_mode_disagreement = enough_evidence and all_active_chains_frozen and len(set(representatives)) > 1
+    offending_variables = (
+        [
+            variable
+            for variable_index, variable in enumerate(variable_order)
+            if len({state[variable_index] for state in representatives}) > 1
+        ]
+        if frozen_mode_disagreement
+        else []
+    )
+
+    reported_variables = offending_variables[:MAX_REPORTED_OFFENDING_VARIABLES]
+    return {
+        "status": STATUS_OK,
+        "evidence_status": STATUS_OK if enough_evidence else STATUS_INSUFFICIENT_DATA,
+        "method": "whole-state frozen-chain disagreement",
+        "draws_by_chain": draws_by_chain,
+        "active_chains": sum(bool(chain) for chain in sample_chains),
+        "variables_checked": len(variable_order),
+        "offending_variable_count": len(offending_variables),
+        "offending_variables": reported_variables,
+        "offending_variables_limit": MAX_REPORTED_OFFENDING_VARIABLES,
+        "offending_variables_truncated": len(offending_variables) > len(reported_variables),
+        "frozen_mode_disagreement": frozen_mode_disagreement,
+        "chain_disagreement": frozen_mode_disagreement,
+        "interpretation_note": (
+            "Different complete states repeated by otherwise frozen chains are a sampler-health "
+            "warning, not a convergence proof or optimality evidence. This screen can reveal "
+            "modes that energy and magnetization traces miss, but it cannot detect non-frozen "
+            "or within-chain joint-distribution failures."
+        ),
+    }
+
+
 def chain_flags(chains: Mapping[str, Any]) -> list[str]:
-    """Chain-family flags. ``chain_disagreement`` fires from energy-trace R-hat or, if
-    present, the ``magnetization`` subsection (EVAL-EQ-007 magnetization wiring);
-    ``insufficient_diagnostic_data`` stays energy-trace-scoped."""
+    """Chain-family flags from energy, magnetization, or frozen-state evidence.
+
+    ``insufficient_diagnostic_data`` stays energy-trace-scoped.
+    """
     flags = []
-    if _disagreement_signals(chains) or _disagreement_signals(chains.get("magnetization") or {}):
+    spin_disagreement = (chains.get("spins") or {}).get("chain_disagreement") is True
+    if (
+        _disagreement_signals(chains)
+        or _disagreement_signals(chains.get("magnetization") or {})
+        or spin_disagreement
+    ):
         flags.append("chain_disagreement")
     if chains.get("rhat_status") == STATUS_INSUFFICIENT_DATA:
         flags.append("insufficient_diagnostic_data")
@@ -574,14 +697,15 @@ def compute_diagnostics(
     chains = chain_section(energy_chains, ess=energy)
     if magnetization_chains is not None:
         chains["magnetization"] = _combined_split_rhat(magnetization_chains)
-    flags = set(energy_flags(energy)) | set(chain_flags(chains))
-    observations = set(energy_observations(energy)) | set(chain_observations(chains))
     if samples is not None and variables is not None:
         diversity = diversity_section(state_counts(samples, variables), len(variables))
-        flags |= set(diversity_flags(diversity))
-        observations |= set(diversity_observations(diversity))
+        chains["spins"] = spin_chain_section(samples, variables, energy_chains)
     else:
         diversity = {"status": STATUS_NOT_AVAILABLE}
+    flags = set(energy_flags(energy)) | set(chain_flags(chains))
+    observations = set(energy_observations(energy)) | set(chain_observations(chains))
+    flags |= set(diversity_flags(diversity))
+    observations |= set(diversity_observations(diversity))
     runtime: dict[str, Any] = dict(timings or {})
     num_reads = len(samples) if samples is not None else energy["count"]
     sample_seconds = runtime.get("sample_seconds")

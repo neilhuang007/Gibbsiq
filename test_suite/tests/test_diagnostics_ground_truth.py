@@ -254,18 +254,17 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
     SAMPLES = [{"a": 1, "b": 1}] * 50 + [{"a": -1, "b": -1}] * 50
     VARIABLES = ["a", "b"]
 
-    def test_identical_constant_chains_report_healthy_rhat(self) -> None:
+    def test_frozen_state_screen_closes_energy_only_blind_spot(self) -> None:
         # Double-well setup: two chains are each frozen in a DIFFERENT
         # degenerate ground state that happens to carry the SAME energy.
-        # Energy-only R-hat can't see this (the energy trace is constant and
-        # identical across chains) -- only the raw magnetization/state trace
-        # exposes it. Without magnetization_chains supplied, the payload must
-        # not claim disagreement; see the companion test below for the fix.
+        # Energy-only R-hat cannot see this, but aligned raw samples now supply
+        # a whole-state cross-chain screen without requiring a caller to
+        # precompute a magnetization trace.
         payload = compute_diagnostics(
             energy_chains=self.ENERGY_CHAINS, samples=self.SAMPLES, variables=self.VARIABLES
         )
 
-        self.assertNotIn("chain_disagreement", payload["flags"])
+        self.assertIn("chain_disagreement", payload["flags"])
         self.assertNotIn("zero_energy_variance", payload["flags"])
         self.assertNotIn("zero_within_chain_variance", payload["flags"])
         self.assertNotIn("low_diversity", payload["flags"])
@@ -278,6 +277,77 @@ class MultimodalFreezeBlindSpotTests(unittest.TestCase):
         self.assertEqual(payload["chains"]["rhat_status"], "undefined_constant_trace")
         self.assertEqual(payload["chains"]["rank_normalized_rhat_status"], "undefined_constant_trace")
         self.assertNotIn("magnetization", payload["chains"])
+        spins = payload["chains"]["spins"]
+        self.assertTrue(spins["chain_disagreement"])
+        self.assertEqual(spins["offending_variables"], ["a", "b"])
+        self.assertEqual(spins["offending_variable_count"], 2)
+        self.assertIn("not a convergence proof", spins["interpretation_note"])
+
+    def test_equal_energy_equal_magnetization_frozen_modes_are_detected(self) -> None:
+        left_mode = {"a": 1, "b": 1, "c": -1, "d": -1}
+        right_mode = {"a": 1, "b": -1, "c": 1, "d": -1}
+        samples = [left_mode] * 16 + [right_mode] * 16
+        payload = compute_diagnostics(
+            energy_chains=[[0.0] * 16, [0.0] * 16],
+            samples=samples,
+            variables=["a", "b", "c", "d"],
+            magnetization_chains=[[0.0] * 16, [0.0] * 16],
+        )
+
+        self.assertEqual(payload["chains"]["rhat_status"], "undefined_constant_trace")
+        self.assertEqual(
+            payload["chains"]["magnetization"]["rhat_status"],
+            "undefined_constant_trace",
+        )
+        self.assertIn("chain_disagreement", payload["flags"])
+        self.assertEqual(payload["chains"]["spins"]["offending_variables"], ["b", "c"])
+
+    def test_seeded_iid_spins_do_not_trigger_variable_screen(self) -> None:
+        variables = [f"v{index}" for index in range(64)]
+        rng = random.Random(20260714)
+        sample_chains = [
+            [{variable: rng.choice((-1, 1)) for variable in variables} for _ in range(256)] for _ in range(4)
+        ]
+        payload = compute_diagnostics(
+            energy_chains=[[0.0] * 256 for _ in range(4)],
+            samples=[sample for chain in sample_chains for sample in chain],
+            variables=variables,
+        )
+
+        self.assertNotIn("chain_disagreement", payload["flags"])
+        self.assertFalse(payload["chains"]["spins"]["chain_disagreement"])
+        self.assertEqual(payload["chains"]["spins"]["offending_variables"], [])
+        self.assertEqual(payload["chains"]["spins"]["variables_checked"], 64)
+
+    def test_one_draw_per_chain_is_insufficient_frozen_mode_evidence(self) -> None:
+        payload = compute_diagnostics(
+            energy_chains=[[0.0], [0.0]],
+            samples=[{"a": 1, "b": -1}, {"a": -1, "b": 1}],
+            variables=["a", "b"],
+        )
+
+        self.assertNotIn("chain_disagreement", payload["flags"])
+        spins = payload["chains"]["spins"]
+        self.assertEqual(spins["status"], "ok")
+        self.assertEqual(spins["evidence_status"], "insufficient_data")
+        self.assertFalse(spins["frozen_mode_disagreement"])
+        self.assertEqual(spins["offending_variables"], [])
+
+    def test_frozen_mode_evidence_caps_explanatory_variable_list(self) -> None:
+        variables = [f"v{index}" for index in range(105)]
+        left = {variable: 1 for variable in variables}
+        right = {variable: -1 for variable in variables}
+        payload = compute_diagnostics(
+            energy_chains=[[0.0] * 4, [0.0] * 4],
+            samples=[left] * 4 + [right] * 4,
+            variables=variables,
+        )
+
+        spins = payload["chains"]["spins"]
+        self.assertTrue(spins["frozen_mode_disagreement"])
+        self.assertEqual(spins["offending_variable_count"], 105)
+        self.assertEqual(len(spins["offending_variables"]), 100)
+        self.assertTrue(spins["offending_variables_truncated"])
 
     def test_magnetization_wiring_fires_chain_disagreement(self) -> None:
         # Same payload as above but with the per-chain magnetization trace
