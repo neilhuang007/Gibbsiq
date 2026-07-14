@@ -1,5 +1,8 @@
 # Stage 4 - Inspector and Reporting
 
+**Status: Absent.** This file defines target behavior. No production `Inspector` class or
+HTML/report exporter exists in the current package.
+
 ## Goal
 
 Generate notebook-friendly and exportable reports from `SampleResult`.
@@ -44,4 +47,3 @@ Every visual must answer a solver question:
 - `dwave.inspector.show`: https://docs.dwavequantum.com/en/latest/ocean/api_ref_inspector/generated/dwave.inspector.show.html
 - D-Wave Inspector repo: https://github.com/dwavesystems/dwave-inspector
 - ArviZ docs: https://python.arviz.org/
-

@@ -1,6 +1,6 @@
 # Stage 2 - THRML Optimization Runtime
 
-**Status: Core complete; PT exit criterion under corrective audit (2026-07-11).** Stage 1
+**Status: Correctness criteria complete (2026-07-14); performance extensions open.** Stage 1
 provided the canonical Ising model and `SampleResult`.
 Stage 2 has connected that model to THRML. The runtime lowers an Ising instance into THRML
 nodes, factors, graph-colored blocks, sampling schedules, initialization state, and a
@@ -12,13 +12,15 @@ schedule, and `num_reads` support; independent energy evaluator; trace capture w
 identifiers and beta schedules; runtime metadata (THRML/JAX versions, device, timing split,
 block stats). Exhaustive small-instance empirical-vs-analytic validation passes in the test
 suite (four-variable dense instance, full state space against analytic Boltzmann
-probabilities). Opt-in parallel-tempering code exists; the 2026-07-11 audit requires corrected
-exchange and local-transition behavior to pass targeted invariants and the full optional THRML
-suite before the exit criterion closes.
+probabilities). Opt-in parallel tempering uses the audited EVAL-EQ-014 exchange ratio, advances
+every replica locally, attempts the sole pair on every two-replica exchange interval, returns
+cold-slot samples, and records per-beta evidence. Targeted invariants and the optional THRML
+suite passed in the 2026-07-14 verification record. Device-side/vectorized exchange, adaptive
+ladder construction, and calibrated performance remain future extensions.
 
-The immediate validation target is a tiny Ising run whose empirical frequencies match
-analytic Boltzmann probabilities within a declared statistical interval. This test checks
-both the lowering and the conditional sign before larger optimization claims are made.
+Tiny Ising empirical frequencies match analytic Boltzmann probabilities within declared
+statistical intervals. These tests check both lowering and the conditional sign before larger
+optimization claims are made.
 
 ## Goal
 
@@ -54,6 +56,9 @@ recomputation.
 - Output artifacts contain enough raw data for Stage 3 diagnostics without rerunning THRML.
 - Parallel-tempering swap decisions satisfy EVAL-EQ-014, every configured sampling interval
   advances each replica locally, and two-replica exchange attempts are not skipped by parity.
+
+All listed correctness criteria have recorded evidence. Performance claims require separate
+matched-budget studies and do not follow from correctness closure.
 
 ## Implementation Notes
 

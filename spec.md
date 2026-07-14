@@ -8,13 +8,22 @@ run. A model enters through a stable interface, is converted into the canonical 
 convention, is lowered into THRML nodes, factors, blocks, and sampling programs, and produces
 a result artifact containing raw samples, traces, diagnostics, metadata, and benchmark
 evidence. The model interface, fixed-beta THRML runtime, diagnostics, evaluator, and strict
-benchmark oracle are implemented. Parallel tempering is under corrective verification, and
-diagnostic threshold/flag semantics are under corrective audit. Inspector,
-constraint-encoding, and classical-baseline layers remain target behavior.
+benchmark oracle are implemented. The parallel-tempering correctness path and diagnostic
+threshold/flag correction have targeted and full-suite verification recorded on 2026-07-14.
+Inspector, general constraint encoding, and classical-baseline runners remain target behavior.
+Pairwise categorical/domain-wall lowering exists and does not constitute a general
+higher-order or knapsack/TSP constraint encoder.
 
-The project is not a backend-agnostic diagnostics package. dimod compatibility, classical
-baselines, and diagnostic fixtures are included because THRML-backed optimization needs
-adoption bridges and independent controls. The primary execution path remains THRML.
+ThermoMap is the compiler, auto-mapping, verification, and thermodynamic-roofline capability
+track inside Gibbsiq. It does not define a separate package. The normative work order is
+`reference/00-roadmap/autonomous-implementation-roadmap.md`, the execution contract is
+`reference/00-roadmap/autonomous-agent-runbook.md`, and live task state and claims are in
+`reference/00-roadmap/NEXT_TASK.md`. That ledger may authorize multiple disjoint lanes; each
+worker owns exactly one bounded task.
+
+The project is not a backend-agnostic diagnostics package. dimod compatibility and diagnostic
+fixtures are implemented adoption and audit bridges. Planned classical baselines provide the
+independent comparison control. The primary execution path remains THRML.
 
 By analogy, Gibbsiq holds the position that Ocean and dimod hold for D-Wave and that ArviZ
 holds for Stan and PyMC: the ingestion, runtime-contract, diagnostics, and
@@ -69,7 +78,9 @@ P(s_i = +1 | s_-i) = sigmoid(-2 * beta * gamma_i)
 
 3. **Diagnostics and telemetry**
    - Compute energy summaries, best-so-far traces, autocorrelation, ESS-style estimates,
-     diversity, chain disagreement, feasibility, and failure flags.
+     diversity, chain disagreement, and failure flags.
+   - Report constraint feasibility as `not_available` until a compatible constraint encoding
+     and unpenalized-objective contract exists.
    - Consume Stage 2 `SampleResult` artifacts without rerunning the sampler.
    - Distinguish unhealthy runs from `not_enough_data`.
 
@@ -84,16 +95,36 @@ P(s_i = +1 | s_-i) = sigmoid(-2 * beta * gamma_i)
    - Keep fixed-work and fixed-time comparisons separate.
    - Recompute objectives from candidate witnesses.
 
+### ThermoMap Capability Track
+
+ThermoMap crosses the five product layers through two additional capability groups:
+
+- **Compilation and mapping**
+   - Maintain target-independent model semantics separately from `TSUSpec` target facts.
+   - Validate and transform models, then partition, place, route, quantize, and schedule them
+     under explicit target constraints.
+   - Record auxiliary variables, rejected mappings, approximation error, and all parameter
+     provenance.
+
+- **Verification and thermodynamic roofline**
+   - Compare exact small laws and larger reference runs against implemented behavior.
+   - Keep circuit, color, communication, mixing, and host costs distinct.
+   - Name the observable in every ESS-adjusted metric and distinguish modeled values from
+     measurements.
+
 ## Data Path
 
 ```text
 QUBO/BQM/Ising input
 -> IsingModel
--> THRMLProgramBundle
+-> audited private THRML lowering
 -> SampleResult
 -> diagnostics
 -> inspector or benchmark report
 ```
+
+The current path reaches diagnostics and the benchmark oracle. `Inspector` and its report
+export remain target behavior.
 
 Each arrow is a checked boundary. Model conversion is checked by exhaustive small-instance
 energy equivalence. THRML lowering is checked by analytic Gibbs conditionals and tiny
@@ -114,10 +145,10 @@ Boltzmann distributions. Benchmark reports are checked by witness recomputation.
 - Best-known benchmark values are not correctness oracles unless the source and witness are
   independently verified.
 
-## Stage 2 Corrective Target
+## Stage 2 Runtime Contract
 
-The fixed-beta THRML path is implemented. The current Stage 2 target is to close the
-parallel-tempering exit criterion while preserving these runtime contracts:
+The fixed-beta and parallel-tempering correctness paths are implemented. Their runtime
+contracts are:
 
 - `THRMLSampler.sample`;
 - `THRMLSampler.sample_qubo`;
@@ -132,8 +163,9 @@ parallel-tempering exit criterion while preserving these runtime contracts:
 Parallel tempering must use the EVAL-EQ-014 exchange ratio, advance every replica by the
 configured number of local sweeps between exchange opportunities, attempt the sole adjacent
 pair at every interval for a two-replica ladder, and preserve cold-slot and per-beta traces.
-Targeted invariants and the full optional THRML suite are required before the exit criterion
-closes.
+The 2026-07-14 targeted invariants and optional THRML suite close this correctness criterion.
+Device-side/vectorized replica exchange, adaptive ladders, and performance calibration remain
+future runtime work and do not reopen the correctness result.
 
 ## Evidence Standard
 
@@ -155,5 +187,11 @@ recorded. At minimum, record:
 Stages 0-3 have implemented core deliverables: the canonical Ising model, offset-preserving
 QUBO/BQM/Ising conversion, `SampleResult`, fixed-beta THRML lowering, graph-colored blocks,
 multi-chain traces, diagnostics, the JSON evaluator, and the strict benchmark oracle.
-Parallel tempering and diagnostic threshold/flag semantics remain under corrective audit.
-Inspector, constraint-encoding, and classical-baseline layers remain absent.
+Parallel-tempering correctness and diagnostic threshold/flag semantics have recorded
+verification. The diagnostics core still lacks rank-normalized bulk/tail ESS, general
+constraint feasibility, and complete joint-mode coverage. Pairwise categorical/domain-wall
+lowering, provenanced target facts, quantization, exact small-law comparison, logical target
+assessment, and supplied-partition communication analysis form the current ThermoMap analysis
+foundation. Inspector, general constraint encoding, automatic physical mapping, calibrated
+costs, and classical-baseline runners remain absent. See `reference/00-roadmap/README.md` for
+the live status and the autonomous implementation roadmap for the dependency order.

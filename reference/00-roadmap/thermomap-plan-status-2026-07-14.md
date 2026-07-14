@@ -9,10 +9,13 @@ evidence required before a compiler or hardware-performance claim receives compl
 
 ## Status Basis And Authority
 
-This document reports the repository state observed on 2026-07-14. Production source,
-executable tests, and recorded verification take precedence over older progress prose for
-factual status. `AGENTS.md`, `spec.md`, `CLAUDE.md`, and the equation audit remain binding for
-conventions and workflow. Their dated progress paragraphs remain historical snapshots.
+This document is the frozen repository-state assessment for commit `c62169e`, observed on
+2026-07-14. It preserves the baseline, rubric, evidence, and score at that commit. The live
+status index is `reference/00-roadmap/README.md`; the live dependency order is
+`reference/00-roadmap/autonomous-implementation-roadmap.md`; agent execution rules and the
+authorized next task are `reference/00-roadmap/autonomous-agent-runbook.md` and
+`reference/00-roadmap/NEXT_TASK.md`. `AGENTS.md`, `spec.md`, `CLAUDE.md`, and the equation audit
+remain binding for conventions and workflow.
 
 The baseline score includes production behavior and tests present before the paper-grounded
 implementation tranche and remains frozen at 30%. The integrated tranche now has production
@@ -363,7 +366,10 @@ to contradict under-specified paper formulas rather than echo them. The reposito
 not substantiate the claim that it automatically maps useful workloads to TSU hardware or that
 TSU-backed optimization is competitive.
 
-## Prioritized Gated Plan
+## Historical Gated Plan At Commit `c62169e`
+
+This section records the ordering proposed during the dated audit. The live autonomous roadmap
+supersedes this ordering while preserving this document's evidence and scores.
 
 ### Gate 0 — Closed: Integrated Analysis Surface
 
@@ -383,7 +389,7 @@ execution path and a defensible penalty policy or explicit user policy. The codo
 [Jelinčič et al., arXiv:2606.17327](https://arxiv.org/abs/2606.17327) is the primary starting
 point.
 
-Done evidence:
+Required closure evidence:
 
 - equation audit defines the categorical energy, state order, offset, conditional, and
   domain-wall penalty/validity contract;
@@ -403,7 +409,7 @@ throughput–accuracy tradeoff as boundary exchange changes; their result motiva
 sweep rather than a universal constant
 ([arXiv:2606.25313](https://arxiv.org/abs/2606.25313)).
 
-Done evidence for the next extension:
+Required closure evidence for the next extension:
 
 - every future timing field carries measured, paper-derived, assumed, or simulated provenance,
   while algebraic proxies remain explicitly labeled as proxies;
@@ -420,7 +426,7 @@ Add target coordinates, allowed neighbor offsets, maximum degree, placement, rou
 replication/equality gadgets, and a decoder. Compile failure is an explicit result when the
 target cannot represent a model within declared limits.
 
-Done evidence:
+Required closure evidence:
 
 - exhaustive small cases prove original-objective witness equivalence;
 - exact distributions quantify the effect of equality penalties and quantization;
@@ -435,7 +441,7 @@ Combine logical work, target cost, and observable-specific statistical efficienc
 sweeps, energy-observable ESS/second, and modeled energy-observable ESS/joule. Preserve the
 observable name in every metric.
 
-Done evidence:
+Required closure evidence:
 
 - circuit-, color-, communication-, mixing-, and host-limited synthetic fixtures produce the
   expected classification;
@@ -449,7 +455,7 @@ Done evidence:
 Add exact, simulated annealing, tabu/steepest-descent, and appropriate specialized baselines;
 then add physics, Bayesian, and optimization benchmark runners and an exportable report.
 
-Done evidence:
+Required closure evidence:
 
 - fixed-work and fixed-time budgets remain separate;
 - tuning, compile, sample, diagnostics, postprocess, and wall time are recorded separately;
@@ -464,7 +470,7 @@ Done evidence:
 
 This gate begins when a device backend and calibration interface are available.
 
-Done evidence:
+Required closure evidence:
 
 - programmed and observed coefficient/response calibration artifacts are stored with device
   identity and checksums;
@@ -481,9 +487,9 @@ The following statements remain useful historical context and should not be read
 | Older statement | 2026-07-14 resolution |
 | --- | --- |
 | Supplied project guidance reports 209 tests with six ArviZ skips. | The recorded pre-tranche full run in `reference/research-journal/2026-07-14-runtime-sampling-and-frozen-mode-correctness.md` ran 342 tests in 172.789 seconds with no failures. The final post-tranche integrated run executed 457 tests in 120.615 seconds and returned `OK`; counts remain command-specific. |
-| `PROJECT_BRIEF.md`, `spec.md`, `CLAUDE.md`, and `reference/00-roadmap/README.md` leave PT and the Stage 3 corrective suite open. | The 2026-07-14 runtime/diagnostic correction has code, focused tests, a full 342-test pass, static checks, and a journal entry. Device-side PT performance remains open; the listed correctness correction is closed in the audited working tree. |
+| At commit `c62169e`, `PROJECT_BRIEF.md`, `spec.md`, `CLAUDE.md`, and `reference/00-roadmap/README.md` left PT and the Stage 3 corrective suite open. | The 2026-07-14 runtime/diagnostic correction has code, focused tests, a full 342-test pass, static checks, and a journal entry. Device-side PT performance remains open; the listed correctness correction is closed in the audited working tree. |
 | Product-layer prose says diagnostics compute feasibility. | Actual `compute_diagnostics` returns `constraints={"status": "not_available"}` until an encoding layer exists (`diagnostics.py:684-719`). Feasibility is target behavior. |
-| The target flow names `THRMLProgramBundle`. | No public class with that name exists. `_Lowering` is private and executes in-process. |
+| At commit `c62169e`, the target flow named `THRMLProgramBundle`. | No public class with that name exists. `_Lowering` is private and executes in-process. |
 | README examples call `Inspector.from_result`. | The call is a target API example. No production `Inspector` exists. |
 | A categorical `SampleResult` might imply Potts execution. | A pairwise `CategoricalModel` and domain-wall compiler now exist, but the categorical conditional, THRML lowering, and sampler remain absent. Storage, modeling, compilation, and execution are four separate claims. |
 | The earlier in-progress equation audit contained fixed-point and distribution formulas. | EVAL-EQ-016 through EVAL-EQ-020 now have production implementations, focused tests, public exports where applicable, and final integration evidence. The 30% baseline remains unchanged; the verified current-tree score is 40%. |

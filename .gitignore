@@ -32,6 +32,9 @@ htmlcov/
 .tox/
 .nox/
 
+# Local research extraction/render scratch space
+tmp/
+
 # --- Editors / IDEs ---
 .idea/
 .vscode/

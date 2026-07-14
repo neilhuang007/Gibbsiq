@@ -9,20 +9,34 @@ target product lowers standard optimization models into THRML block-Gibbs progra
 the raw evidence needed to audit the run, compares against classical baselines, and reports
 whether the result should be trusted.
 
+ThermoMap is the compiler, mapping, verification, and thermodynamic-roofline capability track
+inside Gibbsiq. It does not rename the Python package: production APIs continue to be exported
+from `gibbsiq`. The live work order is
+`reference/00-roadmap/autonomous-implementation-roadmap.md`; agent execution rules are in
+`reference/00-roadmap/autonomous-agent-runbook.md`; live task state and claims are in
+`reference/00-roadmap/NEXT_TASK.md`. The ledger may authorize multiple dependency-ready lanes
+when their ownership is disjoint. Each worker claims and executes exactly one bounded task.
+
 The project is THRML-first. Do not reinterpret it as a generic diagnostics package.
-Diagnostics, dimod compatibility, and baseline adapters exist to make THRML-backed
-optimization auditable and comparable.
+Diagnostics and dimod compatibility make the current THRML-backed path auditable and
+interoperable. Planned baseline adapters will add independent comparison.
 
 The important distinction is not that another optimizer found a low-energy sample. The
 important distinction is the audit trail: model conversion is checked, sampler behavior is
 measured, failures are flagged, and benchmark claims are checked against exact or
 independently verified oracles.
 
-Current repository status: Stages 0–3 of the roadmap are complete (`reference/00-roadmap/README.md`).
-The model layer is implemented (Ising IR, offset-preserving conversion, `SampleResult`), the
-THRML optimization runtime is implemented (`THRMLSampler`, `SamplerConfig`, `thrml_runtime.py`,
-`blocks.py` with deterministic DSATUR graph-coloring, audited lowering, schedule control, seed support, multi-chain traces, and `benchmark_bridge.py` bridging sampler results into the strict benchmark oracle), and the diagnostics layer is implemented (`diagnostics.py`, pure stdlib: Geyer ESS/tau and plain split R-hat cross-validated against arviz and an R-`posterior` reference, diversity/energy/chain sections, family-scoped failure flags with a thresholds echo, magnetization and distance-to-best traces, embedded in every `sample()` call) with 209 tests (6 skip without the arviz dev extra). Parallel-tempering execution is the open Stage 2 exit criterion. Inspector and baseline layers remain to be built;
-treat them as absent until a stage marks them complete.
+Current repository status is recorded in `reference/00-roadmap/README.md`. The binary Ising
+model layer, fixed-beta and parallel-tempering THRML correctness paths, diagnostics core,
+strict witness oracle, and exact public corpus are implemented. The parallel-tempering
+correctness criterion and the 2026-07-11 diagnostic semantic correction are closed by the
+2026-07-14 verification record. Rank-normalized bulk/tail ESS, general constraint feasibility,
+and comprehensive joint-mode diagnostics remain open. Pairwise categorical/domain-wall
+lowering is implemented; it does not supply general higher-order or knapsack/TSP constraint
+encoding. Inspector and classical solver adapters remain absent. The Stage 6 analysis
+foundation includes a provenanced `TSUSpec`, coefficient quantization, exact small-law
+comparison, logical admissibility, and supplied-partition communication proxies; automatic
+partitioning, placement, routing, calibrated costs, and target-aware execution remain absent.
 
 ## Non-Negotiable Contracts
 
@@ -54,6 +68,10 @@ layers, and broad abstractions that do not match the roadmap. The intended layer
 3. Diagnostics and telemetry.
 4. Inspector/reporting.
 5. Baselines and benchmarks.
+
+The ThermoMap capability track adds target specification, compiler validation and transforms,
+physical mapping, non-ideality verification, and quality-adjusted profiling across these
+layers. Its roadmap controls dependency order; this short layer list does not.
 
 ## Code Style And Naming
 
@@ -129,13 +147,13 @@ python tools/generate_ground_truth.py --out reference/06-benchmarks/fixtures/gro
 
 ## Current Research Priority
 
-Stage 1 (core model compatibility) is done. The next implementation target is **Stage 2: the
-THRML optimization runtime**. It lowers the Ising IR into THRML programs, constructs
-graph-aware blocks, records schedule/seed/initialization metadata, captures raw samples and
-traces, and returns a populated `SampleResult`. The first statistical validation target is a
-tiny Ising model whose empirical frequencies match analytic Boltzmann probabilities within a
-declared interval. Diagnostics and benchmark-loader work can proceed in parallel when it
-uses Stage 1 artifacts or Stage 2-style traces.
+Read `reference/00-roadmap/NEXT_TASK.md` before selecting work. Execute exactly one bounded
+task that the ledger authorizes and assigns to the worker, following the dependency and
+completion gates in
+`reference/00-roadmap/autonomous-implementation-roadmap.md` and the evidence protocol in
+`reference/00-roadmap/autonomous-agent-runbook.md`. A dated status report, including
+`reference/00-roadmap/thermomap-plan-status-2026-07-14.md`, is evidence for its recorded
+commit; it is not a live task queue.
 
 Throughout, keep converting the project into an agentic workflow with verifiable rewards:
 specify what is checked by public tests, what is held back as blind tests, and how rewards
@@ -261,4 +279,3 @@ Follow the "Verification & Recording Obligations" section above for *what* to re
 verify. For paper-readiness, each `research-journal/` entry additionally carries a one-line
 **paper hook**: which section, claim, table, or figure the entry feeds. That single line is
 what lets the methodology be transcribed into the manuscript without re-deriving it from code.
-

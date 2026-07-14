@@ -1,11 +1,12 @@
 # Stage 3 - Diagnostics Pipeline
 
-**Status: implemented; corrective semantic audit open (2026-07-11).** The pipeline is
+**Status: Core complete; statistical and constraint extensions open (2026-07-14).** The pipeline is
 implemented in `src/gibbsiq/diagnostics.py` and wired into `THRMLSampler.sample`; the recorded
 ESS/R-hat formula cross-checks remain valid. The corrective patch removes the unsupported
 raw-ESS threshold, reports occupancy efficiency under an accurate name, and separates
-finite-support or constant-objective observations from sampler failures; full-suite
-verification remains pending. Rank-normalized bulk/tail ESS remains absent. The constraint
+finite-support or constant-objective observations from sampler failures. Targeted fixtures and
+the full suite passed in the 2026-07-14 verification record. Rank-normalized bulk/tail ESS and
+complete joint-mode coverage remain absent. The constraint
 feasibility summary reports `not_available`
 until the penalty/one-hot encoding layer exists, and the unpenalized-objective trace waits on
 the same layer.
@@ -26,7 +27,8 @@ optimality; exact or independently verified oracles do that for benchmark instan
 - R-hat-style scalar chain disagreement.
 - Unique fraction, top-k mass, entropy.
 - Hamming-distance metrics.
-- Constraint feasibility summary.
+- Constraint feasibility summary with explicit `not_available` status until the encoding
+  contract exists.
 - Failure flags.
 
 ## Exit Criteria
@@ -41,6 +43,10 @@ optimality; exact or independently verified oracles do that for benchmark instan
   rank-normalized bulk/tail ESS recommendation.
 - Observable and progress statuses are separated from sampler-failure flags on flat objectives
   and fully explored small state spaces.
+
+The implemented core meets these criteria with the documented `not_available` constraint
+state. Rank-normalized bulk/tail ESS, nested R-hat for many short chains, and broader
+joint-mode checks are follow-on statistical work.
 
 ## Implementation Notes
 

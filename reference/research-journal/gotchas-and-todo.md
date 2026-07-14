@@ -71,6 +71,14 @@ THRML runtime (`2026-07-01-stage-02-thrml-runtime-implementation.md`):
   (DSATUR coloring in `blocks.py`, `statistics.NormalDist().inv_cdf` in place of
   scipy `ndtri`); THRML, dimod, and arviz are optional extras. Do not add numpy,
   networkx, or scipy to the core.
+- **Parallel-tempering correctness closed on 2026-07-14; preserve its invariants.** The
+  2026-07-11 audit exposed exchange-sign, missing-local-transition, and two-replica pairing
+  failures. The 2026-07-14 correction verifies EVAL-EQ-014, advances every replica between
+  exchange opportunities, attempts the sole two-replica pair at every interval, and records
+  cold-slot and per-beta evidence. Preserve those tests when changing the runtime
+  (`2026-07-14-runtime-sampling-and-frozen-mode-correctness.md`). Device-side/vectorized
+  exchange and adaptive ladder tuning are performance extensions; they require an assigned
+  roadmap task before implementation.
 
 Diagnostics (`2026-07-02-stage-03-diagnostics-pipeline.md`,
 `2026-07-03-stage-03-sota-alignment.md`):
@@ -92,10 +100,14 @@ Diagnostics (`2026-07-02-stage-03-diagnostics-pipeline.md`,
   scoped multiset. A whole-orchestrator pass that unions extra flags breaks the
   frozen fixtures (H4); scope each flag to the telemetry family its `input` block
   declares.
-- **Constant-beta window assumption.** Trace-window diagnostics assume a constant-
-  beta collection window (EVAL-EQ-007), which the runtime guarantees today. When
-  parallel tempering lands, compute diagnostics per constant-beta segment keyed off
-  `traces["beta_schedule"]`.
+- **Retained diagnostics use one target-beta collection law.** Fixed-beta warmup segments are
+  discarded, and retained reads use `config.beta`. Parallel tempering evolves the full ladder,
+  then returns only the cold-slot samples at `config.beta`; `compute_diagnostics` consumes
+  those cold-slot interaction-energy and magnetization chains. `traces["beta_schedule"]`
+  records `target_beta`, while `traces["parallel_tempering"]` stores per-beta energies and swap
+  evidence. Do not pass per-beta telemetry to the current chain diagnostics as if it were a set
+  of independent retained chains; such a change requires a new equation and trace contract
+  (EVAL-EQ-007; `thrml_runtime.py:1135-1226`).
 - **Folded R-hat median tie knife-edge.** Never pin a folded R-hat value produced
   from continuous data whose central order statistics tie; the folded component is
   invariant only up to a rounding-level knife-edge (`2026-07-03` H5).
@@ -117,40 +129,48 @@ Benchmarks and scoring (`2026-05-31-ground-truth-test-set.md`):
 
 ## Open TODOs
 
-By stage (status source: `reference/00-roadmap/README.md` and the journal
-follow-up sections):
+Open implementation work is selected by stable task ID from
+`reference/00-roadmap/autonomous-implementation-roadmap.md` and claimed through
+`reference/00-roadmap/NEXT_TASK.md`. This list names residual mechanisms. The live ledger
+remains the only task queue.
 
-- **Stage 2 exit criterion - parallel tempering execution.** Opt-in PT code and traces exist.
-  The 2026-07-11 audit found correctness defects in the exchange and transition flow. The exit
-  criterion remains open until targeted PT invariants and the full optional THRML suite pass
-  after correction. Upstream composition point: THRML PR #30 (beta-ladder / sampler
-  abstraction).
-- **Stage 3 semantic criterion - estimator thresholds and flag taxonomy.** The existing
-  ESS/R-hat formulas retain their external cross-checks. Raw-energy Geyer ESS lacks
-  rank-normalized bulk/tail ESS, so the corrective patch removes the rank-normalized
-  `ESS > 400` recommendation from its flags. It also names occupancy efficiency accurately
-  and separates constant/progress observations from sampler-failure flags. Top-1 mass alone
-  now produces `high_sample_concentration`, not `mode_collapse`, because target concentration
-  is not evidence of a failed kernel. The criterion closes after focused fixtures and
-  full-suite verification.
-- **Stage 1 bridge gap — penalty / one-hot encoding layer.** Knapsack and TSP
-  fixtures raise `NotImplementedError` in `benchmark_bridge.py` until this exists;
-  the diagnostics `constraints` section reports `{"status": "not_available"}`
-  meanwhile.
-- **Stage 4 — Inspector.** `Inspector.from_result(result).show()` for
-  topology/trace/diagnostic reports and baseline comparison; consumes
-  `diagnostics["thresholds"]` to render tables without recomputation.
-- **Stage 5 — baselines and benchmarks.** dwave-samplers (not neal), OpenJij, and
-  simulated-bifurcation adapters under the same energy convention and seeds;
-  budget-minimized time-to-solution, success probability, and residual energy
-  metrics; import the proven-optimal Tier B subsets (BiqMac / TSPLIB / QAPLIB) with
-  the maximization sign-flip.
-- **Stage 6 — adaptive hardware runtime; nested R-hat.** Nested R-hat (Margossian
-  et al. 2021, arXiv:2110.13017) for the many-short-vmapped-chains regime.
-- **Optional-extra tier — R\* diagnostic.** Classifier-based R\* needs a learned
-  classifier, which conflicts with the zero-dependency core; admit only as an
-  optional extra.
+- **General constraints and feasibility — `TM-LWR-001`.** Knapsack and TSP fixtures raise
+  `NotImplementedError` in `benchmark_bridge.py`; diagnostics report
+  `{"status": "not_available"}` until a checked encoding and unpenalized-objective contract
+  exist.
+- **Bulk/tail ESS and observable-specific efficiency — `TM-PROF-001`.** The current estimator
+  is raw-energy Geyer ESS. Rank-normalized bulk/tail ESS requires separately named outputs,
+  independent reference cases, and thresholds matched to that estimator. Joint-mode coverage
+  is exercised through `TM-BENCH-002`, `TM-BENCH-003`, and `TM-BENCH-004`; scalar diagnostics
+  alone cannot close it.
+- **Inspector — `GQ-INSPECT-01` and `TM-REP-001`.** The artifact-only core precedes unified
+  CLI, HTML, topology, profiler, and baseline integration.
+- **Baselines and benchmarks — `TM-BASE-001`, `TM-BASE-002`, and `TM-BENCH-001` through
+  `TM-BENCH-004`.** Solver adapters use the canonical energy and separate fixed-work from
+  fixed-time budgets. Proven-optimal Tier B imports retain the BiqMac maximization sign flip.
+- **Hardware-aware compiler and non-idealities — `TM-TARGET-01`, `TM-MAP-001` through
+  `TM-MAP-003`, `TM-NID-001`, `TM-NID-002`, `TM-COST-001`, and `TM-PROF-001`.** These tasks own
+  target topology, automatic mapping, delayed communication, calibrated cost boundaries, and
+  quality-adjusted profiling. The existing Stage 6 modules provide analysis inputs rather
+  than an adaptive execution layer.
+- **Optional diagnostics without a stable task ID.** Nested R-hat for many short vectorized
+  chains and classifier-based R\* remain research candidates. The coordinator must add a
+  bounded task with dependencies, ownership, an independent oracle, and optional-dependency
+  policy before an agent implements either one.
+- **Device-side PT performance and upstream composition.** Stage 2 correctness is closed. The
+  roadmap currently assigns no standalone device-side PT optimization task. If profiling
+  demonstrates that this work is necessary, the coordinator must add a bounded task or place
+  the upstream interface artifact under `TM-RFC-001` after its dependencies close.
 
-Recently closed (prune once absorbed into the roadmap): rank-normalized + folded
-split R-hat (EVAL-EQ-013) and magnetization chain-disagreement wiring landed
-2026-07-03; see `2026-07-03-stage-03-sota-alignment.md`.
+## Closed Historical Corrections
+
+- **Stage 2 PT corrective audit closed 2026-07-14.** The targeted invariants, optional THRML
+  tests, and full-suite record are in
+  `2026-07-14-runtime-sampling-and-frozen-mode-correctness.md`.
+- **Stage 3 flag-taxonomy corrective audit closed 2026-07-14.** Raw-energy ESS carries no
+  borrowed bulk/tail threshold; occupancy efficiency is named accurately; observable and
+  progress statuses are separated from sampler failures; top-1 concentration alone yields
+  `high_sample_concentration`. Remaining bulk/tail and joint-mode work is routed above.
+- **Rank-normalized and folded split R-hat plus magnetization disagreement landed
+  2026-07-03.** EVAL-EQ-013 and `2026-07-03-stage-03-sota-alignment.md` retain their formula and
+  cross-validation evidence.

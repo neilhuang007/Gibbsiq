@@ -1,70 +1,196 @@
-# Roadmap
+# Gibbsiq And ThermoMap Roadmap
 
-## Status (updated 2026-07-11)
+## Canonical Entry Point
 
-The roadmap is THRML-first. Gibbsiq is the optimization infrastructure and trust layer above
-THRML. Diagnostics, dimod compatibility, and baseline adapters exist to make THRML-backed
-optimization auditable and comparable; they do not replace the THRML execution path. The
-durable contribution is independent verification and diagnostics, which a hardware vendor
-cannot credibly supply for its own device; the `SampleResult` schema, diagnostic inputs, and
-benchmark oracle are kept backend-portable at the architectural level as a hedge, without
-changing the THRML-first execution target. The 2026-07-01 positioning decision is journaled in
-`reference/research-journal/2026-07-01-trust-layer-positioning.md`.
+This directory contains two roadmap layers:
 
-| Stage | Title | Status |
-| --- | --- | --- |
-| 0 | [Research and framing](stage-00-research-and-framing.md) | Complete — research pack, evaluator, strict benchmark oracle, ground-truth corpus |
-| 1 | [Core model compatibility](stage-01-core-model-compatibility.md) | Complete (2026-06-01) - `compile_qubo`/`compile_ising`/`compile_bqm`, Ising IR, and `SampleResult` |
-| 2 | [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Core complete; PT exit criterion under corrective audit (2026-07-11) - fixed-beta lowering, deterministic DSATUR blocks, schedule/seed/init control, multi-chain traces, independent energy recomputation, and small-instance validation are implemented; PT requires targeted and full-suite re-verification |
-| 3 | [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Implemented; corrective semantic audit awaiting full verification (2026-07-11) - stdlib Geyer ESS/tau and split R-hat retain their arviz/R cross-checks; the patch removes the unsupported raw-ESS threshold, reports occupancy efficiency accurately, and separates observations from failures; rank-normalized bulk/tail ESS remains future work |
-| 4 | [Inspector and reporting](stage-04-inspector-and-reporting.md) | Pending |
-| 5 | [Baselines and benchmarks](stage-05-baselines-and-benchmarks.md) | Pending |
-| 6 | [Adaptive hardware-aware runtime](stage-06-adaptive-hardware-runtime.md) | Pending |
+1. `stage-00` through `stage-06` preserve the original Gibbsiq product history.
+2. [`autonomous-implementation-roadmap.md`](autonomous-implementation-roadmap.md) is the
+   canonical dependency graph for completing the full ThermoMap compiler, verifier,
+   profiler, benchmark, and release plan from the current repository state.
 
-Progress follows the staged order. Stages 0-3 have implemented core deliverables. Stage 3
-diagnostics emit telemetry and its ESS/R-hat formulas retain external cross-checks (journals:
-`2026-07-02-stage-03-diagnostics-pipeline.md` and
-`2026-07-03-stage-03-sota-alignment.md`). The 2026-07-11 corrective patch removes the
-rank-normalized threshold from raw-energy ESS, reports occupancy efficiency under an accurate
-name, and separates observable/progress statuses from sampler-failure flags. Full-suite
-verification remains pending, and rank-normalized bulk/tail ESS is absent.
-Stage 4 reporting remains pending. Parallel-tempering code is present, but the same audit keeps
-the Stage 2 exit criterion open until corrected exchange and transition behavior pass targeted
-invariants and the full optional THRML suite.
+After completing the canonical startup read order in
+[`autonomous-agent-runbook.md`](autonomous-agent-runbook.md), use these roadmap controls in
+this order:
 
-Stage 1 carry-over items, tracked in the journal and not blocking Stage 2: hidden-style
-metamorphic tests (variable relabel, offset shift, spin-gauge), a `to_qubo()` reverse
-conversion for baseline adapters, and a `dimod` integration test in an optional environment.
+1. [`NEXT_TASK.md`](NEXT_TASK.md) — current coordinator task plus zero or more explicitly
+   `ready` or `claimed` parallel lanes; each worker claims one bounded task.
+2. [`autonomous-agent-runbook.md`](autonomous-agent-runbook.md) — execution, verification,
+   journaling, commit, and handoff loop.
+3. [`autonomous-implementation-roadmap.md`](autonomous-implementation-roadmap.md) — stable task
+   IDs, dependencies, public/blind tests, independent oracles, and exit gates.
+4. [`thermomap-plan-status-2026-07-14.md`](thermomap-plan-status-2026-07-14.md) — detailed
+   evidence audit and interpretation boundaries at the implementation snapshot.
 
-## Dependencies
+If `NEXT_TASK.md` or the runbook is absent, the first ready task is `TM-GOV-001`. Chat history
+does not replace the ledger.
+
+## Status Snapshot — 2026-07-14
+
+The verified implementation snapshot is commit `c62169e` (`feat: add audited ThermoMap
+analysis foundation`). The final repository verification at that snapshot ran 457 tests in
+120.615 seconds and returned `OK`; Ruff, format, mypy, and Markdown-math checks also passed.
+The count belongs to that recorded command and is not a permanent property of the repository.
+
+The detailed audit reports two separate scores:
+
+- optimizer and audit foundation: 8.5/10 = 85%;
+- full ThermoMap proposal: 8/20 = 40% in the verified current tree.
+
+These are equal-row capability scores. Placement, routing, degree reduction, stale dynamics,
+cost calibration, and physical hardware access carry more engineering risk than their row
+count suggests.
+
+### Verified Present
+
+- canonical offset-preserving Ising/QUBO/BQM model and `SampleResult`;
+- audited fixed-beta and parallel-tempering THRML execution with deterministic DSATUR blocks,
+  seed/schedule/init controls, raw retained samples, traces, and work accounting;
+- sampler-health diagnostics, strict witness oracle, anti-echo bridge, and exact 27-fixture
+  corpus;
+- exact capped Boltzmann comparison, declared stored-coefficient quantization, and direct
+  logical target assessment;
+- partial provenanced `TSUSpec` for capacity, degree, color, coefficient, and optional cell
+  facts;
+- pairwise categorical IR and exact domain-wall lowering;
+- supplied-partition chain-order search plus separately named communication algebraic proxies;
+- supplied-assignment Potts objective evaluation and an optimization-only ICM primitive.
+
+### Open Product Boundary
+
+The repository lacks automatic graph partitioning, variable placement, general routing,
+degree-reduction/equality gadgets, a complete topology/cost `TSUSpec`, hybrid TSU/GPU
+partitioning, stale-boundary dynamics, calibrated end-to-end latency or energy,
+observable-specific ESS/joule roofline classification, cross-domain baseline runners,
+Inspector/HTML reporting, and a physical TSU backend.
+
+The public execution path is the THRML JAX simulator. A simulator run validates software
+lowering and sampling behavior on its recorded host. It does not establish production TSU
+timing, energy, or optimization advantage.
+
+## Original Stage History
+
+The linked stage files retain their original scope and decisions. Their dated status
+paragraphs are historical snapshots. This index and the autonomous roadmap state the current
+implementation status.
+
+| Legacy stage | Current evidence-based status |
+| --- | --- |
+| 0 — [Research and framing](stage-00-research-and-framing.md) | Complete for the original Gibbsiq scope: research pack, evaluator, strict oracle, and exact corpus exist. |
+| 1 — [Core model compatibility](stage-01-core-model-compatibility.md) | Complete for binary pairwise QUBO/Ising/BQM. Pairwise categorical/domain-wall modeling is an implemented extension. General factors, clamping, coordinates, and constrained encodings remain open. |
+| 2 — [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Core correctness complete. The 2026-07-14 correction verifies exchange sign, local transition/work accounting, first retained-sample work, and two-replica attempts. Device-side PT remains a performance refactor, not an open correctness gate. |
+| 3 — [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Core semantic correction complete and integrated. Scalar energy ESS/tau, plain and rank/folded R-hat, diversity, magnetization, and frozen-state checks exist. Rank-normalized bulk/tail ESS, feasibility, and broader joint-mode checks remain future work. |
+| 4 — [Inspector and reporting](stage-04-inspector-and-reporting.md) | Pending. The artifact-only core is the dependency-ready task `GQ-INSPECT-01`. No production `Inspector` class exists at the snapshot. |
+| 5 — [Baselines and benchmarks](stage-05-baselines-and-benchmarks.md) | Partial. Exact fixtures and witness verification exist; matched solver adapters, fixed-work/fixed-time runners, and comparative artifacts remain open. |
+| 6 — [Adaptive hardware-aware runtime](stage-06-adaptive-hardware-runtime.md) | Partial analysis foundation. Target facts, quantization, exact-law comparison, logical admissibility, and supplied-partition communication analysis exist. Automatic mapping, target-aware execution, calibration, and adaptive compiler search remain open. |
+
+The private runtime type `_Lowering` executes the current THRML conversion in process. A
+public `THRMLProgramBundle` is not implemented. Target-flow prose using that name is an API
+proposal rather than a current class.
+
+## Canonical Delivery Sequence
+
+The full dependency graph and task cards live in the autonomous roadmap. The shortest
+software-MVP critical path is:
 
 ```text
-0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6
+governance and verified foundation
+-> program IR + complete target contract + independent verifier
+-> higher-order/degree lowering + schedule candidates
+-> partition -> placement -> routing
+-> compiled artifact and one-call API
+-> non-idealities + end-to-end cost model
+-> mixing-aware thermodynamic roofline
+-> baseline harness + physics/Bayesian/optimization benchmarks
+-> Inspector/CLI/reports
+-> compatibility matrix and software release
 ```
 
-Work unblocked by Stage 1 and available to start in parallel, provided it supports the
-THRML-first direction:
+Three bounded lanes are dependency-ready after `TM-GOV-001` closes and may run in parallel:
 
-- diagnostics from fixtures and THRML-style traces;
-- benchmark loaders;
-- inspector from mock `SampleResult` artifacts (the schema exists).
+| Task | Scope | Exclusive production files |
+| --- | --- | --- |
+| `TM-VERIFY-01` | Independent CPU Gibbs plus capped transition, stationarity, detailed-balance, and empirical verification | `reference_sampler.py`, `verification.py`, focused tests, new equation entries |
+| `TM-TARGET-01` | Complete provenanced topology, communication, host, reprogramming, and numeric target contract | `hardware.py`, `topology.py`, focused tests |
+| `GQ-INSPECT-01` | Artifact-only `Inspector` core over existing `SampleResult` and diagnostics | `inspector.py`, summary schema, focused tests |
 
-## Adoption and ecosystem
+When fewer than three worker slots are available, take the deterministic prefix of this lane
+order: `TM-VERIFY-01`, then `TM-TARGET-01`, then `GQ-INSPECT-01`. With one slot, expose the
+first lane; with two, expose the first two. Skip an earlier lane only for a recorded ownership,
+input, or external blocker.
 
-Adoption surface is an explicit parallel-track concern alongside the numbered stages, not a
-new stage in the dependency chain. Three workstreams run in parallel with Stage 2 and later
-stages:
+The mapping passes are sequential because each freezes the artifact consumed by the next:
 
-- Flagship examples that reproduce third-party THRML optimization results with Gibbsiq
-  diagnostics attached: the portfolio index-tracking setup of arXiv:2601.07792 (Jan 2026) and
-  the Max-k-Cut Potts study of arXiv:2605.06425. Each example runs the published instance
-  through the Gibbsiq path and reports sampler-health diagnostics and witness-verified
-  objectives.
-- Upstream THRML contributions, focused on the parallel-tempering and sampler-abstraction
-  area under discussion in THRML PR #30, so that the beta-ladder and multi-chain composition
-  Gibbsiq depends on is available in the substrate.
-- Publishing the ground-truth corpus (Tier A proven optima) as a standalone independent
-  verification suite for Ising-machine solvers, usable outside the THRML path.
+```text
+TM-MAP-001 partition
+-> TM-MAP-002 placement
+-> TM-MAP-003 routing
+-> TM-API-001 compiled artifact
+```
 
-These items support the THRML-first direction and the independent-verification moat; they are
-sequenced opportunistically rather than gated on the Stage 2-6 order.
+Physics, Bayesian, and optimization benchmark families may proceed in parallel only after
+`TM-BENCH-001` freezes the raw-artifact, timing, seed, and witness-accounting contract.
+
+The release-state labels are intentionally narrower than “project complete”:
+
+- M2 emits `software_mvp_complete` only after every M2 gate closes.
+- M3 emits `simulator_research_release_complete` only after every simulator/research gate
+  closes.
+- M4 has no autonomous completion claim: it closes only after `TM-HW-001` records authorized
+  physical-device calibration and matched evidence.
+
+Without hardware access, the honest terminal state is M3
+`simulator_research_release_complete` with `TM-HW-001` still `blocked_external`.
+
+## Software And Hardware Completion Gates
+
+The simulator-backed software milestones are autonomous once their Python dependencies and
+public source material are available. `TM-REL-001` requires an actual Python 3.10–3.13 CI
+matrix because `pyproject.toml` declares that range while the snapshot CI exercises only
+Python 3.13. Support is verified only for jobs that pass.
+
+`TM-HW-001` is `blocked_external`. It starts only when all of the following exist:
+
+- an authorized physical TSU and documented backend API;
+- immutable device identity and calibration interface;
+- an agreed timing and energy measurement boundary;
+- permission to preserve raw samples, calibration data, versions, and checksums.
+
+No agent may fill that gate with modeled paper values or simulator timings. A hardware claim
+requires exact small-law checks and matched TSU-versus-host workloads at equal quality targets.
+
+## Source-Of-Truth Order
+
+When status prose conflicts, use this order:
+
+1. `AGENTS.md` and higher-level instructions for workflow and non-negotiable behavior;
+2. canonical equations and conventions in
+   [`../08-evaluation/equation-audit.md`](../08-evaluation/equation-audit.md);
+3. executable source, tests actually run at the current `HEAD`, and the latest dated
+   verification/status record for implementation status;
+4. [`autonomous-implementation-roadmap.md`](autonomous-implementation-roadmap.md) for task
+   dependencies and exit criteria;
+5. [`NEXT_TASK.md`](NEXT_TASK.md) for active claims, file ownership, and the dependency-ready
+   frontier, constrained by the roadmap dependencies;
+6. `PROJECT_BRIEF.md`, `spec.md`, `CLAUDE.md`, dated journals, legacy stage prose, and other
+   scope/history documents.
+
+This order preserves historical decisions while preventing an old test count, open corrective
+gate, or proposed class name from overriding the current tree.
+
+## Adoption And Publication Tracks
+
+Adoption remains a parallel concern after the relevant compiler and benchmark contracts
+close:
+
+- reproduce selected third-party THRML optimization work through the audited Gibbsiq path;
+- prepare narrowly scoped upstream THRML contributions around stable sampler/compiler
+  boundaries;
+- publish the proven-optimum corpus as an independent Ising-machine verification suite;
+- produce the claims-evidence map, raw benchmark artifacts, figures, bibliography, and
+  mandatory AI-usage disclosure required by the publication track.
+
+These tracks cannot bypass the witness, diagnostic, provenance, or matched-budget gates. The
+defensible current contribution is the integrated audit contract and analysis foundation.
+Automatic mapping and quality-adjusted calibrated costs are required for a distinct ThermoMap
+systems claim.

@@ -5,15 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this project is
 
 Gibbsiq is **THRML-native optimization infrastructure** for QUBO / Ising / BQM problems.
-It turns standard optimization models into auditable THRML programs. Its differentiator is
-not diagnostics in isolation. Its differentiator is the complete THRML optimization contract:
-audited model conversion, graph-aware block construction, schedules, seed and initialization
-control, trace capture, sampler-health diagnostics, baseline comparison, and witness-based
-benchmark verification.
+It turns standard optimization models into auditable THRML programs. Its implemented contract
+contains audited model conversion, graph-aware block construction, schedules, seed and
+initialization control, trace capture, sampler-health diagnostics, and witness-based benchmark
+verification. The target contract adds independent baseline comparison and reporting.
 
-Do not reinterpret the project as a backend-agnostic diagnostics package. dimod and baseline
-support are adoption and comparison bridges into the THRML path. Diagnostics are mandatory
-telemetry for THRML-backed optimization runs, not an independent product objective.
+Do not reinterpret the project as a backend-agnostic diagnostics package. dimod support is an
+adoption bridge into the THRML path; planned baseline support is the independent comparison
+bridge. Diagnostics are mandatory telemetry for THRML-backed optimization runs, not an
+independent product objective.
 
 The accurate analogy is Ocean and dimod for D-Wave plus ArviZ for Stan and PyMC, applied to
 the THRML ecosystem: Gibbsiq is the ingestion, runtime-contract, diagnostics, and
@@ -27,13 +27,19 @@ and benchmark oracle are kept backend-portable at the architectural level as a h
 contract-level portability that keeps the THRML-first execution target, journaled in
 `reference/research-journal/2026-07-01-trust-layer-positioning.md`.
 
+ThermoMap names the compiler, auto-mapping, verification, and thermodynamic-roofline
+capability track within Gibbsiq. It is not a package rename: public production APIs remain
+under `gibbsiq`. Read `reference/00-roadmap/autonomous-implementation-roadmap.md` for the live
+dependency order, `reference/00-roadmap/autonomous-agent-runbook.md` for execution rules, and
+`reference/00-roadmap/NEXT_TASK.md` for live task state and claims. The ledger may authorize
+multiple disjoint dependency-ready lanes; each worker claims exactly one bounded task.
+
 THRML's official documentation currently describes the public runtime as a JAX-based GPU
 simulator for programs intended for future Extropic hardware. Simulator results and the
 Jelinčič system-level energy model are not production TSU measurements and cannot support a
 QUBO hardware-speedup claim.
 
-The repository has implemented the core deliverables for **Stages 0 through 3 of a 6-stage
-roadmap** while the Stage 2 PT exit criterion remains open (status:
+The repository uses seven numbered stages, Stage 0 through Stage 6 (status:
 `reference/00-roadmap/README.md`). `src/gibbsiq/` holds the model IR and conversions
 (`model.py`, `conversions.py`), the `SampleResult` schema (`result.py`), the JSON evaluator
 (`evaluation.py`), the strict benchmark oracle (`benchmark_oracle.py`), the THRML runtime
@@ -42,10 +48,11 @@ graph-coloring block construction (`blocks.py`), the benchmark bridge
 (`benchmark_bridge.py`) lowering ground-truth fixtures into the IR and scoring sampler
 results against the strict oracle, and the diagnostics layer (`diagnostics.py`, pure
 stdlib). **Stage 2 (THRML optimization runtime)** landed 2026-07-01 with exhaustive
-small-instance validation. Opt-in parallel-tempering code exists, but the 2026-07-11
-corrective audit keeps its exit criterion open until targeted invariants and the full optional
-THRML suite pass.
-**Stage 3 (diagnostics pipeline)** is implemented and under corrective semantic audit. It
+small-instance validation. The 2026-07-14 verification closes the opt-in
+parallel-tempering correctness criterion: exchange sign, local transitions, two-replica
+pairing, cold-slot sampling, and sweep accounting have targeted and full-suite evidence.
+Device-side/vectorized PT and adaptive ladders remain performance extensions.
+**Stage 3 (diagnostics pipeline)** is implemented. It
 landed 2026-07-02 with Geyer ESS/tau and plain split R-hat
 (arviz v0.21.0 algorithm, cross-validated to 1e-9 against arviz and to 1e-8 against an
 R-`posterior` reference), diversity/energy/chain sections, family-scoped failure flags with
@@ -55,11 +62,17 @@ under separately named `rank_normalized_rhat*` keys (EVAL-EQ-013; the plain `rha
 frozen), and magnetization chain-disagreement wiring (`chains.magnetization` subsection)
 closing the equal-energy double-well blind spot. Trace-window diagnostics assume a
 constant-beta collection window (guaranteed by the runtime; see EVAL-EQ-007). The 2026-07-11
-corrective patch removes the raw-energy `low_ess` threshold, renames
-`occupancy_efficiency`, and separates observable/progress statuses from sampler-failure flags;
-full-suite verification remains pending. Rank-normalized bulk/tail ESS, inspector,
-constraint-encoding, and baseline layers remain to be built. Record the exact suite count and
-skip count from the command actually run; do not preserve a historical count as current.
+corrective patch removes the raw-energy `low_ess` threshold, names
+`occupancy_efficiency` accurately, and separates observable/progress statuses from
+sampler-failure flags; the 2026-07-14 verification closes that correction.
+Rank-normalized bulk/tail ESS, complete joint-mode coverage, Inspector, general constraint
+encoding, and baseline runners remain to be built. Pairwise categorical/domain-wall lowering
+exists and does not fill the general constraint gap. The current ThermoMap analysis surface
+also exports provenanced target facts, coefficient quantization, exact small-law comparison,
+logical target assessment, and supplied-partition communication proxies. It does not perform
+automatic partitioning, placement, routing, calibrated costing, or physical TSU execution.
+Record the exact suite and skip counts from the command actually run; do not preserve a
+historical count as current.
 
 ## Commands
 
@@ -85,8 +98,9 @@ python tools/generate_ground_truth.py --out reference/06-benchmarks/fixtures/gro
 
 The evaluator exits with status `0` **only** when every known fixture is present and passing.
 Tests live under `test_suite/tests/` and run with the stdlib `unittest` runner (no pytest
-dependency yet). Ruff, mypy, packaging, and unit checks are configured in
-`.github/workflows/ci.yml`. The framework prescribes the public/blind split in
+dependency yet). Markdown-math, Ruff, mypy, and unit checks are configured in
+`.github/workflows/ci.yml`; a package-build check and a Python 3.10–3.13 CI matrix remain to
+be added. The framework prescribes the public/blind split in
 `reference/08-evaluation/evaluation-framework.md`.
 
 ## Canonical conventions (do not violate)
@@ -172,10 +186,16 @@ The intended product is five layers (see `spec.md` and `reference/00-roadmap/`):
    non-failure observations (`high_sample_concentration`, `no_recent_improvement`, etc.).
 4. **Inspector** — `Inspector.from_result(result).show()` produces topology/trace/diagnostic
    reports, best-state tables, and baseline comparisons.
-5. **Benchmarks** — exact/bruteforce validator plus simulated annealing (neal/dimod), OpenJij,
-   and simulated-bifurcation baselines, all run under the same energy convention and seeds.
+5. **Benchmarks** — exact/bruteforce validator plus `dwave-samplers` simulated annealing,
+   OpenJij, and simulated-bifurcation baselines, all run under the same energy convention and
+   seeds.
 
-Target API the whole stack converges on:
+The ThermoMap capability track crosses these layers. It adds a target-independent compiler
+IR, provenanced target description, validation and lowering passes, partitioning,
+placement/routing, non-ideality verification, and a quality-adjusted roofline. The autonomous
+implementation roadmap is authoritative for its work packages and dependencies.
+
+Target API the whole stack converges on; `Inspector` remains absent from the current package:
 
 ```python
 model  = compile_qubo(problem)

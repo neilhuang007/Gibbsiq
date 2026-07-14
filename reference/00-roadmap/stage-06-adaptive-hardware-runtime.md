@@ -1,8 +1,18 @@
 # Stage 6 - Adaptive Hardware-Aware Runtime
 
+**Status: Partial analysis foundation; adaptive execution absent.** The current package exports
+a provenanced abstract `TSUSpec`, coefficient quantization with exact small-law comparison,
+logical target admissibility, and supplied-partition chain-communication proxies. It does not
+automatically partition, place, route, calibrate costs, adapt a running sampler, or execute a
+physical TSU. The broader ThermoMap compiler sequence is defined in
+`autonomous-implementation-roadmap.md`.
+
 ## Goal
 
 Add adaptive schedules, topology-aware blocks, restarts, and hardware-aligned metadata.
+
+This stage is one runtime component of the ThermoMap capability track inside Gibbsiq. The
+Python package remains `gibbsiq`.
 
 ## Deliverables
 
