@@ -26,6 +26,20 @@ import verify_citation as vc  # noqa: E402
 # "arxiv" entries auto-upgrade to the published DOI when DataCite records one.
 MANIFEST = [
     ("jelincic2025", "jelincic-2025-probabilistic-hardware-architecture", "arxiv", "2510.23972"),
+    ("jelincic2026codon", "jelincic-2026-codon-optimization", "arxiv", "2606.17327"),
+    ("aadit2026millionpbit", "aadit-2026-million-pbit", "arxiv", "2606.25313"),
+    (
+        "chowdhury2025apticm",
+        "chowdhury-2025-adaptive-parallel-tempering-icm",
+        "doi",
+        "10.1038/s41467-025-64235-y",
+    ),
+    (
+        "yao2026qsb",
+        "yao-2026-sparse-fpga-quantized-simulated-bifurcation",
+        "doi",
+        "10.1038/s41467-026-75119-0",
+    ),
     ("ayodele2022", "ayodele-2022-penalty-weights-permutation", "doi", "10.1007/978-3-031-04148-8_11"),
     ("mucke2025", "mucke-2025-qubolite", "arxiv", "2509.21321"),
     ("zaman2021", "zaman-2021-pyqubo", "arxiv", "2103.01708"),

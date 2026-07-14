@@ -429,6 +429,78 @@ def _reads_by_chain(num_reads: int, num_chains: int) -> tuple[int, ...]:
     return tuple(base + (chain_index < remainder) for chain_index in range(num_chains))
 
 
+def _local_sweep_accounting(
+    config: SamplerConfig,
+    *,
+    mode: str,
+    reads_by_chain: Sequence[int],
+    backend_generated_reads_by_chain: Sequence[int],
+    beta_count: int,
+) -> dict[str, Any]:
+    """Describe executed local work without equating requested and backend reads.
+
+    A sweep is one complete ordered pass over all free blocks for one chain and
+    one beta replica. Fixed-beta vectorization can generate a final discarded
+    draw for shorter active chains; parallel tempering does not.
+    """
+    if len(reads_by_chain) != len(backend_generated_reads_by_chain):
+        raise ValueError("read allocations and backend read counts must have equal length")
+    if beta_count < 1:
+        raise ValueError(f"beta_count must be >= 1, got {beta_count!r}")
+    if mode not in {"fixed_beta", "parallel_tempering", "constant_model_shortcut"}:
+        raise ValueError(f"unsupported sweep-accounting mode {mode!r}")
+
+    shortcut = mode == "constant_model_shortcut"
+    active = [generated > 0 for generated in backend_generated_reads_by_chain]
+    warmup_by_chain = [
+        0 if shortcut or not is_active else config.n_warmup * beta_count for is_active in active
+    ]
+    retained_target_by_chain = [
+        0 if shortcut else int(reads) * config.steps_per_sample for reads in reads_by_chain
+    ]
+    executed_target_by_chain = [
+        0 if shortcut else int(generated) * config.steps_per_sample
+        for generated in backend_generated_reads_by_chain
+    ]
+    executed_auxiliary_by_chain = [
+        0 if shortcut else target * (beta_count - 1) for target in executed_target_by_chain
+    ]
+    executed_sampling_by_chain = [
+        target + auxiliary for target, auxiliary in zip(executed_target_by_chain, executed_auxiliary_by_chain)
+    ]
+    discarded_target_by_chain = [
+        executed - retained for executed, retained in zip(executed_target_by_chain, retained_target_by_chain)
+    ]
+    total_by_chain = [
+        warmup + sampling for warmup, sampling in zip(warmup_by_chain, executed_sampling_by_chain)
+    ]
+
+    return {
+        "mode": mode,
+        "unit": "one complete ordered pass over all free blocks for one chain and one beta replica",
+        "configured_chains": len(reads_by_chain),
+        "active_chains": sum(active),
+        "beta_count": beta_count,
+        "first_retained_read_target_sweeps": 0 if shortcut else config.steps_per_sample,
+        "retained_reads_by_chain": [int(value) for value in reads_by_chain],
+        "backend_generated_reads_by_chain": [int(value) for value in backend_generated_reads_by_chain],
+        "executed_warmup_sweeps_by_chain": warmup_by_chain,
+        "retained_target_beta_sweeps_by_chain": retained_target_by_chain,
+        "executed_target_beta_sweeps_by_chain": executed_target_by_chain,
+        "discarded_target_beta_sweeps_by_chain": discarded_target_by_chain,
+        "executed_auxiliary_beta_sweeps_by_chain": executed_auxiliary_by_chain,
+        "executed_sampling_sweeps_by_chain": executed_sampling_by_chain,
+        "executed_total_sweeps_by_chain": total_by_chain,
+        "retained_target_beta_sweeps": sum(retained_target_by_chain),
+        "executed_target_beta_sweeps": sum(executed_target_by_chain),
+        "discarded_target_beta_sweeps": sum(discarded_target_by_chain),
+        "executed_auxiliary_beta_sweeps": sum(executed_auxiliary_by_chain),
+        "executed_sampling_sweeps": sum(executed_sampling_by_chain),
+        "executed_warmup_sweeps": sum(warmup_by_chain),
+        "executed_total_sweeps": sum(total_by_chain),
+    }
+
+
 def _decode_sample_chains(
     spins: Any,
     model: IsingModel,
@@ -445,6 +517,11 @@ def _decode_sample_chains(
         chain_energies: list[float] = []
         chain_best: list[float] = []
         chain_samples: list[dict[Variable, int]] = []
+        if chain_reads <= 0:
+            energy_trace.append(chain_energies)
+            best_trace.append(chain_best)
+            sample_chains.append(chain_samples)
+            continue
         best_interaction: float | None = None
         best_total: float | None = None
         for row in spins[chain_index][:chain_reads]:
@@ -862,6 +939,15 @@ class THRMLSampler:
         config = self.config
         reads_by_chain = _reads_by_chain(num_reads, config.num_chains)
         reads_per_chain = max(reads_by_chain)
+        sweep_accounting = _local_sweep_accounting(
+            config,
+            mode="constant_model_shortcut",
+            reads_by_chain=reads_by_chain,
+            backend_generated_reads_by_chain=(0,) * config.num_chains,
+            beta_count=(
+                1 if config.parallel_tempering_betas is None else len(config.parallel_tempering_betas)
+            ),
+        )
         lower_seconds = time.perf_counter() - lower_started
 
         sample_started = time.perf_counter()
@@ -888,6 +974,8 @@ class THRMLSampler:
                     "beta": config.beta,
                     "n_samples": reads_per_chain,
                     "reads_by_chain": list(reads_by_chain),
+                    "backend_generated_reads_by_chain": [0] * config.num_chains,
+                    "pre_first_sample_sweeps": 0,
                     "steps_per_sample": config.steps_per_sample,
                 }
             )
@@ -906,6 +994,8 @@ class THRMLSampler:
                     "beta_ladder": list(config.parallel_tempering_betas),
                     "n_samples": reads_per_chain,
                     "reads_by_chain": list(reads_by_chain),
+                    "backend_generated_reads_by_chain": [0] * config.num_chains,
+                    "pre_first_sample_sweeps": 0,
                     "steps_per_sample": config.steps_per_sample,
                     "swap_interval": config.parallel_tempering_swap_interval,
                 },
@@ -917,6 +1007,7 @@ class THRMLSampler:
             "best_energy_so_far": total_energy_chains,
             "sample_chain_ids": sample_chain_ids,
             "beta_schedule": beta_schedule,
+            "local_sweep_accounting": sweep_accounting,
             "magnetization": None,
             "distance_to_best": [[0 for _ in chain] for chain in sample_chains],
         }
@@ -951,6 +1042,7 @@ class THRMLSampler:
             lower_seconds=lower_seconds,
             sample_seconds=sample_seconds,
         )
+        metadata["local_sweep_accounting"] = sweep_accounting
         if config.parallel_tempering_betas is not None:
             metadata.update(
                 {
@@ -1003,6 +1095,13 @@ class THRMLSampler:
             programs.append((beta, program, ebm))
         reads_by_chain = _reads_by_chain(num_reads, config.num_chains)
         reads_per_chain = max(reads_by_chain)
+        sweep_accounting = _local_sweep_accounting(
+            config,
+            mode="parallel_tempering",
+            reads_by_chain=reads_by_chain,
+            backend_generated_reads_by_chain=reads_by_chain,
+            beta_count=len(programs),
+        )
         lower_seconds = time.perf_counter() - lower_started
 
         sample_started = time.perf_counter()
@@ -1053,6 +1152,8 @@ class THRMLSampler:
                 "beta_ladder": list(config.parallel_tempering_betas),
                 "n_samples": reads_per_chain,
                 "reads_by_chain": list(reads_by_chain),
+                "backend_generated_reads_by_chain": list(reads_by_chain),
+                "pre_first_sample_sweeps": config.steps_per_sample,
                 "steps_per_sample": config.steps_per_sample,
                 "swap_interval": config.parallel_tempering_swap_interval,
             },
@@ -1065,6 +1166,7 @@ class THRMLSampler:
             "best_energy_so_far": decoded.best_trace,
             "sample_chain_ids": decoded.chain_ids,
             "beta_schedule": beta_schedule,
+            "local_sweep_accounting": sweep_accounting,
             "magnetization": magnetization_chains,
             "distance_to_best": distance_chains,
             "parallel_tempering": {
@@ -1097,6 +1199,7 @@ class THRMLSampler:
             lower_seconds=lower_seconds,
             sample_seconds=sample_seconds,
         )
+        metadata["local_sweep_accounting"] = sweep_accounting
         metadata.update(
             {
                 "parallel_tempering_swap_attempts": decoded.swap_attempts,
@@ -1181,9 +1284,24 @@ class THRMLSampler:
             segment_programs.append((program, sweeps))
         reads_by_chain = _reads_by_chain(num_reads, config.num_chains)
         reads_per_chain = max(reads_by_chain)
+        active_chain_count = sum(chain_reads > 0 for chain_reads in reads_by_chain)
+        backend_generated_reads_by_chain = tuple(
+            reads_per_chain if chain_index < active_chain_count else 0
+            for chain_index in range(config.num_chains)
+        )
+        sweep_accounting = _local_sweep_accounting(
+            config,
+            mode="fixed_beta",
+            reads_by_chain=reads_by_chain,
+            backend_generated_reads_by_chain=backend_generated_reads_by_chain,
+            beta_count=1,
+        )
         final_warmup = 0 if segments else config.n_warmup
         sampling_schedule = thrml.SamplingSchedule(
-            n_warmup=final_warmup,
+            # THRML 0.1.3 observes the post-warmup state as sample zero. Advance
+            # at the target beta here so that sample zero obeys the same
+            # steps-per-sample contract as every later retained sample.
+            n_warmup=final_warmup + config.steps_per_sample,
             n_samples=reads_per_chain,
             steps_per_sample=config.steps_per_sample,
         )
@@ -1207,8 +1325,8 @@ class THRMLSampler:
 
         sample_started = time.perf_counter()
         root_key = jax.random.key(config.seed)
-        chain_keys = jax.random.split(root_key, config.num_chains)
-        if config.num_chains == 1:
+        chain_keys = jax.random.split(root_key, config.num_chains)[:active_chain_count]
+        if active_chain_count == 1:
             stacked = run_chain(chain_keys[0])[None, ...]
         else:
             stacked = jax.vmap(run_chain)(chain_keys)
@@ -1239,6 +1357,8 @@ class THRMLSampler:
                 "beta": config.beta,
                 "n_samples": reads_per_chain,
                 "reads_by_chain": list(reads_by_chain),
+                "backend_generated_reads_by_chain": list(backend_generated_reads_by_chain),
+                "pre_first_sample_sweeps": config.steps_per_sample,
                 "steps_per_sample": config.steps_per_sample,
             }
         )
@@ -1250,6 +1370,7 @@ class THRMLSampler:
             "best_energy_so_far": decoded.best_trace,
             "sample_chain_ids": decoded.chain_ids,
             "beta_schedule": beta_schedule,
+            "local_sweep_accounting": sweep_accounting,
             "magnetization": magnetization_chains,
             "distance_to_best": distance_chains,
         }
@@ -1269,6 +1390,7 @@ class THRMLSampler:
             lower_seconds=lower_seconds,
             sample_seconds=sample_seconds,
         )
+        metadata["local_sweep_accounting"] = sweep_accounting
 
         diagnostics = compute_diagnostics(
             energy_chains=interaction_energy_chains,

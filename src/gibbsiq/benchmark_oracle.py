@@ -54,7 +54,7 @@ def _scalar_diffs(expected: Any, actual: Any, path: str, tolerance: float) -> li
         and not isinstance(expected, bool)
         and isinstance(actual, (int, float))
         and not isinstance(actual, bool)
-        and float(expected) == float(actual)
+        and expected == actual
     ):
         return []
     return [_diff(path, "value_mismatch", "value does not match", expected=expected, actual=actual)]

@@ -145,6 +145,11 @@ class DsaturEdgeCaseTests(unittest.TestCase):
 
 
 class ValidatePartitionTests(unittest.TestCase):
+    def test_rejects_empty_block_before_backend_lowering(self) -> None:
+        model = compile_ising({"a": 0.0})
+        with self.assertRaisesRegex(ValueError, "empty blocks.*1"):
+            validate_partition(model, BlockPartition(blocks=(("a",), ())))
+
     def test_rejects_missing_variable(self) -> None:
         model = compile_ising({"a": 0.0, "b": 0.0}, {("a", "b"): 1.0})
         with self.assertRaises(ValueError):

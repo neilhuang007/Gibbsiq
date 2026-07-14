@@ -544,3 +544,375 @@ The rejected `1e-6` alternative was too strict for ordinary float32 sparse model
 once conservative accumulation error was included; `1e-4` still bounds the
 corresponding sigmoid-probability perturbation by at most `2.5e-5`. This is an
 approximation guarantee, not a claim of exact sampling from the host Hamiltonian.
+
+## EVAL-EQ-016: Fixed-Point Effective-Coefficient Quantization
+
+Source: fixed-point arithmetic convention used for the target-parameterized hardware
+analysis. The signed `s{I}{F}` notation follows the numeric-format declaration in Aadit et
+al. 2026, arXiv:2606.25313v1, Methods and Supplementary Sections S9-S12. The exact rounding
+and overflow policies remain explicit target parameters because the paper does not define a
+universal Extropic TSU coefficient format.
+
+For `I` integer bits excluding the sign bit and `F` fractional bits, a signed two's-complement
+format has step and representable interval
+
+```text
+step = 2^(-F)
+minimum = -2^I
+maximum = 2^I - step
+total_bits = 1 + I + F
+```
+
+Quantization applies to the dimensionless, beta-scaled coefficients that determine the Gibbs
+law:
+
+```text
+h_i_effective = beta * h_i
+J_ij_effective = beta * J_ij
+h_i_quantized = Q(h_i_effective)
+J_ij_quantized = Q(J_ij_effective)
+```
+
+The analysis accepts finite `beta >= 0`. At `beta = 0`, every effective coefficient is zero
+and the exact target is the uniform distribution, matching the canonical conditional API.
+
+The quantized effective Hamiltonian is
+
+```text
+E_quantized(s) = sum_i h_i_quantized s_i
+               + sum_(i<j) J_ij_quantized s_i s_j.
+```
+
+The original offset is excluded because it cancels from every normalized probability. The
+quantized Hamiltonian is an implemented sampling target; candidate optimization witnesses
+remain scored with the original canonical `IsingModel`.
+
+Nearest-even rounding and toward-zero rounding are separately named policies. Overflow is
+either rejected or explicitly saturated to the nearest endpoint. Silent wraparound is not an
+admissible scientific-computing policy.
+
+Use: fixed-point target analysis and exact small-model distribution comparison. This equation
+models coefficient quantization. It does not model quantization of an accumulated local field,
+sigmoid distortion, delayed boundary states, drift, or physical circuit mismatch.
+
+## EVAL-EQ-017: Quantization Error And Distribution Bounds
+
+Source: direct bound derived from EVAL-EQ-005 and EVAL-EQ-016. The local-logit component is
+the coefficient-error part of EVAL-EQ-015 without a floating-reduction term.
+
+Define effective-coefficient errors
+
+```text
+delta_h_i = h_i_quantized - beta * h_i
+delta_J_ij = J_ij_quantized - beta * J_ij.
+```
+
+For every neighboring spin assignment, the conditional-logit error at variable `i` obeys
+
+```text
+local_logit_error_i
+    <= 2 * (abs(delta_h_i) + sum_j abs(delta_J_ij)).
+```
+
+For every complete spin state, the effective-energy error obeys
+
+```text
+abs(E_quantized(s) - beta * E_interaction(s)) <= epsilon
+
+epsilon = sum_i abs(delta_h_i) + sum_(i<j) abs(delta_J_ij).
+```
+
+Let `p` be the canonical target distribution and `q` the quantized effective distribution.
+The unnormalized log weights differ by at most `epsilon`; normalization can add at most a
+second `epsilon`. Therefore the likelihood ratio lies in
+`[exp(-2 epsilon), exp(2 epsilon)]`, which gives the conservative total-variation bound
+
+```text
+TV(p, q) <= tanh(epsilon).
+```
+
+Exact small-model comparison enumerates the full state space using offset-free interaction
+energies and stable log-sum-exp normalization. It reports total variation, both directed KL
+divergences, state-probability error, single-spin marginal error, and pair-correlation error.
+If an interaction energy, beta-scaled log weight, or the span between finite log weights
+exceeds binary64, exact comparison raises an explicit numerical-domain error before a
+non-finite log probability can enter serialized evidence. Quantization analysis records this
+as `not_computed_numerical_range`, preserves the reason, and still returns the finite scalable
+coefficient and local-logit bounds. Exact enumeration is therefore optional evidence rather
+than a failure point for the analytic analysis.
+Exact comparison validates equilibrium distributions only; it does not establish mixing speed
+or correctness under non-Hamiltonian hardware effects.
+
+For **one fixed-beta target configuration**, graph-feasibility checks use the effective
+interaction graph
+
+```text
+G_beta = (V, E_beta)
+E_beta = {(i, j) in E : beta * J_ij != 0}.
+```
+
+The currently certified structural special case is
+
+```text
+beta = 0  =>  E_beta = empty,
+```
+
+so maximum degree, color phases, and topology/locality are evaluated on an edgeless graph,
+while p-bit capacity remains `|V|`. Coefficient quantization must independently show that all
+effective biases and couplings are zero and that the implemented law is uniform. The report
+retains the original logical edge count so this simplification cannot be mistaken for a
+property of the source model.
+
+This is not a reusable multi-temperature mapping certificate. Any schedule containing a
+positive beta must be assessed at that beta (and, until a separately audited quantized-graph
+policy exists, uses the original nonzero logical interaction graph for structural checks).
+In particular, a nonzero coupling that rounds to zero at positive beta does not silently erase
+its logical edge from admissibility analysis merely because the target declares no acceptable
+distribution-error threshold.
+
+Use: target-admissibility analysis and quantization sensitivity tests. Exact total variation
+must not exceed the analytic bound beyond the declared floating-point tolerance.
+
+## EVAL-EQ-018: Distributed Boundary-Traffic Pair And Shared-Link Proxies
+
+Source: Aadit et al. 2026, arXiv:2606.25313v1, Supplementary Sections S4.1-S4.6,
+equations S.2-S.6. This contract evaluates a caller-supplied partition and chain mapping; it
+does not implement METIS, KaHIP, the paper's Potts partitioner, or physical node placement.
+
+Let an undirected Ising graph be partitioned into non-empty clusters. For two distinct
+clusters `a` and `b`, define the **directed unique boundary-vertex demand**
+
+```text
+b_(a->b) = number of distinct vertices in a incident to one or more edges into b.
+```
+
+This is not a cut-edge count: one vertex incident to several cross-cluster edges contributes
+one state bit. In a general sparse graph, `b_(a->b)` and `b_(b->a)` need not be equal. The
+paper defines `b_ab` for an unordered pair while describing states shipped from `a` to `b`,
+then uses one `b_ab` in its unordered sums. Gibbsiq must expose both directed values. Its
+declared symmetric collapse is
+
+```text
+b_ab = max(b_(a->b), b_(b->a))                    [policy = "max_directed"]
+```
+
+so the result is invariant to the arbitrary orientation of the unordered pair. This policy
+allocates the larger directed frame size to both directions. It is a Gibbsiq accounting rule,
+not a claim about the paper authors' unstated intent or a physical link protocol.
+
+For a caller-supplied physical chain order, let `position(a)` be the slot of cluster `a` and
+let each adjacent physical link have a finite positive integer usable-pin count. Then
+
+```text
+d_ab = abs(position(a) - position(b))
+P_ab = minimum usable-pin count over every link on that unique chain route
+C_ab = b_ab * d_ab / P_ab
+C_tot = sum_(active unordered a,b) C_ab
+C_max = max_(active unordered a,b) C_ab
+```
+
+An active pair has `b_ab > 0`. Zero-traffic unordered pairs are not materialized as pair rows
+and do not require route construction. This keeps a `K`-partition no-edge report linear in
+`K`, rather than storing `K(K-1)/2` zero rows and all of their routes.
+
+With finite positive communication clock `f_comm` and positive integer color count `N_color`,
+the paper's factor of two for packing/unpacking gives the **paper pair-route proxy**
+
+```text
+tau_pair_proxy = 2 * N_color * C_max / f_comm
+eta_pair_proxy = 2 * N_color * C_max
+f_pbit_pair_proxy = f_comm / eta_pair_proxy
+```
+
+`C_max` is the maximum cost of one partition pair. It does not aggregate contention from
+several active pairs whose routes share a physical link. For every physical link `ell`, let
+`R_ab` be the set of links on the unique chain route and define the exact load under the
+declared `max_directed` accounting policy:
+
+```text
+Q_ell = sum_(active a,b: ell in R_ab) b_ab
+L_ell = Q_ell / P_ell
+L_max = max_ell L_ell
+tau_link_proxy = 2 * N_color * L_max / f_comm
+```
+
+`Q_ell`, `L_ell`, and `L_max` are exact for this accounting rule. They are not a link schedule:
+direction arbitration, full- or half-duplex operation, headers, buffering, pipelining, and
+overlap between links remain unspecified. To ensure neither the paper's long-route pair proxy
+nor shared-link aggregation is hidden, the report also defines the explicitly diagnostic
+composite
+
+```text
+W_composite = max(C_max, L_max)
+tau_composite_proxy = 2 * N_color * W_composite / f_comm
+eta_composite_proxy = 2 * N_color * W_composite
+f_pbit_composite_proxy = f_comm / eta_composite_proxy
+```
+
+Taking the maximum avoids double-counting the same work by summing two non-independent
+proxies. It is not asserted to be a latency upper bound, lower bound, feasible schedule, or
+hardware clock limit. The clock-shaped quantities are algebraic sensitivity proxies only.
+When there is no boundary traffic, every work and time proxy is zero. Frequency proxies are
+serialized as `null` with status `"inactive_no_boundary_traffic"`, never IEEE infinity or NaN.
+
+Paper-value pin: for `b_46 = 660`, `d_46 = 2`, and route pins `min(26, 54) = 26`,
+
+```text
+C_46 = 660 * 2 / 26 = 50.769230769...
+eta_pair_proxy = 2 * 3 * C_46 = 304.615384615...
+```
+
+which the paper rounds to `C_max ~= 50.8` and `eta ~= 305`.
+
+Shared-link counterexample: place five left partitions in slots `0..4`, five right partitions
+in slots `5..9`, connect every left/right partition pair once, set all link pins to one,
+`N_color = 2`, and `f_comm = 2`. The farthest active pair has `C_max = 9`, so the paper pair
+proxy is `tau_pair_proxy = 18`. All 25 active pairs cross central link 4, so `L_max = 25` and
+`tau_link_proxy = tau_composite_proxy = 50`. Therefore `C_max` alone cannot represent shared-
+link serialization.
+
+Exact chain-order search enumerates all permutations through a declared small partition
+limit and minimizes the lexicographic objective
+
+```text
+(W_composite, L_max, C_max, C_tot, canonical_partition_order).
+```
+
+The numeric comparison uses exact rational costs before converting report values to finite
+binary64. For `K >= 2`, reversal removes a factor of two only when the indexed link-pin sequence
+is itself reflection-symmetric. A `K = 1` chain has one order and records no reversal reduction.
+Aadit et al. state `6!/2 = 360` orders up to reversal, but their later
+DSIM-1 pin sequence `[54, 30, 54, 26, 54]` is not reflection-symmetric. Treating reversal as
+a cost symmetry for that indexed sequence would discard distinguishable mappings. The search
+therefore evaluates `K!/2` representatives for a reflection-symmetric chain with `K >= 2`,
+the sole order for `K = 1`, and all `K!` orders for a non-symmetric chain, recording the policy.
+It refuses sizes above its explicit exact-search limit rather than presenting an unverified
+heuristic as optimal.
+
+Use: target-aware communication profiling. These are workload and clock-sensitivity proxies,
+not measured latency, a communication schedule, a hardware-frequency limit, a TSU energy
+model, an equilibrium-correctness proof, or evidence that the supplied partition is good.
+
+## EVAL-EQ-019: Supplied-Assignment Topology-Aware Potts Objective
+
+Source: Aadit et al. 2026, arXiv:2606.25313v1, Supplementary Section S5, equations S.7-S.8.
+For a supplied cluster assignment `s_i` and supplied ordered cluster labels, evaluate only
+
+```text
+H_Potts(s) = sum_((i,j) in E) abs(J_ij) * kappa(abs(s_i - s_j))
+             + lambda * sum_(q=1..K) (n_q - N/K)^2
+
+kappa(0) = 0
+kappa(1) = delta_near
+kappa(d >= 2) = delta_far
+0 < delta_near < delta_far
+lambda > 0
+```
+
+Here `s_i` is the integer position of variable `i`'s supplied partition in the supplied
+cluster order; it is not an Ising spin. The evaluator reports interaction and balance terms
+separately and performs no optimization. It uses each canonical undirected Ising edge once,
+weights it by `abs(J_ij)`, and preserves arbitrary variable and partition labels through the
+validated assignment.
+
+Use: compare already-computed partition assignments under the paper's topology-aware
+objective. It must not be described as a partitioner or a SOTA mapping algorithm.
+
+## EVAL-EQ-020: Pairwise Categorical Energy And Domain-Wall Lowering
+
+Source: Jelincic and Walker 2026, arXiv:2606.17327v1, Supplementary Note 1,
+equations S1-S20, expressed here in zero-based binary wall variables. This contract is the
+domain-neutral finite-state mathematics only. It does not adopt the paper's application model,
+sampling schedule, target-hardware parameters, or modeled energy figures.
+
+Let categorical variables have an explicit order `p = 0, ..., L-1`. Variable `p` has an
+explicit, non-empty ordered domain
+
+```text
+D_p = (d_(p,0), ..., d_(p,K_p-1)).
+```
+
+The canonical pairwise categorical energy is
+
+```text
+E(z) = offset
+     + sum_p U_p(z_p)
+     + sum_(p<r) V_(p,r)(z_p, z_r).
+```
+
+Every supplied unary table is oriented by its domain order. Every pair table is stored in
+canonical variable order `p < r`; a table supplied in reverse variable order is transposed
+exactly once. Supplying both orientations for one unordered pair is an error, not a request to
+sum duplicate interactions.
+
+For a state index `k_p` in `0, ..., K_p-1`, introduce `K_p-1` binary wall variables
+
+```text
+q_(p,i) = 1[k_p > i],      i = 0, ..., K_p-2.
+```
+
+Thus valid words are a prefix of ones followed by zeros. A reverse wall is an adjacent
+`0 -> 1` transition. With a caller-supplied finite `P > 0`, the constraint term is
+
+```text
+H_wall(q) = P * sum_p sum_(i=0..K_p-3) q_(p,i+1) * (1 - q_(p,i)).
+```
+
+It contributes exactly `P` for each reverse wall and zero for every valid word. `P` has no
+default. Positivity alone does not prove that all invalid words lie above all valid states;
+that requires a problem-specific penalty analysis. Changing `P` from `P_1` to `P_2` changes
+the energy of a fixed binary word by exactly
+
+```text
+(P_2 - P_1) * violation_count(q).
+```
+
+For a unary row written by state index as `U_p[k]`, the first-difference expansion is
+
+```text
+U_p(k_p) = U_p[0]
+         + sum_(i=0..K_p-2) (U_p[i+1] - U_p[i]) * q_(p,i).
+```
+
+For a canonically oriented pair table `V[a,b]`, define
+
+```text
+delta_p V[i,0] = V[i+1,0] - V[i,0]
+delta_r V[0,j] = V[0,j+1] - V[0,j]
+
+delta_p delta_r V[i,j]
+    = V[i+1,j+1] - V[i,j+1] - V[i+1,j] + V[i,j].
+```
+
+The exact pair expansion is
+
+```text
+V[k_p,k_r] = V[0,0]
+    + sum_i delta_p V[i,0] * q_(p,i)
+    + sum_j delta_r V[0,j] * q_(r,j)
+    + sum_i sum_j delta_p delta_r V[i,j] * q_(p,i) * q_(r,j).
+```
+
+Adding the unary bases, pair bases, original offset, finite differences, and reverse-wall
+terms produces a QUBO. The QUBO is converted through EVAL-EQ-003, so the canonical Ising sign
+and offset rules are reused rather than re-derived. For every valid categorical assignment
+`z`, its encoded binary word `q(z)` must satisfy
+
+```text
+E_categorical(z) = E_QUBO(q(z)) = E_Ising(2*q(z) - 1).
+```
+
+A singleton domain has `K_p = 1`, contributes zero wall variables, and always decodes to its
+sole category. Its unary base and any pair-table dependence are folded into the QUBO offset or
+the other variable's first differences. An all-singleton model therefore lowers to a
+zero-variable constant Ising model while preserving the complete categorical energy.
+
+The representation uses the minimum `sum_p (K_p - 1)` wall variables, but algebraic energy
+equivalence says nothing about Markov-chain behavior. Category order changes which states are
+adjacent under a one-bit move; pair-table mixed differences can densify the wall graph; and
+invalid words add new regions of state space. An exact lowering can therefore improve or
+severely worsen mixing. Its graph overhead and sampling diagnostics must be evaluated rather
+than inferred from valid-state energy equality.
+
+Use: auditable lowering of finite pairwise categorical models to the existing QUBO/Ising IR.
+It is not a penalty-selection theorem, a mixing guarantee, or a hardware-performance claim.

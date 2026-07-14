@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import random
 import sys
 import unittest
 from importlib import import_module, util
@@ -349,6 +350,58 @@ class DimodConformanceTest(unittest.TestCase):
         ]
         expected_rows = [(sample, energy) for sample, energy in zip(result.samples, result.energies)]
         self.assertCountEqual(actual_rows, expected_rows)
+
+    def test_seeded_converted_samplesets_pass_dimod_energy_oracle(self) -> None:
+        variables = tuple(f"v{index}" for index in range(4))
+        for seed in (11, 23, 47):
+            rng = random.Random(seed)
+            linear = {variable: rng.randint(-8, 8) / 4.0 for variable in variables}
+            quadratic = {
+                pair: rng.randint(-8, 8) / 4.0
+                for pair in itertools.combinations(variables, 2)
+                if rng.random() < 0.75
+            }
+            offset = rng.randint(-8, 8) / 4.0
+            qubo = {
+                **{(variable, variable): coefficient for variable, coefficient in linear.items()},
+                **quadratic,
+            }
+
+            with self.subTest(seed=seed, source="qubo", vartype="SPIN"):
+                qubo_model = compile_qubo(qubo, offset=offset, variables=variables)
+                result = SampleResult.from_model(
+                    qubo_model,
+                    list(spin_assignments(qubo_model.variables)),
+                )
+                self.dimod.testing.assert_sampleset_energies(result.to_dimod(), qubo_model.to_dimod())
+
+            with self.subTest(seed=seed, source="qubo", vartype="BINARY"):
+                binary_result = SampleResult.from_model(
+                    qubo_model,
+                    list(binary_assignments(qubo_model.variables)),
+                    vartype="BINARY",
+                )
+                binary_bqm = qubo_model.to_dimod().change_vartype(
+                    self.dimod.BINARY,
+                    inplace=False,
+                )
+                self.dimod.testing.assert_sampleset_energies(binary_result.to_dimod(), binary_bqm)
+
+            with self.subTest(seed=seed, source="ising", vartype="SPIN"):
+                ising_model = compile_ising(
+                    linear,
+                    quadratic,
+                    offset=offset,
+                    variables=variables,
+                )
+                ising_result = SampleResult.from_model(
+                    ising_model,
+                    list(spin_assignments(ising_model.variables)),
+                )
+                self.dimod.testing.assert_sampleset_energies(
+                    ising_result.to_dimod(),
+                    ising_model.to_dimod(),
+                )
 
 
 if __name__ == "__main__":

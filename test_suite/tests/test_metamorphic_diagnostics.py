@@ -151,6 +151,60 @@ class VariableRelabelTests(unittest.TestCase):
         )
         self.assertEqual(original_section, renamed_section)
 
+    def test_spin_chain_disagreement_tracks_variable_relabeling(self) -> None:
+        variables = ["a", "b", "c", "d"]
+        relabel = {"a": "w", "b": "x", "c": "y", "d": "z"}
+        left = {"a": 1, "b": 1, "c": -1, "d": -1}
+        right = {"a": 1, "b": -1, "c": 1, "d": -1}
+        samples = [left] * 20 + [right] * 20
+        renamed = [{relabel[variable]: spin for variable, spin in sample.items()} for sample in samples]
+
+        original = compute_diagnostics(
+            energy_chains=[[0.0] * 20, [0.0] * 20],
+            samples=samples,
+            variables=variables,
+        )
+        transformed = compute_diagnostics(
+            energy_chains=[[0.0] * 20, [0.0] * 20],
+            samples=renamed,
+            variables=[relabel[variable] for variable in variables],
+        )
+
+        self.assertTrue(original["chains"]["spins"]["chain_disagreement"])
+        self.assertTrue(transformed["chains"]["spins"]["chain_disagreement"])
+        self.assertEqual(original["chains"]["spins"]["offending_variables"], ["b", "c"])
+        self.assertEqual(transformed["chains"]["spins"]["offending_variables"], ["x", "y"])
+
+    def test_spin_chain_disagreement_is_gauge_invariant(self) -> None:
+        variables = ["a", "b", "c", "d"]
+        left = {"a": 1, "b": 1, "c": -1, "d": -1}
+        right = {"a": 1, "b": -1, "c": 1, "d": -1}
+        samples = [left] * 20 + [right] * 20
+        gauge = {"a": -1, "b": 1, "c": -1, "d": 1}
+        gauged = [
+            {variable: sample[variable] * gauge[variable] for variable in variables} for sample in samples
+        ]
+
+        original = compute_diagnostics(
+            energy_chains=[[0.0] * 20, [0.0] * 20],
+            samples=samples,
+            variables=variables,
+        )
+        transformed = compute_diagnostics(
+            energy_chains=[[0.0] * 20, [0.0] * 20],
+            samples=gauged,
+            variables=variables,
+        )
+
+        self.assertEqual(
+            original["chains"]["spins"]["offending_variables"],
+            transformed["chains"]["spins"]["offending_variables"],
+        )
+        self.assertEqual(
+            original["chains"]["spins"]["offending_variable_count"],
+            transformed["chains"]["spins"]["offending_variable_count"],
+        )
+
 
 class TrendingChainTests(unittest.TestCase):
     def test_trending_identical_chains_yield_large_rhat(self) -> None:

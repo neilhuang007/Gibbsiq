@@ -1,6 +1,6 @@
 # Reference Index
 
-Research snapshot: 2026-07-11.
+Research snapshot: 2026-07-14.
 
 ## Start Here
 
@@ -39,6 +39,24 @@ Research snapshot: 2026-07-11.
   or arXiv id on demand; [`tools/transcribe_pdf.py`](../tools/transcribe_pdf.py)
   extracts text from a PDF for comparison. Extraction does not establish transcription
   fidelity; page-scoped claims still require comparison with the PDF.
+
+### 2026-07-14 Primary Additions
+
+- [`aadit-2026-million-pbit.pdf`](05-theory/papers/aadit-2026-million-pbit.pdf) —
+  primary arXiv preprint on a distributed digital multi-FPGA p-bit computer and
+  boundary-communication behavior; it is probabilistic-computer evidence, not Extropic
+  TSU-silicon evidence (`aadit2026millionpbit`).
+- [`jelincic-2026-codon-optimization.pdf`](01-architecture/papers/jelincic-2026-codon-optimization.pdf) —
+  Extropic-affiliated arXiv preprint on codon optimization and modeled thermodynamic-hardware
+  energy; its projections are not end-to-end production-TSU measurements
+  (`jelincic2026codon`).
+- [`chowdhury-2025-adaptive-parallel-tempering-icm.pdf`](05-theory/papers/chowdhury-2025-adaptive-parallel-tempering-icm.pdf) —
+  local arXiv v3 for adaptive parallel tempering with isoenergetic cluster moves and
+  probabilistic-computer optimization; the canonical citation uses the peer-reviewed
+  Nature Communications version of record (`chowdhury2025apticm`).
+- [`yao-2026-sparse-fpga-quantized-simulated-bifurcation.pdf`](01-architecture/papers/yao-2026-sparse-fpga-quantized-simulated-bifurcation.pdf) —
+  peer-reviewed Nature Communications article-in-press on a digital FPGA quantized
+  simulated-bifurcation machine; it is a comparator, not TSU evidence (`yao2026qsb`).
 
 ## Rules for Future Agents
 

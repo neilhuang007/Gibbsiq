@@ -12,10 +12,11 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from gibbsiq import SamplerConfig, color_blocks, compile_ising  # noqa: E402
+from gibbsiq import BlockPartition, SamplerConfig, color_blocks, compile_ising  # noqa: E402
 from gibbsiq.thrml_runtime import (  # noqa: E402
     _Lowering,
     _advance_block_state,
+    _local_sweep_accounting,
     _reads_by_chain,
     _replica_exchange_log_ratio,
     _replica_exchange_pairs,
@@ -155,9 +156,73 @@ class RuntimeMathContractTests(unittest.TestCase):
                 self.assertEqual(sum(allocation), total)
                 self.assertLessEqual(max(allocation) - min(allocation), 1)
 
+    def test_fixed_beta_sweep_accounting_includes_discarded_vectorized_draw(self) -> None:
+        config = SamplerConfig(n_warmup=5, steps_per_sample=3, num_chains=3)
+        accounting = _local_sweep_accounting(
+            config,
+            mode="fixed_beta",
+            reads_by_chain=(3, 2, 0),
+            backend_generated_reads_by_chain=(3, 3, 0),
+            beta_count=1,
+        )
+
+        self.assertEqual(accounting["executed_warmup_sweeps_by_chain"], [5, 5, 0])
+        self.assertEqual(accounting["retained_target_beta_sweeps_by_chain"], [9, 6, 0])
+        self.assertEqual(accounting["executed_target_beta_sweeps_by_chain"], [9, 9, 0])
+        self.assertEqual(accounting["discarded_target_beta_sweeps_by_chain"], [0, 3, 0])
+        self.assertEqual(accounting["executed_total_sweeps"], 28)
+
+    def test_parallel_tempering_accounting_counts_every_replica(self) -> None:
+        config = SamplerConfig(n_warmup=5, steps_per_sample=3, num_chains=3)
+        accounting = _local_sweep_accounting(
+            config,
+            mode="parallel_tempering",
+            reads_by_chain=(3, 2, 0),
+            backend_generated_reads_by_chain=(3, 2, 0),
+            beta_count=3,
+        )
+
+        self.assertEqual(accounting["executed_warmup_sweeps_by_chain"], [15, 15, 0])
+        self.assertEqual(accounting["executed_target_beta_sweeps_by_chain"], [9, 6, 0])
+        self.assertEqual(accounting["executed_auxiliary_beta_sweeps_by_chain"], [18, 12, 0])
+        self.assertEqual(accounting["discarded_target_beta_sweeps"], 0)
+        self.assertEqual(accounting["executed_total_sweeps"], 75)
+
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class RuntimeBackendContractTests(unittest.TestCase):
+    def test_first_fixed_beta_read_advances_before_observation(self) -> None:
+        model = compile_ising({"s": 1.0})
+        config = SamplerConfig(
+            beta=20.0,
+            n_warmup=0,
+            steps_per_sample=100,
+            num_chains=4,
+            seed=0,
+            init="all_up",
+        )
+
+        result = THRMLSampler(config).sample(model, num_reads=1)
+
+        self.assertEqual(dict(result.samples[0]), {"s": -1})
+        accounting = result.traces["local_sweep_accounting"]
+        self.assertEqual(accounting["first_retained_read_target_sweeps"], 100)
+        self.assertEqual(accounting["executed_target_beta_sweeps"], 100)
+        self.assertEqual(accounting["active_chains"], 1)
+        self.assertEqual(accounting["backend_generated_reads_by_chain"], [1, 0, 0, 0])
+        self.assertEqual(accounting, result.metadata["local_sweep_accounting"])
+
+    def test_invalid_empty_block_fails_at_gibbsiq_boundary(self) -> None:
+        model = compile_ising({"s": 1.0})
+        bad_partition = BlockPartition(blocks=(("s",), ()))
+
+        with self.assertRaisesRegex(ValueError, "empty blocks.*1"):
+            THRMLSampler(SamplerConfig()).sample(
+                model,
+                num_reads=1,
+                partition=bad_partition,
+            )
+
     def test_offset_only_model_fixed_beta_preserves_result_contract(self) -> None:
         model = compile_ising({}, offset=-3.5)
 
@@ -170,6 +235,7 @@ class RuntimeBackendContractTests(unittest.TestCase):
         self.assertEqual(result.traces["distance_to_best"], [[0, 0], [0]])
         self.assertNotIn("parallel_tempering", result.traces)
         self.assertEqual(result.metadata["local_transition_rng"], "not_used_constant_model")
+        self.assertEqual(result.traces["local_sweep_accounting"]["executed_total_sweeps"], 0)
 
     def test_offset_only_model_uses_exact_deterministic_shortcut(self) -> None:
         model = compile_ising({}, offset=4.25)
@@ -241,6 +307,11 @@ class RuntimeBackendContractTests(unittest.TestCase):
         self.assertLessEqual(observed_up, upper_count)
         self.assertEqual(result.traces["parallel_tempering"]["swap_attempts"], num_reads)
         self.assertTrue(any(event["accepted"] for event in result.traces["parallel_tempering"]["swap_trace"]))
+        accounting = result.traces["local_sweep_accounting"]
+        self.assertEqual(accounting["executed_target_beta_sweeps"], num_reads)
+        self.assertEqual(accounting["executed_auxiliary_beta_sweeps"], num_reads)
+        self.assertEqual(accounting["executed_warmup_sweeps"], 16)
+        self.assertEqual(accounting, result.metadata["local_sweep_accounting"])
 
     def test_float32_rejects_unstable_accumulation(self) -> None:
         if str(jnp.asarray(1.0).dtype) != "float32":

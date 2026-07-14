@@ -181,6 +181,9 @@ def validate_partition(model: IsingModel, partition: BlockPartition) -> None:
     Each variable must appear in exactly one block; no block may contain a
     coupled pair.
     """
+    empty_blocks = [index for index, block in enumerate(partition.blocks) if not block]
+    if empty_blocks:
+        raise ValueError(f"partition contains empty blocks at indices {empty_blocks!r}")
     placed = [variable for block in partition.blocks for variable in block]
     if len(placed) != len(set(placed)):
         raise ValueError("partition places at least one variable in multiple blocks")
