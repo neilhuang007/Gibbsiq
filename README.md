@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Combinatorial optimization problems such as maximum cut, number partitioning, and the travelling salesman problem can be expressed as quadratic unconstrained binary optimization (QUBO) or as ground-state search over an Ising energy function. THRML provides a JAX-based block-sampling substrate that its official documentation describes as a GPU simulator for programs intended for future Extropic hardware. Gibbsiq is the optimization and audit layer above that substrate. The implemented core compiles QUBO, Ising, and binary quadratic models (BQM), lowers the canonical Ising representation into THRML programs, records raw traces and diagnostics, runs a verified opt-in parallel-tempering path, and verifies benchmark witnesses. Inspector and classical-baseline runners remain absent.
+Combinatorial optimization problems such as maximum cut, number partitioning, and the travelling salesman problem can be expressed as quadratic unconstrained binary optimization (QUBO) or as ground-state search over an Ising energy function. THRML provides a JAX-based block-sampling substrate that its official documentation describes as a GPU simulator for programs intended for future Extropic hardware. Gibbsiq is the optimization and audit layer above that substrate. The implemented core compiles QUBO, Ising, and binary quadratic models (BQM), lowers the canonical Ising representation into THRML programs, records raw traces and diagnostics, runs a verified opt-in parallel-tempering path, independently checks small Gibbs kernels, verifies benchmark witnesses, and emits artifact-only Inspector summaries. Classical-baseline runners and full Inspector/HTML integration remain absent.
 
 The project is THRML-first. Diagnostics are required, but the execution target is THRML. The intended contribution is a reusable optimization stack with five parts: audited model conversion, graph-aware block construction, schedule and seed control, multi-chain trace capture, and benchmark oracles that recompute objective values from witness states. Positioned by analogy, Gibbsiq is to THRML what Ocean and dimod are to D-Wave and what ArviZ is to Stan and PyMC: the ingestion, runtime-contract, diagnostics, and independent-verification layer above the sampling substrate. The general programming layer for thermodynamic sampling units is THRML itself; Gibbsiq occupies the optimization and trust layer above it.
 
@@ -99,15 +99,16 @@ QUBO/BQM/Ising
 -> Inspector / benchmark report
 ```
 
-Gibbsiq does not currently claim that THRML is faster than classical or GPU baselines, and it does not treat R-hat, ESS, or diversity as proof of optimality. The implemented scope comprises conversion, fixed-beta and parallel-tempering runtime lowering, graph-colored blocks, schedule and seed controls, raw multi-chain traces, diagnostics, witness-verified benchmark scoring, and the partial ThermoMap analysis surface described above. Inspector, general constraint encoding, automatic physical mapping, calibrated cost models, and classical-baseline runners remain to be built.
+Gibbsiq does not currently claim that THRML is faster than classical or GPU baselines, and it does not treat R-hat, ESS, or diversity as proof of optimality. The implemented scope comprises conversion, fixed-beta and parallel-tempering runtime lowering, graph-colored blocks, schedule and seed controls, raw multi-chain traces, diagnostics, witness-verified benchmark scoring, an independent small-state verifier, a complete provenanced target-fact schema, an artifact-only Inspector core, and the partial ThermoMap analysis surface described above. General constraint encoding, automatic physical mapping, calibrated cost models, classical-baseline runners, and full Inspector/HTML integration remain to be built.
 
-The intended Stage 4 top-level interface is shown below. `Inspector` is not available in the
-current package.
+The implemented Stage 4 core is artifact-only. Browser display and unified HTML/CLI integration
+remain future work.
 
 ```python
 model  = compile_qubo(problem)
 result = THRMLSampler(config).sample(model, num_reads=128)
-Inspector.from_result(result).show()
+report = Inspector.from_result(result, model=model)
+print(report.to_markdown())
 ```
 
 ## 4. Usage and Installation
@@ -141,11 +142,17 @@ The current public ThermoMap analysis surface remains under `gibbsiq`:
 
 ```python
 from gibbsiq import (
+    GridTopology,
+    Inspector,
+    ReferenceGibbsSampler,
+    ReferenceSamplerConfig,
     FixedPointSpec,
     TSUSpec,
     analyze_quantization,
     assess_target_admissibility,
+    build_exact_transition_kernel,
     exact_boltzmann_distribution,
+    verify_transition_kernel,
 )
 ```
 

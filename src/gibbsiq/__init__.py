@@ -44,12 +44,38 @@ from gibbsiq.exact_distribution import (
     compare_boltzmann_distributions,
     exact_boltzmann_distribution,
 )
-from gibbsiq.hardware import FixedPointSpec, ParameterProvenance, TSUSpec
+from gibbsiq.hardware import (
+    CommunicationSpec,
+    FixedPointSpec,
+    HostTransferSpec,
+    ParameterProvenance,
+    PhysicalQuantity,
+    ProgrammingSpec,
+    TSUSpec,
+)
 from gibbsiq.hardware_assessment import HardwareAssessment, assess_target_admissibility
+from gibbsiq.inspector import Inspector
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
 from gibbsiq.quantization import QuantizationAnalysis, analyze_quantization
+from gibbsiq.reference_sampler import (
+    ReferenceGibbsSampler,
+    ReferenceSampleResult,
+    ReferenceSamplerConfig,
+    ReferenceTransitionEvent,
+)
 from gibbsiq.result import ResultVartype, SampleResult
 from gibbsiq.thrml_runtime import SamplerConfig, THRMLSampler
+from gibbsiq.topology import ExplicitTopology, GridTopology
+from gibbsiq.verification import (
+    EmpiricalInterval,
+    EmpiricalVerificationReport,
+    ExactTransitionKernel,
+    TransitionVerificationReport,
+    build_exact_transition_kernel,
+    verify_empirical_distribution,
+    verify_transition_kernel,
+    verify_transition_matrix,
+)
 
 # package version; pyproject.toml reads it through [tool.setuptools.dynamic].
 __version__ = "0.1.0"
@@ -59,26 +85,42 @@ __all__ = [
     "CategoricalModel",
     "ChainCommunicationProfile",
     "ChainOrderSearchResult",
+    "CommunicationSpec",
     "DistributionComparison",
     "DomainWallEncoding",
+    "EmpiricalInterval",
+    "EmpiricalVerificationReport",
     "ExactDistribution",
     "ExactDistributionNumericalError",
+    "ExactTransitionKernel",
+    "ExplicitTopology",
     "FixedPointSpec",
+    "GridTopology",
     "HardwareAssessment",
+    "HostTransferSpec",
+    "Inspector",
     "IsingModel",
     "IsoenergeticClusterMove",
     "ParameterProvenance",
+    "PhysicalQuantity",
     "PottsObjectiveEvaluation",
+    "ProgrammingSpec",
     "QuantizationAnalysis",
+    "ReferenceGibbsSampler",
+    "ReferenceSampleResult",
+    "ReferenceSamplerConfig",
+    "ReferenceTransitionEvent",
     "ResultVartype",
     "SampleResult",
     "SamplerConfig",
     "THRMLSampler",
     "TSUSpec",
+    "TransitionVerificationReport",
     "__version__",
     "analyze_quantization",
     "assess_target_admissibility",
     "binary_to_spin",
+    "build_exact_transition_kernel",
     "candidate_from_result",
     "chain_flags",
     "chain_section",
@@ -112,5 +154,8 @@ __all__ = [
     "split_rhat",
     "state_counts",
     "validate_partition",
+    "verify_empirical_distribution",
     "verify_optimum_claim",
+    "verify_transition_kernel",
+    "verify_transition_matrix",
 ]
