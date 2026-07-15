@@ -1,0 +1,59 @@
+{
+  "accessed_on": "2026-07-15",
+  "sources": [
+    {
+      "classification_boundary": "Circuit RNG behavior is measured in the paper; complete-cell energy and full-system energy are modeled. The artifact labels 2e-15 joule per cell update as modeled and 1e-7 second as inferred from RNG autocorrelation.",
+      "identifier": "doi:10.1038/s44335-026-00075-3",
+      "local_path": "reference/01-architecture/papers/jelincic-2025-probabilistic-hardware-architecture.pdf",
+      "role": "primary Extropic architecture and physical-model source",
+      "sha256": "940e61b13e9387d05c9380249ad3694f32cd07b18157cbf789d82888eee6b696",
+      "target_defaults_adopted": false,
+      "url": "https://www.nature.com/articles/s44335-026-00075-3"
+    },
+    {
+      "classification_boundary": "Modeled workload evidence from an Extropic-affiliated preprint; no topology, timing, energy, or coefficient value becomes a target default.",
+      "identifier": "arXiv:2606.17327v1",
+      "local_path": "reference/01-architecture/papers/jelincic-2026-codon-optimization.pdf",
+      "role": "codon-workload and domain-wall context",
+      "sha256": "81b73f3bc67e9b323b90cb27763701b7b529d2ee5fd753735464e4385b0066f9",
+      "target_defaults_adopted": false,
+      "url": "https://arxiv.org/abs/2606.17327"
+    },
+    {
+      "classification_boundary": "Measured digital FPGA p-bit comparator evidence; never Extropic TSU measurement evidence.",
+      "identifier": "arXiv:2606.25313v1",
+      "local_path": "reference/05-theory/papers/aadit-2026-million-pbit.pdf",
+      "role": "fixed-point notation and distributed-boundary comparator",
+      "sha256": "56475ad7733bc5eb8e58e4435b7c549e2d1e26c76ede406d693c8c273949f268",
+      "target_defaults_adopted": false,
+      "url": "https://arxiv.org/abs/2606.25313"
+    },
+    {
+      "classification_boundary": "Algorithmic and simulation comparator for update policy, delay-to-update ratio, time-multiplexing, and DAC precision; never Extropic TSU evidence.",
+      "identifier": "doi:10.1038/s41598-026-47285-0",
+      "local_path": null,
+      "role": "state-of-the-art non-Extropic p-bit architecture sensitivity input",
+      "sha256": null,
+      "target_defaults_adopted": false,
+      "url": "https://www.nature.com/articles/s41598-026-47285-0"
+    },
+    {
+      "classification_boundary": "Official product roadmap; it supplies no stable topology, precision, host-transfer, programming, or reprogramming contract used as a default here.",
+      "identifier": "Extropic hardware roadmap",
+      "local_path": null,
+      "role": "current official product-status boundary",
+      "sha256": null,
+      "target_defaults_adopted": false,
+      "url": "https://extropic.ai/hardware"
+    },
+    {
+      "classification_boundary": "Official simulator documentation supports arbitrary graph exploration and block-Gibbs semantics; it is not a physical target specification.",
+      "identifier": "THRML documentation",
+      "local_path": null,
+      "role": "official software and topology-simulation boundary",
+      "sha256": null,
+      "target_defaults_adopted": false,
+      "url": "https://docs.thrml.ai/en/latest/architecture/"
+    }
+  ]
+}

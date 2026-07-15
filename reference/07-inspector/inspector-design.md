@@ -1,7 +1,9 @@
 # Inspector Design
 
-Status: design contract only. No production `Inspector` class exists at the verified
-`c62169e` snapshot.
+Status: implementation candidate added on 2026-07-15 in `src/gibbsiq/inspector.py` with
+focused coverage in `test_suite/tests/test_inspector.py`. The core remains in review until the
+coordinator completes the independent audit and integration gates. HTML, CLI, comparison, and
+compiled-manifest integration remain assigned to `TM-REP-001`.
 
 ## Authority And Sources
 
@@ -155,6 +157,32 @@ recomputations from those facts:
 
 The core does not invent warning thresholds. It preserves the distinction in the equation
 audit between sampler-health flags, observations, and `not_enough_data`/unavailable states.
+
+#### Summary Schema And Label Encoding
+
+The implementation candidate emits schema `gibbsiq.inspector.summary.v1`. Its top-level fields
+are `artifact`, `stored_energies`, `best_row`, `model_association`, `traces`, `diagnostics`,
+`warnings`, `metadata`, and `availability`. Stored traces, diagnostics, flags, and metadata
+carry their `result.*` source path. Missing data and every deferred integration section carry
+`status = "not_available"` and a concrete reason.
+
+Variable assignments are positional. `artifact.variable_order` and
+`model_association.variable_order` contain ordered `{position, label}` records, and
+`best_row.sample_values` contains values in that order. Built-in immutable labels use tagged,
+lossless JSON encodings: `none`, `bool`, decimal-string `int`, normalized binary64-hex `float`,
+`str`, base64 `bytes`, recursively encoded `tuple`, and sorted encoded `frozenset`. An arbitrary
+custom label uses `kind = "opaque"` plus its module-qualified Python type. The report therefore
+retains the exact checked position while excluding object identity and process-specific
+`repr`. Two opaque instances of the same type are distinguished by their positions in the raw
+`SampleResult`, which remains the source artifact; the summary does not claim to reconstruct
+opaque Python objects.
+
+Non-string keys in auxiliary stored evidence use a sorted `mapping_entries_v1` representation.
+Bytes use base64, sets use sorted item encodings, non-finite floats use explicit tagged values,
+and other opaque Python values retain only their module-qualified type. This keeps JSON finite
+and deterministic without presenting the report as a replacement for raw evidence. Markdown
+embeds the complete JSON under a fence longer than any backtick run in the payload, so a stored
+label cannot terminate the evidence block.
 
 ### Core Artifacts And Gates
 

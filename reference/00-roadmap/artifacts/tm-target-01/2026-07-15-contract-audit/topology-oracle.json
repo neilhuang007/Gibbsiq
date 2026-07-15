@@ -1,0 +1,31 @@
+{
+  "explicit_cycle_five": {
+    "adjacency": {
+      "0": [1, 4],
+      "1": [0, 2],
+      "2": [1, 3],
+      "3": [2, 4],
+      "4": [0, 3]
+    },
+    "capacity": 5,
+    "distance_0_to_3": 2,
+    "edges": [[0, 1], [0, 4], [1, 2], [2, 3], [3, 4]],
+    "maximum_degree": 2
+  },
+  "grid_3_by_4": {
+    "capacity": 12,
+    "distance_negative_2_7_to_0_10": 5,
+    "edge_count": 17,
+    "maximum_degree": 4,
+    "neighbor_offsets": [[-1, 0], [0, -1], [0, 1], [1, 0]],
+    "origin": [-2, 7],
+    "shape": [3, 4]
+  },
+  "method": {
+    "explicit_graphs": "enumerate each selected undirected edge mask, construct adjacency outside gibbsiq.topology, and run independent breadth-first search",
+    "explicit_simple_graph_count_through_five_nodes": 1099,
+    "grid_case_count": 48,
+    "grids": "enumerate Cartesian-product coordinates and offset-displaced neighbors outside gibbsiq.topology, then run independent breadth-first search",
+    "production_summary_values_consumed": false
+  }
+}

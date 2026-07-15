@@ -1,0 +1,48 @@
+{
+  "algorithm": "sha256",
+  "base_commit": "b15b0a13e6c5ac20bf650665ec667c815e68736c",
+  "entries": [
+    {
+      "bytes": 501,
+      "path": "reference/00-roadmap/artifacts/tm-target-01/2026-07-15-contract-audit/environment.json",
+      "sha256": "b77e5b712039fc9314f2662d866409951dd94af5d7d67e19eb03909c11d0a315"
+    },
+    {
+      "bytes": 3175,
+      "path": "reference/00-roadmap/artifacts/tm-target-01/2026-07-15-contract-audit/source-manifest.json",
+      "sha256": "339e53b956105b71ac98a88aa73465a363e74914dfd6f125c60389ea50cb2db2"
+    },
+    {
+      "bytes": 4821,
+      "path": "reference/00-roadmap/artifacts/tm-target-01/2026-07-15-contract-audit/target-fixtures.json",
+      "sha256": "f8f1218cc80cc66cdda0aade5e4b83f0286a9474e22d9423884b7611b8e63541"
+    },
+    {
+      "bytes": 981,
+      "path": "reference/00-roadmap/artifacts/tm-target-01/2026-07-15-contract-audit/topology-oracle.json",
+      "sha256": "075390c1b67c719cc72aabbe95afd803677244bf2936ff8c9346aba231d2b805"
+    },
+    {
+      "bytes": 3250,
+      "path": "reference/00-roadmap/artifacts/tm-target-01/2026-07-15-contract-audit/verification.json",
+      "sha256": "a2017ac0598cda57e7bac1e558fcba17ac660633489fd3a433ddf6f85bd5c4bd"
+    },
+    {
+      "bytes": 24915,
+      "path": "src/gibbsiq/hardware.py",
+      "sha256": "b467a34361c0642532cf22e0040fcd806cdbb34b8556c339999fd4b642d4e23b"
+    },
+    {
+      "bytes": 13699,
+      "path": "src/gibbsiq/topology.py",
+      "sha256": "166eeb6e0e53e2e26e618550b8959c50c0813c096596c422041756aa2a52c2c3"
+    },
+    {
+      "bytes": 22366,
+      "path": "test_suite/tests/test_target_spec.py",
+      "sha256": "758a9e0517bec1c5a96d787a5a59a1186855fa9c7e52966299f30b6203d7c221"
+    }
+  ],
+  "manifest_self_hash": null,
+  "note": "The manifest does not hash itself. Recompute every entry from the repository root."
+}

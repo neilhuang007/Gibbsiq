@@ -1,0 +1,89 @@
+{
+  "best_energy": 1.75,
+  "best_sample": {
+    "alpha": -1,
+    "beta": 1
+  },
+  "diagnostics": {
+    "flags": [
+      "chain_disagreement"
+    ],
+    "future_metric": {
+      "status": "experimental",
+      "value": 17
+    }
+  },
+  "energies": [
+    4.25,
+    1.75,
+    5.75,
+    5.25
+  ],
+  "interaction_energies": [
+    0.0,
+    -2.5,
+    1.5,
+    1.0
+  ],
+  "metadata": {
+    "artifact_case": "gq-inspect-01",
+    "backend": "stored-artifact-only",
+    "best_sample_selection_basis": "offset-free Ising interaction energy",
+    "conversion_offset": 4.25,
+    "input_offset": 4.25,
+    "reported_energy_collision_count": 0,
+    "seed": 481,
+    "source_format": "ising",
+    "source_model_format": "ising",
+    "timing": {
+      "sample_seconds": 0.125
+    },
+    "variable_order": [
+      "alpha",
+      "beta"
+    ],
+    "versions": {
+      "gibbsiq": "0.1.0"
+    }
+  },
+  "num_states": null,
+  "samples": [
+    {
+      "alpha": 1,
+      "beta": 1
+    },
+    {
+      "alpha": -1,
+      "beta": 1
+    },
+    {
+      "alpha": 1,
+      "beta": -1
+    },
+    {
+      "alpha": -1,
+      "beta": -1
+    }
+  ],
+  "traces": {
+    "chain_labels": [
+      "alpha",
+      "beta"
+    ],
+    "energy": [
+      [
+        6.0,
+        4.0
+      ],
+      [
+        5.0,
+        4.0
+      ]
+    ]
+  },
+  "variables": [
+    "alpha",
+    "beta"
+  ],
+  "vartype": "SPIN"
+}

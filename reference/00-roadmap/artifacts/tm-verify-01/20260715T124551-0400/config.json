@@ -1,0 +1,40 @@
+{
+  "empirical_interval": {
+    "familywise_confidence": 0.99,
+    "method": "Bonferroni-Hoeffding",
+    "sampling_design": "one retained state per independently seeded chain"
+  },
+  "main_empirical": {
+    "beta": 0.8,
+    "initialization": "all_up",
+    "model": {
+      "linear": {
+        "s": 0.35
+      },
+      "offset": 11.0
+    },
+    "n_warmup": 0,
+    "sample_count": 2000,
+    "seed": 20260715,
+    "steps_per_sample": 1,
+    "update_schedule": "systematic"
+  },
+  "repeated_seed_sensitivity": {
+    "sample_counts": [
+      200,
+      800
+    ],
+    "seeds": [
+      9100,
+      9101,
+      9102,
+      9103,
+      9104
+    ]
+  },
+  "reproduction_command": "$env:PYTHONPATH='src'; python reference/00-roadmap/artifacts/tm-verify-01/20260715T124551-0400/generate_artifact.py",
+  "run_id": "20260715T124551-0400",
+  "state_cap": 8,
+  "task": "TM-VERIFY-01",
+  "transition_tolerance": 1e-12
+}

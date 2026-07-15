@@ -4,21 +4,26 @@
 
 | Field | Value |
 | --- | --- |
-| Observed date | 2026-07-14 |
+| Observed date | 2026-07-15 |
 | Verified implementation base | `c62169e` (`feat: add audited ThermoMap analysis foundation`) |
 | Verified control-plane documentation | `21c2a71` (`docs: add autonomous ThermoMap execution roadmap`) |
 | Implementation score at base | 8/20 ThermoMap rows = 40%, using the equal-row audit in `thermomap-plan-status-2026-07-14.md` |
 | Public backend | THRML JAX simulator; no production TSU artifact is present |
 | Control-plane state | `TM-GOV-001` is `complete`; `21c2a71` verifies the control documents and this ledger transition closes the task |
 | Active governance owner | none |
-| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `ready`; claim the deterministic capacity prefix below |
-| Scratch state observed before this pass | Untracked `tmp/`; excluded from the implementation commit |
+| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `verified` implementation candidates; worker ownership is released and coordinator `/root` owns integration |
+| Scratch state observed before this pass | Untracked `Project_GOAL.md` supplied as task input; excluded from the implementation commit |
 
 The implementation base has a recorded full-suite result of 457 tests in 120.615 seconds at
 the environment captured by
 `reference/research-journal/2026-07-14-thermomap-final-integration-verification.md`. This is
 historical evidence tied to that command and commit. Every later completion records the count,
 skips, duration, dependencies, and environment from the command actually run.
+
+During the 2026-07-15 implementation pass, all three lanes advanced through `claimed`,
+`in_progress`, and `review` before the coordinator set the current `verified` state. The worker
+claims and review corrections are preserved in the dated task and integration journals; the
+intermediate dirty-worktree states are not separate Git commits.
 
 ## Source Control Rules
 
@@ -39,9 +44,10 @@ prose. Reconcile a conflict before selecting a feature task.
 | `TM-FND-001` | `complete` | none | Canonical model, runtime, diagnostics, and witness oracle are verified at `c62169e`. |
 | `TM-FND-002` | `complete` | none | Target-analysis and finite-state foundation is verified at `c62169e`. |
 | `TM-GOV-001` | `complete` | none | Control documents, links, task graph, reader test, and evidence were verified in `21c2a71`; this ledger transition closes the task. |
-| `TM-VERIFY-01` | `ready` | `TM-FND-001`, `TM-GOV-001` | Both dependencies are complete; owner is unclaimed. |
-| `TM-TARGET-01` | `ready` | `TM-FND-002`, `TM-GOV-001` | Both dependencies are complete; owner is unclaimed. |
-| `GQ-INSPECT-01` | `ready` | `TM-FND-001`, `TM-GOV-001` | Both dependencies are complete; owner is unclaimed. |
+| `TM-VERIFY-01` | `verified` | `TM-FND-001`, `TM-GOV-001` | Focused, independent-oracle, artifact, static, and final 518-test repository gates pass; awaiting the feature commit. |
+| `TM-TARGET-01` | `verified` | `TM-FND-002`, `TM-GOV-001` | Focused, exhaustive-topology, artifact, compatibility, static, and final 518-test repository gates pass; awaiting the feature commit. |
+| `GQ-INSPECT-01` | `verified` | `TM-FND-001`, `TM-GOV-001` | Focused, independent fingerprint/energy, artifact, static, and final 518-test repository gates pass; awaiting the feature commit. |
+| `TM-IR-001` | `dependency_blocked` | `TM-VERIFY-01` | The implementation is verified but the dependency becomes `complete` only in the post-feature ledger transition. |
 
 ## Historical Governance Closure — `TM-GOV-001`
 
@@ -90,13 +96,13 @@ Worker-capacity selection is deterministic after that transition:
 This is a prefix rule. Reconcile an earlier task that ceases to be `ready` before claiming a
 later lane. Each worker owns one bounded task, and each lane remains serial.
 
-## Next Parallel-Safe Coding Lanes
+## Verified First-Frontier Commit Candidate
 
 ### `TM-VERIFY-01` — Independent CPU Gibbs And Exact Kernel Verifier
 
-- Gate/state: M1 compiler kernel; `ready`.
+- Gate/state: M1 compiler kernel; `verified`.
 - Dependencies: `TM-FND-001`, `TM-GOV-001`.
-- Owner: unclaimed.
+- Owner: none; implementation worker `/root/tm_verify_01`, coordinator reviewer `/root`.
 - Blocker: none; both dependencies are complete.
 - Objective: add a THRML-independent seeded Gibbs reference and capped transition,
   stationarity, detailed-balance, and empirical-interval verification.
@@ -126,15 +132,16 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 - Acceptance commands: focused discovery with patterns `test_reference_sampler.py` and
   `test_statistical_verifier.py`, followed by the shared acceptance commands below.
 - Journal target: `reference/research-journal/YYYY-MM-DD-tm-verify-01.md`.
-- Last verified: governance inputs supporting readiness were verified in `21c2a71`; this
-  ledger transition marks the task `ready`; task-specific implementation evidence and tests
-  have not yet run.
+- Last verified: 2026-07-15 coordinator run passed 10 sampler tests, 20 verifier tests, the
+  final 518-test suite with 0 skips in 108.136 seconds, Ruff, format, mypy, Markdown math, and
+  diff checks. Seven manifest-covered files rehashed successfully; manifest SHA-256 is
+  `7c203e5672a3d8ff1f976ee163778a43f877131e2f452f9362ba7ad20008e253`.
 
 ### `TM-TARGET-01` — Complete Provenanced Target Specification
 
-- Gate/state: M1 compiler kernel; `ready`.
+- Gate/state: M1 compiler kernel; `verified`.
 - Dependencies: `TM-FND-002`, `TM-GOV-001`.
-- Owner: unclaimed.
+- Owner: none; implementation worker `/root/tm_target_01`, coordinator reviewer `/root`.
 - Blocker: none; both dependencies are complete.
 - Objective: complete the immutable target contract without inventing Z1 defaults.
 - Sources: `src/gibbsiq/hardware.py`, `src/gibbsiq/hardware_assessment.py`,
@@ -165,15 +172,17 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 - Acceptance commands: focused discovery with patterns `test_target_spec.py`,
   `test_hardware_specs.py`, and `test_hardware_assessment.py`, followed by the shared commands.
 - Journal target: `reference/research-journal/YYYY-MM-DD-tm-target-01.md`.
-- Last verified: governance inputs supporting readiness were verified in `21c2a71`; this
-  ledger transition marks the task `ready`; task-specific complete-target evidence and tests
-  have not yet run.
+- Last verified: 2026-07-15 coordinator run passed 15 target tests, 32 nearest hardware tests,
+  exhaustive independent enumeration of 48 grids and all 1,099 simple graphs through five
+  nodes, the final 518-test suite with 0 skips in 108.136 seconds, and all static gates. Eight
+  manifest entries rehashed successfully; manifest SHA-256 is
+  `5fc6a3a32087561936dff69beebcc619d28cbee2e0bb0b3ae220a5b7121e94df`.
 
 ### `GQ-INSPECT-01` — Artifact-Only Inspector Core
 
-- Gate/state: M2 software MVP; `ready`.
+- Gate/state: M2 software MVP; `verified`.
 - Dependencies: `TM-FND-001`, `TM-GOV-001`.
-- Owner: unclaimed.
+- Owner: none; implementation worker `/root/gq_inspect_01`, coordinator reviewer `/root`.
 - Blocker: none; both dependencies are complete.
 - Objective: implement `Inspector.from_result(result, *, model: IsingModel | None = None)` as
   a deterministic consumer of stored `SampleResult` artifacts without rerunning THRML.
@@ -215,9 +224,10 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 - Acceptance commands: focused discovery with pattern `test_inspector.py`, followed by the
   shared acceptance commands below.
 - Journal target: `reference/research-journal/YYYY-MM-DD-gq-inspect-01.md`.
-- Last verified: governance inputs supporting readiness were verified in `21c2a71`; this
-  ledger transition marks the task `ready`; task-specific Inspector implementation evidence
-  and tests have not yet run.
+- Last verified: 2026-07-15 coordinator run passed 15 Inspector tests, public API integration,
+  the final 518-test suite with 0 skips in 108.136 seconds, and all static gates. Six
+  manifest-covered files rehashed successfully; manifest SHA-256 is
+  `7aae3476248a9483bfdf9b4f5de7489bdd94112859170a695f1d85cf1f44804e`.
 
 ## Shared Acceptance Commands
 

@@ -195,7 +195,8 @@ IR, provenanced target description, validation and lowering passes, partitioning
 placement/routing, non-ideality verification, and a quality-adjusted roofline. The autonomous
 implementation roadmap is authoritative for its work packages and dependencies.
 
-Target API the whole stack converges on; `Inspector` remains absent from the current package:
+Target API the whole stack converges on; the artifact-only `Inspector.from_result` core is
+implemented, while `show()` and unified report integration remain future work:
 
 ```python
 model  = compile_qubo(problem)

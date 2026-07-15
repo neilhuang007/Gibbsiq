@@ -1,0 +1,10 @@
+{
+  "boundary_note": "Serialization is included only in wall time. Sampler results omit timing so identical seeds remain byte-for-byte comparable in memory.",
+  "clock": "time.perf_counter",
+  "compile_seconds": 0.00018999999156221747,
+  "diagnostics_seconds": 0.018333699990762398,
+  "kernel_construction_seconds": 8.749999688006938e-05,
+  "sample_seconds": 0.11052940000081435,
+  "tuning_seconds": 0.0,
+  "wall_seconds_before_environment_and_manifest": 0.18077880000055302
+}

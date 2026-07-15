@@ -14,26 +14,47 @@ from gibbsiq import (  # noqa: E402
     CategoricalModel,
     ChainCommunicationProfile,
     ChainOrderSearchResult,
+    CommunicationSpec,
     DistributionComparison,
     DomainWallEncoding,
+    EmpiricalInterval,
+    EmpiricalVerificationReport,
     ExactDistribution,
     ExactDistributionNumericalError,
+    ExactTransitionKernel,
+    ExplicitTopology,
     FixedPointSpec,
+    GridTopology,
     HardwareAssessment,
+    HostTransferSpec,
+    Inspector,
     IsoenergeticClusterMove,
     ParameterProvenance,
+    PhysicalQuantity,
     PottsObjectiveEvaluation,
+    ProgrammingSpec,
     QuantizationAnalysis,
+    ReferenceGibbsSampler,
+    ReferenceSampleResult,
+    ReferenceSamplerConfig,
+    ReferenceTransitionEvent,
+    SampleResult,
     TSUSpec,
+    TransitionVerificationReport,
     analyze_quantization,
     assess_target_admissibility,
+    build_exact_transition_kernel,
     compare_boltzmann_distributions,
     compile_domain_wall,
+    compile_ising,
     evaluate_potts_assignment,
     exact_boltzmann_distribution,
     isoenergetic_cluster_move,
     profile_chain_communication,
     search_optimal_chain_order,
+    verify_empirical_distribution,
+    verify_transition_kernel,
+    verify_transition_matrix,
 )
 
 
@@ -41,26 +62,46 @@ THERMOMAP_PUBLIC_NAMES = (
     "CategoricalModel",
     "ChainCommunicationProfile",
     "ChainOrderSearchResult",
+    "CommunicationSpec",
     "DistributionComparison",
     "DomainWallEncoding",
+    "EmpiricalInterval",
+    "EmpiricalVerificationReport",
     "ExactDistribution",
     "ExactDistributionNumericalError",
+    "ExactTransitionKernel",
+    "ExplicitTopology",
     "FixedPointSpec",
+    "GridTopology",
     "HardwareAssessment",
+    "HostTransferSpec",
+    "Inspector",
     "IsoenergeticClusterMove",
     "ParameterProvenance",
+    "PhysicalQuantity",
     "PottsObjectiveEvaluation",
+    "ProgrammingSpec",
     "QuantizationAnalysis",
+    "ReferenceGibbsSampler",
+    "ReferenceSampleResult",
+    "ReferenceSamplerConfig",
+    "ReferenceTransitionEvent",
     "TSUSpec",
+    "TransitionVerificationReport",
     "analyze_quantization",
     "assess_target_admissibility",
+    "build_exact_transition_kernel",
     "compare_boltzmann_distributions",
     "compile_domain_wall",
+    "compile_ising",
     "evaluate_potts_assignment",
     "exact_boltzmann_distribution",
     "isoenergetic_cluster_move",
     "profile_chain_communication",
     "search_optimal_chain_order",
+    "verify_empirical_distribution",
+    "verify_transition_kernel",
+    "verify_transition_matrix",
 )
 
 
@@ -188,6 +229,63 @@ class ThermoMapPublicApiTests(unittest.TestCase):
         self.assertTrue(metadata["combined_energy_invariant"])
         self.assertFalse(metadata["replicas_are_independent"])
         self.assertEqual(metadata["semantics"], "optimization_only_replica_coupling")
+
+    def test_new_frontier_types_compose_through_public_imports(self) -> None:
+        model = compile_ising({"spin": 0.25}, variables=("spin",), offset=1.5)
+        sampler = ReferenceGibbsSampler(
+            ReferenceSamplerConfig(
+                beta=0.75,
+                n_warmup=2,
+                seed=17,
+                initialization="all_up",
+            )
+        )
+        result = sampler.sample(model, num_reads=4)
+        self.assertIsInstance(result, ReferenceSampleResult)
+        self.assertTrue(all(isinstance(event, ReferenceTransitionEvent) for event in result.transitions))
+
+        kernel = build_exact_transition_kernel(model, 0.75)
+        self.assertIsInstance(kernel, ExactTransitionKernel)
+        transition_report = verify_transition_kernel(model, 0.75, kernel)
+        self.assertIsInstance(transition_report, TransitionVerificationReport)
+        self.assertTrue(transition_report.passed)
+        self.assertTrue(verify_transition_matrix(model, 0.75, kernel.matrix, states=kernel.states).passed)
+
+        empirical = verify_empirical_distribution(
+            model,
+            [{"spin": -1}, {"spin": -1}, {"spin": 1}, {"spin": -1}],
+            0.75,
+        )
+        self.assertIsInstance(empirical, EmpiricalVerificationReport)
+        self.assertTrue(all(isinstance(interval, EmpiricalInterval) for interval in empirical.intervals))
+
+        stored = SampleResult.from_model(model, ({"spin": -1}, {"spin": 1}))
+        self.assertEqual(
+            Inspector.from_result(stored, model=model).to_dict()["model_association"]["status"],
+            "caller_supplied_sample_checked",
+        )
+
+        topology = GridTopology(shape=(1,), neighbor_offsets=())
+        self.assertIsInstance(topology, GridTopology)
+        self.assertIsInstance(ExplicitTopology(node_count=1, edges=()), ExplicitTopology)
+        assumed_topology = ParameterProvenance(
+            "assumed",
+            "public API smoke-test topology",
+            sensitivity_note="single-cell exact scenario",
+        )
+        complete_target = TSUSpec(
+            name="single-cell-target",
+            topology=topology,
+            communication=CommunicationSpec(),
+            host_transfer=HostTransferSpec(),
+            programming=ProgrammingSpec(),
+            provenance={"topology": assumed_topology},
+        )
+        self.assertEqual(complete_target.to_dict()["topology"]["shape"], [1])
+
+        assumed_quantity = ParameterProvenance("assumed", "public API physical scenario")
+        fact = PhysicalQuantity(1.0, "second", 0.5, 2.0, assumed_quantity)
+        self.assertEqual(fact.unit, "second")
 
 
 if __name__ == "__main__":

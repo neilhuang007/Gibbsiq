@@ -1,0 +1,234 @@
+{
+  "model": {
+    "graph": [
+      [
+        "a",
+        "b"
+      ]
+    ],
+    "linear": {
+      "a": 0.4,
+      "b": -0.25
+    },
+    "metadata": {
+      "conversion_offset": 0.0,
+      "input_offset": 0.0,
+      "source_format": "ising",
+      "variable_order": [
+        "a",
+        "b"
+      ]
+    },
+    "offset": 0.0,
+    "quadratic": {
+      "a,b": 0.9
+    },
+    "source_format": "ising",
+    "variable_order": [
+      "a",
+      "b"
+    ],
+    "variables": [
+      "a",
+      "b"
+    ],
+    "vartype": "SPIN"
+  },
+  "random_single_site": {
+    "kernel": {
+      "beta": 1.3,
+      "blocks": [],
+      "detailed_balance_expected": true,
+      "matrix": [
+        [
+          0.13102235340368018,
+          0.4760601550750405,
+          0.3929174915212793,
+          0.0
+        ],
+        [
+          0.023939844924959486,
+          0.9595969576759724,
+          0.0,
+          0.01646319739906812
+        ],
+        [
+          0.1070825084787207,
+          0.0,
+          0.8150295714594056,
+          0.07788792006187369
+        ],
+        [
+          0.0,
+          0.4835368026009319,
+          0.42211207993812633,
+          0.09435111746094181
+        ]
+      ],
+      "states": [
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "update_schedule": "random_single_site",
+      "variables": [
+        "a",
+        "b"
+      ]
+    },
+    "report": {
+      "aperiodic": true,
+      "beta": 1.3,
+      "detailed_balance_expected": true,
+      "detailed_balance_passed": true,
+      "detailed_balance_residual": 4.5102810375396984e-17,
+      "detailed_balance_status": "pass",
+      "ergodic": true,
+      "irreducible": true,
+      "num_states": 4,
+      "passed": true,
+      "row_residual": 0.0,
+      "row_stochastic_passed": true,
+      "stationarity_passed": true,
+      "stationarity_residual": 4.85722573273506e-17,
+      "tolerance": 1e-12,
+      "variables": [
+        "a",
+        "b"
+      ]
+    }
+  },
+  "systematic": {
+    "kernel": {
+      "beta": 1.3,
+      "blocks": [],
+      "detailed_balance_expected": false,
+      "matrix": [
+        [
+          0.010254154588624931,
+          0.20391086236881645,
+          0.6634208783604733,
+          0.12241410468208534
+        ],
+        [
+          0.04630318427910823,
+          0.9207704209227556,
+          0.027797257986210386,
+          0.005129136811925858
+        ],
+        [
+          0.010254154588624931,
+          0.20391086236881645,
+          0.6634208783604733,
+          0.12241410468208534
+        ],
+        [
+          0.04630318427910823,
+          0.9207704209227556,
+          0.027797257986210386,
+          0.005129136811925858
+        ]
+      ],
+      "states": [
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "update_schedule": "systematic",
+      "variables": [
+        "a",
+        "b"
+      ]
+    },
+    "report": {
+      "aperiodic": true,
+      "beta": 1.3,
+      "detailed_balance_expected": false,
+      "detailed_balance_passed": false,
+      "detailed_balance_residual": 0.028410690187546044,
+      "detailed_balance_status": "not_required_non_reversible_schedule",
+      "ergodic": true,
+      "irreducible": true,
+      "num_states": 4,
+      "passed": true,
+      "row_residual": 0.0,
+      "row_stochastic_passed": true,
+      "stationarity_passed": true,
+      "stationarity_residual": 9.71445146547012e-17,
+      "tolerance": 1e-12,
+      "variables": [
+        "a",
+        "b"
+      ]
+    }
+  },
+  "traps": {
+    "nonergodic_identity": {
+      "aperiodic": false,
+      "beta": 1.3,
+      "detailed_balance_expected": true,
+      "detailed_balance_passed": true,
+      "detailed_balance_residual": 0.0,
+      "detailed_balance_status": "pass",
+      "ergodic": false,
+      "irreducible": false,
+      "num_states": 4,
+      "passed": false,
+      "row_residual": 0.0,
+      "row_stochastic_passed": true,
+      "stationarity_passed": true,
+      "stationarity_residual": 0.0,
+      "tolerance": 1e-12,
+      "variables": [
+        "a",
+        "b"
+      ]
+    },
+    "wrong_conditional_sign": {
+      "aperiodic": true,
+      "beta": 1.0,
+      "detailed_balance_expected": true,
+      "detailed_balance_passed": false,
+      "detailed_balance_residual": 0.7615941559557647,
+      "detailed_balance_status": "fail",
+      "ergodic": true,
+      "irreducible": true,
+      "num_states": 2,
+      "passed": false,
+      "row_residual": 0.0,
+      "row_stochastic_passed": true,
+      "stationarity_passed": false,
+      "stationarity_residual": 0.7615941559557646,
+      "tolerance": 1e-12,
+      "variables": [
+        "s"
+      ]
+    }
+  }
+}

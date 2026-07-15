@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-07-15T12:56:55.779248-04:00",
+  "git_head_before_task": "b15b0a13e6c5ac20bf650665ec667c815e68736c",
+  "git_status_porcelain": "M reference/00-roadmap/NEXT_TASK.md\n M reference/00-roadmap/README.md\n M reference/00-roadmap/stage-04-inspector-and-reporting.md\n M reference/07-inspector/inspector-design.md\n M reference/08-evaluation/equation-audit.md\n M reference/claims-evidence-map.md\n M reference/research-journal/gotchas-and-todo.md\n M src/gibbsiq/__init__.py\n M src/gibbsiq/hardware.py\n M test_suite/tests/test_public_api_thermomap.py\n?? Project_GOAL.md\n?? reference/00-roadmap/artifacts/\n?? reference/research-journal/2026-07-15-goal-roadmap-and-first-frontier-integration.md\n?? reference/research-journal/2026-07-15-gq-inspect-01.md\n?? reference/research-journal/2026-07-15-tm-verify-01.md\n?? src/gibbsiq/inspector.py\n?? src/gibbsiq/reference_sampler.py\n?? src/gibbsiq/topology.py\n?? src/gibbsiq/verification.py\n?? test_suite/tests/test_inspector.py\n?? test_suite/tests/test_reference_sampler.py\n?? test_suite/tests/test_statistical_verifier.py\n?? test_suite/tests/test_target_spec.py",
+  "os_name": "nt",
+  "platform": "Windows-11-10.0.26220-SP0",
+  "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "python": "3.13.5 (main, Jun 12 2025, 12:42:35) [MSC v.1943 64 bit (AMD64)]",
+  "python_executable": "E:\\projects\\Gibbsiq\\.venv\\Scripts\\python.exe",
+  "reproduction_command": "$env:PYTHONPATH='src'; python reference/00-roadmap/artifacts/tm-verify-01/20260715T124551-0400/generate_artifact.py"
+}

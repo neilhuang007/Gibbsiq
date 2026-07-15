@@ -25,12 +25,14 @@ this order:
 If `NEXT_TASK.md` or the runbook is absent, the first ready task is `TM-GOV-001`. Chat history
 does not replace the ledger.
 
-## Status Snapshot — 2026-07-14
+## Status Snapshot — 2026-07-15
 
-The verified implementation snapshot is commit `c62169e` (`feat: add audited ThermoMap
-analysis foundation`). The final repository verification at that snapshot ran 457 tests in
-120.615 seconds and returned `OK`; Ruff, format, mypy, and Markdown-math checks also passed.
-The count belongs to that recorded command and is not a permanent property of the repository.
+The verified foundation remains commit `c62169e` (`feat: add audited ThermoMap analysis
+foundation`). The 2026-07-15 first-frontier tranche adds the independent CPU Gibbs/exact-kernel
+verifier, complete target-fact schema, and artifact-only Inspector core. Its commands, raw
+artifacts, checksums, review findings, and final integration evidence are recorded in the four
+dated 2026-07-15 journals. Test counts belong to those recorded commands rather than being a
+permanent property of the repository.
 
 The detailed audit reports two separate scores:
 
@@ -50,19 +52,23 @@ count suggests.
   corpus;
 - exact capped Boltzmann comparison, declared stored-coefficient quantization, and direct
   logical target assessment;
-- partial provenanced `TSUSpec` for capacity, degree, color, coefficient, and optional cell
-  facts;
+- THRML-independent seeded CPU Gibbs traces plus capped transition, stationarity,
+  detailed-balance, ergodicity, and simultaneous empirical-law verification;
+- complete provenanced `TSUSpec` facts for grid/explicit topology, coefficient and accumulator
+  formats, communication, host transfer, programming/reprogramming, and optional cell facts;
 - pairwise categorical IR and exact domain-wall lowering;
 - supplied-partition chain-order search plus separately named communication algebraic proxies;
-- supplied-assignment Potts objective evaluation and an optimization-only ICM primitive.
+- supplied-assignment Potts objective evaluation and an optimization-only ICM primitive;
+- deterministic artifact-only Inspector JSON/Markdown summaries with optional all-row canonical
+  energy verification.
 
 ### Open Product Boundary
 
 The repository lacks automatic graph partitioning, variable placement, general routing,
-degree-reduction/equality gadgets, a complete topology/cost `TSUSpec`, hybrid TSU/GPU
-partitioning, stale-boundary dynamics, calibrated end-to-end latency or energy,
-observable-specific ESS/joule roofline classification, cross-domain baseline runners,
-Inspector/HTML reporting, and a physical TSU backend.
+degree-reduction/equality gadgets, hybrid TSU/GPU partitioning, stale-boundary dynamics,
+calibrated end-to-end latency or energy, observable-specific ESS/joule roofline classification,
+cross-domain baseline runners, unified Inspector/HTML/CLI reporting, and a physical TSU
+backend.
 
 The public execution path is the THRML JAX simulator. A simulator run validates software
 lowering and sampling behavior on its recorded host. It does not establish production TSU
@@ -80,9 +86,9 @@ implementation status.
 | 1 — [Core model compatibility](stage-01-core-model-compatibility.md) | Complete for binary pairwise QUBO/Ising/BQM. Pairwise categorical/domain-wall modeling is an implemented extension. General factors, clamping, coordinates, and constrained encodings remain open. |
 | 2 — [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Core correctness complete. The 2026-07-14 correction verifies exchange sign, local transition/work accounting, first retained-sample work, and two-replica attempts. Device-side PT remains a performance refactor, not an open correctness gate. |
 | 3 — [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Core semantic correction complete and integrated. Scalar energy ESS/tau, plain and rank/folded R-hat, diversity, magnetization, and frozen-state checks exist. Rank-normalized bulk/tail ESS, feasibility, and broader joint-mode checks remain future work. |
-| 4 — [Inspector and reporting](stage-04-inspector-and-reporting.md) | Pending. The artifact-only core is the dependency-ready task `GQ-INSPECT-01`. No production `Inspector` class exists at the snapshot. |
+| 4 — [Inspector and reporting](stage-04-inspector-and-reporting.md) | Partial. The artifact-only `Inspector` core emits deterministic JSON/Markdown and verifies every stored energy row against an optional caller-supplied model. Unified CLI, HTML, topology, profiler, baseline, and compiled-manifest integration remain under `TM-REP-001`. |
 | 5 — [Baselines and benchmarks](stage-05-baselines-and-benchmarks.md) | Partial. Exact fixtures and witness verification exist; matched solver adapters, fixed-work/fixed-time runners, and comparative artifacts remain open. |
-| 6 — [Adaptive hardware-aware runtime](stage-06-adaptive-hardware-runtime.md) | Partial analysis foundation. Target facts, quantization, exact-law comparison, logical admissibility, and supplied-partition communication analysis exist. Automatic mapping, target-aware execution, calibration, and adaptive compiler search remain open. |
+| 6 — [Adaptive hardware-aware runtime](stage-06-adaptive-hardware-runtime.md) | Partial analysis foundation. Complete provenanced target facts, topology contracts, independent Gibbs/kernel verification, quantization, exact-law comparison, logical admissibility, and supplied-partition communication analysis exist. Automatic mapping, target-aware execution, calibration, and adaptive compiler search remain open. |
 
 The private runtime type `_Lowering` executes the current THRML conversion in process. A
 public `THRMLProgramBundle` is not implemented. Target-flow prose using that name is an API

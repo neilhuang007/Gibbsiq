@@ -1,0 +1,107 @@
+{
+  "artifact_checks": {
+    "constructor_fixture_equality": {
+      "duration_seconds": 0.176,
+      "exit_code": 0,
+      "result": "paper-modeled and unknown TSUSpec dictionaries exactly matched target-fixtures.json"
+    },
+    "json_finite_parse": {
+      "duration_seconds": 0.154,
+      "exit_code": 0,
+      "result": "all four pre-verification JSON artifacts parsed; every float was finite"
+    }
+  },
+  "environment": "reference/00-roadmap/artifacts/tm-target-01/2026-07-15-contract-audit/environment.json",
+  "focused_tests": [
+    {
+      "command": "python -m unittest discover -s test_suite/tests -p test_target_spec.py",
+      "duration_seconds_unittest": 0.188,
+      "duration_seconds_wall": 0.434,
+      "errors": 0,
+      "failures": 0,
+      "skips": 0,
+      "tests": 15
+    },
+    {
+      "command": "python -m unittest discover -s test_suite/tests -p test_hardware_specs.py",
+      "duration_seconds_unittest": 0.001,
+      "duration_seconds_wall": 0.242,
+      "errors": 0,
+      "failures": 0,
+      "skips": 0,
+      "tests": 12
+    },
+    {
+      "command": "python -m unittest discover -s test_suite/tests -p test_hardware_assessment.py",
+      "duration_seconds_unittest": 0.094,
+      "duration_seconds_wall": 0.326,
+      "errors": 0,
+      "failures": 0,
+      "skips": 0,
+      "tests": 20
+    }
+  ],
+  "full_suite": {
+    "command": "python -m unittest discover -s test_suite/tests",
+    "duration_seconds_unittest": 212.221,
+    "duration_seconds_wall": 241.728,
+    "errors": 0,
+    "failures": 0,
+    "note": "ArviZ emitted its known constant-trace invalid-value RuntimeWarning; the suite passed.",
+    "skips": 0,
+    "tests": 517
+  },
+  "oracle_coverage": {
+    "explicit_simple_graphs_through_five_nodes": 1099,
+    "translated_grid_cases": 48
+  },
+  "static_checks": [
+    {
+      "command": "python -m ruff check src/gibbsiq/hardware.py src/gibbsiq/topology.py test_suite/tests/test_target_spec.py",
+      "duration_seconds_wall": 0.166,
+      "exit_code": 0
+    },
+    {
+      "command": "python -m ruff format --check src/gibbsiq/hardware.py src/gibbsiq/topology.py test_suite/tests/test_target_spec.py",
+      "duration_seconds_wall": 0.165,
+      "exit_code": 0
+    },
+    {
+      "command": "python -m mypy src/gibbsiq/hardware.py src/gibbsiq/topology.py",
+      "duration_seconds_wall": 0.321,
+      "exit_code": 0
+    },
+    {
+      "command": "python -m ruff check .",
+      "duration_seconds_wall": 0.199,
+      "exit_code": 0
+    },
+    {
+      "command": "python -m ruff format --check .",
+      "duration_seconds_wall": 0.227,
+      "exit_code": 0
+    },
+    {
+      "command": "python -m mypy src/gibbsiq",
+      "duration_seconds_wall": 0.377,
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/check_markdown_math.py",
+      "duration_seconds_wall": 0.17,
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "duration_seconds_wall": 0.125,
+      "exit_code": 0
+    }
+  ],
+  "test_first_failure": {
+    "command": "python -m unittest discover -s test_suite/tests -p test_target_spec.py",
+    "duration_seconds_wall": 0.161,
+    "errors": 1,
+    "failure": "ImportError: cannot import name 'CommunicationSpec' from 'gibbsiq.hardware'",
+    "tests": 1
+  }
+}

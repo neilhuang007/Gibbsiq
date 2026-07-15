@@ -143,16 +143,16 @@ remains the only task queue.
   independent reference cases, and thresholds matched to that estimator. Joint-mode coverage
   is exercised through `TM-BENCH-002`, `TM-BENCH-003`, and `TM-BENCH-004`; scalar diagnostics
   alone cannot close it.
-- **Inspector — `GQ-INSPECT-01` and `TM-REP-001`.** The artifact-only core precedes unified
-  CLI, HTML, topology, profiler, and baseline integration.
+- **Inspector integration — `TM-REP-001`.** The artifact-only core is complete. Unified CLI,
+  HTML, topology, profiler, baseline, and compiled-manifest integration remain open.
 - **Baselines and benchmarks — `TM-BASE-001`, `TM-BASE-002`, and `TM-BENCH-001` through
   `TM-BENCH-004`.** Solver adapters use the canonical energy and separate fixed-work from
   fixed-time budgets. Proven-optimal Tier B imports retain the BiqMac maximization sign flip.
-- **Hardware-aware compiler and non-idealities — `TM-TARGET-01`, `TM-MAP-001` through
-  `TM-MAP-003`, `TM-NID-001`, `TM-NID-002`, `TM-COST-001`, and `TM-PROF-001`.** These tasks own
-  target topology, automatic mapping, delayed communication, calibrated cost boundaries, and
-  quality-adjusted profiling. The existing Stage 6 modules provide analysis inputs rather
-  than an adaptive execution layer.
+- **Hardware-aware compiler and non-idealities — `TM-MAP-001` through `TM-MAP-003`,
+  `TM-NID-001`, `TM-NID-002`, `TM-COST-001`, and `TM-PROF-001`.** The immutable target-fact and
+  topology contract is complete. The remaining tasks own automatic mapping, delayed
+  communication, calibrated cost boundaries, and quality-adjusted profiling. The existing
+  Stage 6 modules provide analysis inputs rather than an adaptive execution layer.
 - **Optional diagnostics without a stable task ID.** Nested R-hat for many short vectorized
   chains and classifier-based R\* remain research candidates. The coordinator must add a
   bounded task with dependencies, ownership, an independent oracle, and optional-dependency
@@ -163,6 +163,12 @@ remains the only task queue.
   the upstream interface artifact under `TM-RFC-001` after its dependencies close.
 
 ## Closed Historical Corrections
+
+- **First dependency-ready frontier closed 2026-07-15.** `TM-VERIFY-01`, `TM-TARGET-01`, and
+  `GQ-INSPECT-01` added the independent small-state verifier, complete target-fact contract,
+  and artifact-only Inspector core. The three task journals and coordinator integration
+  journal retain the tests, raw artifacts, SHA-256 manifests, rejected alternatives, and
+  critical-review corrections.
 
 - **Stage 2 PT corrective audit closed 2026-07-14.** The targeted invariants, optional THRML
   tests, and full-suite record are in

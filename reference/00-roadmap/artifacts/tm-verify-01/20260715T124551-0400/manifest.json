@@ -1,0 +1,42 @@
+{
+  "files": [
+    {
+      "bytes": 903,
+      "path": "config.json",
+      "sha256": "0db5d7382acb3899b33966f0c9dc0ee5866017e376a4af81d99e2d1f0f1d5807"
+    },
+    {
+      "bytes": 5317270,
+      "path": "empirical-evidence.json",
+      "sha256": "e8c9f56a63bffa671041c4e368d5575c9fd67094f8ee6a6220b437fbe1a5fe4b"
+    },
+    {
+      "bytes": 1573,
+      "path": "environment.json",
+      "sha256": "bbbc5a10de1d38bd3b8786980b8c891907f04fc4757e068452b287d8ee928355"
+    },
+    {
+      "bytes": 11368,
+      "path": "generate_artifact.py",
+      "sha256": "3e87230407d0d352ddbb3d0ea5e65b108f1a8653d30e932b9ab3e71fac05e45e"
+    },
+    {
+      "bytes": 22147,
+      "path": "reference-trace.json",
+      "sha256": "7de418b9bce3157c6d2f38f64d2e4c3608e3a78e5027c373fce70a3281939847"
+    },
+    {
+      "bytes": 477,
+      "path": "timing.json",
+      "sha256": "8c2e4a6830d97359d74695f449d0ae39a0cf14b847620ae5ef762b63a2e9e83a"
+    },
+    {
+      "bytes": 4872,
+      "path": "transition-evidence.json",
+      "sha256": "659db63e3ce722201849c878cac62197305ed9107854184940104338a9007f52"
+    }
+  ],
+  "manifest_note": "The manifest does not recursively checksum itself.",
+  "run_id": "20260715T124551-0400",
+  "task": "TM-VERIFY-01"
+}

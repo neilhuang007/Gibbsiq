@@ -916,3 +916,108 @@ than inferred from valid-state energy equality.
 
 Use: auditable lowering of finite pairwise categorical models to the existing QUBO/Ising IR.
 It is not a penalty-selection theorem, a mixing guarantee, or a hardware-performance claim.
+
+## EVAL-EQ-021: Reference Gibbs Transition Kernels
+
+Sources: EVAL-EQ-004 and EVAL-EQ-005; Geman and Geman 1984,
+DOI 10.1109/TPAMI.1984.4767596; Levin and Peres 2017, *Markov Chains and Mixing
+Times*, second edition, Sections 1.6 and 3.3; He et al. 2016,
+arXiv:1606.03432. Audited 2026-07-15 for `TM-VERIFY-01`.
+
+Let `pi(s)` be the finite-state Boltzmann law in EVAL-EQ-005. For variable `i`,
+the single-site heat-bath kernel replaces only `s_i` with its exact conditional
+from EVAL-EQ-004:
+
+```text
+K_i(s, t) = 1[t_-i = s_-i] * pi(t_i | s_-i).
+```
+
+The random-single-site kernel chooses one of `n` variables uniformly:
+
+```text
+K_random = (1 / n) * sum_i K_i.
+```
+
+Each `K_i` satisfies detailed balance with `pi`, so their uniform mixture does
+as well. A deterministic scan with declared order `(i_1, ..., i_n)` composes
+the coordinate kernels:
+
+```text
+K_systematic = K_(i_1) K_(i_2) ... K_(i_n).
+```
+
+Every factor preserves `pi`, so the product preserves `pi`. The product is
+generally non-reversible because the factors need not commute. A detailed-
+balance residual is therefore reported for systematic scans as descriptive
+evidence and is not an acceptance requirement.
+
+For a block `B` containing no interacting pair, the conditional factorizes:
+
+```text
+pi(t_B | s_-B) = product_(i in B) pi(t_i | s_-B).
+```
+
+All variables in one such block may be sampled against the same phase-start
+state and committed simultaneously. The one-block kernel is reversible. A
+declared sequence of two or more block kernels preserves `pi` and is generally
+non-reversible for the same composition reason as a systematic scan. A block
+containing an interacting pair fails before sampling or kernel construction.
+
+For a zero-variable model the state space contains the sole empty state and all
+three schedules reduce to the `1 x 1` identity kernel. The canonical offset
+cancels from every conditional and transition probability; retained total-energy
+traces continue to include it.
+
+Use: THRML-independent reference sampling, exact transition construction, legal
+block-update tests, fixed-seed replay, and scan-semantics reporting. One sampler
+step means one random single-site update for `random_single_site`, one complete
+ordered sweep for `systematic`, and one complete ordered pass over all declared
+blocks for `blocked`. Work is counted as the number of evaluated single-site
+conditionals.
+
+## EVAL-EQ-022: Finite-Kernel Residuals And Simultaneous Empirical Intervals
+
+Sources: Levin and Peres 2017, Sections 1.6 and 4.1; Hoeffding 1963,
+DOI 10.1080/01621459.1963.10500830. Audited 2026-07-15 for
+`TM-VERIFY-01`.
+
+For a finite row-oriented transition matrix `P` and enumerated target vector
+`pi`, define the maximum absolute residuals
+
+```text
+row_residual = max_i abs(sum_j P_ij - 1)
+stationary_residual = max_j abs(sum_i pi_i P_ij - pi_j)
+detailed_balance_residual = max_(i,j) abs(pi_i P_ij - pi_j P_ji).
+```
+
+A kernel passes the numerical checks when every entry is finite, every entry is
+at least `-tolerance`, and the required residuals are at most `tolerance`.
+`TM-VERIFY-01` uses absolute tolerance `1e-12`. Stationarity is required for all
+schedules. Detailed balance is required only for kernels whose declared schedule
+is reversible under EVAL-EQ-021. The positive-transition graph is also checked
+for strong connectivity and period one. This rejects identity and disconnected
+kernels that can satisfy both stationarity and detailed balance while failing to
+explore the target state space.
+
+Empirical verification uses `N` independently generated retained states and a
+predeclared familywise confidence `1 - alpha`. The compared bounded observables
+are every spin-up indicator, every pair product, and every exact energy-level
+indicator. If there are `m` comparisons and observable `r` lies in `[a_r, b_r]`,
+the Bonferroni-Hoeffding half-width is
+
+```text
+epsilon_r = (b_r - a_r) * sqrt(log(2 * m / alpha) / (2 * N)).
+```
+
+The reported interval is the sample mean plus or minus `epsilon_r`, clipped to
+the observable range. Hoeffding's inequality and the union bound give simultaneous
+coverage of at least `1 - alpha` when the retained states are independent. The
+verifier records that assumption explicitly and rejects a correlated-chain design
+for this interval method. MCMC draws from one trajectory require a separately
+audited dependence-aware interval; substituting the raw draw count would produce
+unsupported coverage.
+
+Use: exact row/stationarity/detailed-balance verification, non-ergodic traps,
+wrong-sign traps, and simultaneous empirical marginal/correlation/energy-law
+checks. These intervals measure sampling-law agreement and do not certify mixing
+or optimization quality.

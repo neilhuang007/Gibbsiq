@@ -1,0 +1,38 @@
+{
+  "artifacts": [
+    {
+      "bytes": 320,
+      "path": "environment.json",
+      "sha256": "4bbb730859594373855e2c20953b3931f508dc6c07649996afdadf6c61a58d53"
+    },
+    {
+      "bytes": 678,
+      "path": "generation-config.json",
+      "sha256": "c4888b2da48a583bed91b59694ec221e579f45829df439650a8a2079ed508218"
+    },
+    {
+      "bytes": 1359,
+      "path": "input-result.json",
+      "sha256": "d96ed9e8c7a0bc4591f97a76f659541bb3efd798ba2cd7a67b1fe033fd9909c5"
+    },
+    {
+      "bytes": 949,
+      "path": "model-association.json",
+      "sha256": "8c0614fd60c1f946a58600bc70040383d07bae50086b2e7c5a98894e675e03d9"
+    },
+    {
+      "bytes": 5076,
+      "path": "report.md",
+      "sha256": "96d1c644a79cc1a229d6586465c6efd6a394d64362f2de8ef87d1491c0ac8683"
+    },
+    {
+      "bytes": 4763,
+      "path": "summary.json",
+      "sha256": "24745a4fc8f62a743c83f580a6c893d51267933667a65d2208c9df62c7c14936"
+    }
+  ],
+  "manifest_scope": "SHA-256 values cover every sibling artifact except manifest.json itself",
+  "run_id": "2026-07-15-artifact-only-core",
+  "schema_version": "gibbsiq.artifact-manifest.v1",
+  "task": "GQ-INSPECT-01"
+}

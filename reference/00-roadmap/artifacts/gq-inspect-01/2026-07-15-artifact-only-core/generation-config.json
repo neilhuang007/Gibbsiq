@@ -1,0 +1,16 @@
+{
+  "best_row_rule": "first argmin of stored interaction_energies",
+  "reproduction_commands": [
+    "$env:PYTHONPATH='src'; python -m unittest discover -s test_suite/tests -p 'test_inspector.py'",
+    "python tools/check_markdown_math.py",
+    "ruff check src/gibbsiq/inspector.py test_suite/tests/test_inspector.py",
+    "ruff format --check src/gibbsiq/inspector.py test_suite/tests/test_inspector.py",
+    "mypy src/gibbsiq/inspector.py"
+  ],
+  "seed_role": "stored metadata only; Inspector executes no RNG",
+  "stochastic_steps": false,
+  "stored_seed": 481,
+  "task": "GQ-INSPECT-01",
+  "verification_absolute_tolerance": 1e-09,
+  "verification_relative_tolerance": 0.0
+}

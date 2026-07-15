@@ -1,0 +1,12 @@
+{
+  "base_commit": "b15b0a13e6c5ac20bf650665ec667c815e68736c",
+  "implementation": "CPython",
+  "machine": "AMD64",
+  "operating_system": "Windows-11-10.0.26220-SP0",
+  "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "python": "3.13.5 (main, Jun 12 2025, 12:42:35) [MSC v.1943 64 bit (AMD64)]",
+  "randomness": null,
+  "stochastic_run": false,
+  "timezone": "America/New_York",
+  "worktree_note": "Concurrent TM-VERIFY-01 and GQ-INSPECT-01 changes were present and preserved."
+}

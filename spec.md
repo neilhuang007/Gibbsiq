@@ -7,10 +7,12 @@ provides a path from a standard quadratic optimization model to an auditable THR
 run. A model enters through a stable interface, is converted into the canonical Ising
 convention, is lowered into THRML nodes, factors, blocks, and sampling programs, and produces
 a result artifact containing raw samples, traces, diagnostics, metadata, and benchmark
-evidence. The model interface, fixed-beta THRML runtime, diagnostics, evaluator, and strict
-benchmark oracle are implemented. The parallel-tempering correctness path and diagnostic
-threshold/flag correction have targeted and full-suite verification recorded on 2026-07-14.
-Inspector, general constraint encoding, and classical-baseline runners remain target behavior.
+evidence. The model interface, fixed-beta THRML runtime, diagnostics, evaluator, strict
+benchmark oracle, independent small-state verifier, complete target-fact contract, and
+artifact-only Inspector core are implemented. The parallel-tempering correctness path and
+diagnostic threshold/flag correction have targeted and full-suite verification recorded on
+2026-07-14. General constraint encoding, full Inspector/HTML integration, and
+classical-baseline runners remain target behavior.
 Pairwise categorical/domain-wall lowering exists and does not constitute a general
 higher-order or knapsack/TSP constraint encoder.
 
@@ -123,8 +125,9 @@ QUBO/BQM/Ising input
 -> inspector or benchmark report
 ```
 
-The current path reaches diagnostics and the benchmark oracle. `Inspector` and its report
-export remain target behavior.
+The current path reaches diagnostics, the benchmark oracle, and deterministic artifact-only
+Inspector JSON/Markdown export. Unified HTML, CLI, topology, profile, and baseline report
+integration remain target behavior.
 
 Each arrow is a checked boundary. Model conversion is checked by exhaustive small-instance
 energy equivalence. THRML lowering is checked by analytic Gibbs conditionals and tiny
@@ -192,6 +195,8 @@ verification. The diagnostics core still lacks rank-normalized bulk/tail ESS, ge
 constraint feasibility, and complete joint-mode coverage. Pairwise categorical/domain-wall
 lowering, provenanced target facts, quantization, exact small-law comparison, logical target
 assessment, and supplied-partition communication analysis form the current ThermoMap analysis
-foundation. Inspector, general constraint encoding, automatic physical mapping, calibrated
-costs, and classical-baseline runners remain absent. See `reference/00-roadmap/README.md` for
-the live status and the autonomous implementation roadmap for the dependency order.
+foundation. The artifact-only Inspector core and complete target-fact/topology contract are
+implemented. General constraint encoding, automatic physical mapping, calibrated costs, full
+Inspector/HTML integration, and classical-baseline runners remain absent. See
+`reference/00-roadmap/README.md` for the live status and the autonomous implementation roadmap
+for the dependency order.

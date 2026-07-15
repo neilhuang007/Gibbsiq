@@ -33,10 +33,12 @@ correctness criterion and the 2026-07-11 diagnostic semantic correction are clos
 2026-07-14 verification record. Rank-normalized bulk/tail ESS, general constraint feasibility,
 and comprehensive joint-mode diagnostics remain open. Pairwise categorical/domain-wall
 lowering is implemented; it does not supply general higher-order or knapsack/TSP constraint
-encoding. Inspector and classical solver adapters remain absent. The Stage 6 analysis
-foundation includes a provenanced `TSUSpec`, coefficient quantization, exact small-law
-comparison, logical admissibility, and supplied-partition communication proxies; automatic
-partitioning, placement, routing, calibrated costs, and target-aware execution remain absent.
+encoding. The artifact-only Inspector core is implemented; full HTML/CLI integration and
+classical solver adapters remain absent. The Stage 6 analysis foundation includes a complete
+provenanced target-fact/topology contract, an independent small-state Gibbs/kernel verifier,
+coefficient quantization, exact small-law comparison, logical admissibility, and
+supplied-partition communication proxies; automatic partitioning, placement, routing,
+calibrated costs, and target-aware execution remain absent.
 
 ## Non-Negotiable Contracts
 

@@ -1,7 +1,10 @@
 # Stage 4 - Inspector and Reporting
 
-**Status: Absent.** This file defines target behavior. No production `Inspector` class or
-HTML/report exporter exists in the current package.
+**Status: Partial as of 2026-07-15.** `GQ-INSPECT-01` implements the production artifact-only
+`Inspector.from_result(result, *, model=None)` core with deterministic JSON/Markdown summaries,
+stored traces/diagnostics/metadata, explicit unavailable sections, and optional all-row model
+verification. HTML, CLI, comparison, topology, profiler, baseline, and compiled-manifest
+integration remain assigned to `TM-REP-001`.
 
 ## Goal
 

@@ -1,0 +1,175 @@
+{
+  "paper_modeled_sensitivity_target": {
+    "accumulator_format": {
+      "fractional_bits": 6,
+      "integer_bits": 8,
+      "maximum": 255.984375,
+      "minimum": -256.0,
+      "overflow": "reject",
+      "rounding": "nearest_even",
+      "signed": true,
+      "step": 0.015625,
+      "total_bits": 15
+    },
+    "cell_energy_joules": 2e-15,
+    "cell_update_seconds": 1e-07,
+    "coefficient_format": {
+      "fractional_bits": 3,
+      "integer_bits": 4,
+      "maximum": 15.875,
+      "minimum": -16.0,
+      "overflow": "reject",
+      "rounding": "nearest_even",
+      "signed": true,
+      "step": 0.125,
+      "total_bits": 8
+    },
+    "communication": {
+      "clock_frequency": null,
+      "link_bandwidth": null,
+      "link_energy_per_bit": null,
+      "link_latency": null
+    },
+    "host_transfer": {
+      "bandwidth": null,
+      "energy_per_bit": null,
+      "latency": null
+    },
+    "max_color_phases": 2,
+    "max_degree": 4,
+    "name": "paper-modeled-grid-sensitivity",
+    "pbit_capacity": 12,
+    "programming": {
+      "programming_energy": null,
+      "programming_time": null,
+      "reprogramming_energy": null,
+      "reprogramming_time": null
+    },
+    "provenance": {
+      "accumulator_format": {
+        "accessed_on": null,
+        "classification": "assumed",
+        "evidence_artifact": null,
+        "note": "",
+        "sensitivity_note": "compare wider accumulator formats",
+        "sensitivity_range": null,
+        "sensitivity_unit": null,
+        "source": "accumulator scenario"
+      },
+      "cell_energy_joules": {
+        "accessed_on": "2026-07-15",
+        "classification": "modeled",
+        "evidence_artifact": null,
+        "note": "paper system-model center with a declared factor-of-two sensitivity interval",
+        "sensitivity_note": "",
+        "sensitivity_range": [
+          1e-15,
+          4e-15
+        ],
+        "sensitivity_unit": "joule",
+        "source": "doi:10.1038/s44335-026-00075-3"
+      },
+      "cell_update_seconds": {
+        "accessed_on": "2026-07-15",
+        "classification": "inferred",
+        "evidence_artifact": null,
+        "note": "inferred from measured RNG autocorrelation; this is not a complete-cell timing measurement",
+        "sensitivity_note": "",
+        "sensitivity_range": [
+          5e-08,
+          2e-07
+        ],
+        "sensitivity_unit": "second",
+        "source": "doi:10.1038/s44335-026-00075-3"
+      },
+      "coefficient_format": {
+        "accessed_on": null,
+        "classification": "assumed",
+        "evidence_artifact": null,
+        "note": "",
+        "sensitivity_note": "compare adjacent integer and fractional bit allocations",
+        "sensitivity_range": null,
+        "sensitivity_unit": null,
+        "source": "format scenario"
+      },
+      "max_color_phases": {
+        "accessed_on": null,
+        "classification": "assumed",
+        "evidence_artifact": null,
+        "note": "",
+        "sensitivity_note": "",
+        "sensitivity_range": [
+          2.0,
+          4.0
+        ],
+        "sensitivity_unit": "count",
+        "source": "scenario"
+      },
+      "max_degree": {
+        "accessed_on": null,
+        "classification": "assumed",
+        "evidence_artifact": null,
+        "note": "",
+        "sensitivity_note": "",
+        "sensitivity_range": [
+          2.0,
+          8.0
+        ],
+        "sensitivity_unit": "count",
+        "source": "scenario"
+      },
+      "pbit_capacity": {
+        "accessed_on": null,
+        "classification": "assumed",
+        "evidence_artifact": null,
+        "note": "",
+        "sensitivity_note": "",
+        "sensitivity_range": [
+          8.0,
+          32.0
+        ],
+        "sensitivity_unit": "count",
+        "source": "scenario"
+      },
+      "topology": {
+        "accessed_on": null,
+        "classification": "assumed",
+        "evidence_artifact": null,
+        "note": "",
+        "sensitivity_note": "compare translated/reflected grids and explicit topologies",
+        "sensitivity_range": null,
+        "sensitivity_unit": null,
+        "source": "abstract topology scenario"
+      }
+    },
+    "schema_version": "tsu-target-v2",
+    "topology": {
+      "kind": "grid",
+      "neighbor_offsets": [
+        [-1, 0],
+        [0, -1],
+        [0, 1],
+        [1, 0]
+      ],
+      "origin": [-2, 7],
+      "shape": [3, 4],
+      "tile_shape": [1, 2]
+    }
+  },
+  "unknown_target": {
+    "accumulator_format": null,
+    "cell_energy_joules": null,
+    "cell_update_seconds": null,
+    "coefficient_format": null,
+    "communication": null,
+    "host_transfer": null,
+    "max_color_phases": null,
+    "max_degree": null,
+    "name": "unknown-target",
+    "pbit_capacity": null,
+    "programming": null,
+    "provenance": {},
+    "schema_version": "tsu-target-v2",
+    "topology": null
+  }
+}

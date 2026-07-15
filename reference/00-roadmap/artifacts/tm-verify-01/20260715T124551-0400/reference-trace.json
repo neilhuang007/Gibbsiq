@@ -1,0 +1,1220 @@
+{
+  "model": {
+    "graph": [
+      [
+        "a",
+        "b"
+      ]
+    ],
+    "linear": {
+      "a": 0.4,
+      "b": -0.3
+    },
+    "metadata": {
+      "conversion_offset": 5.25,
+      "input_offset": 5.25,
+      "source_format": "ising",
+      "variable_order": [
+        "a",
+        "b"
+      ]
+    },
+    "offset": 5.25,
+    "quadratic": {
+      "a,b": 0.6
+    },
+    "source_format": "ising",
+    "variable_order": [
+      "a",
+      "b"
+    ],
+    "variables": [
+      "a",
+      "b"
+    ],
+    "vartype": "SPIN"
+  },
+  "recomputed_energies": [
+    3.95,
+    3.95,
+    3.95,
+    3.95,
+    3.95,
+    3.95,
+    3.95,
+    3.95,
+    5.75,
+    5.75,
+    3.95,
+    5.75,
+    5.35,
+    3.95,
+    3.95,
+    3.95
+  ],
+  "sampler_result": {
+    "chain_ids": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "energies": [
+      3.95,
+      3.95,
+      3.95,
+      3.95,
+      3.95,
+      3.95,
+      3.95,
+      3.95,
+      5.75,
+      5.75,
+      3.95,
+      5.75,
+      5.35,
+      3.95,
+      3.95,
+      3.95
+    ],
+    "initial_states": [
+      [
+        1,
+        -1
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "interaction_energies": [
+      -1.3,
+      -1.3,
+      -1.3,
+      -1.3,
+      -1.3,
+      -1.3,
+      -1.3,
+      -1.3,
+      0.49999999999999994,
+      0.49999999999999994,
+      -1.3,
+      0.49999999999999994,
+      0.10000000000000003,
+      -1.3,
+      -1.3,
+      -1.3
+    ],
+    "metadata": {
+      "beta": 1.1,
+      "block_strategy": "not_applicable",
+      "blocks": [],
+      "chain_seeds": [
+        9435802763324109755,
+        15350644406934883524
+      ],
+      "conditional_evaluations": 38,
+      "initialization": "random",
+      "n_warmup": 3,
+      "num_chains_active": 2,
+      "num_chains_requested": 2,
+      "offset_handling": "retained in total energies; absent from Gibbs conditionals",
+      "python_version": "3.13.5",
+      "read_allocation": [
+        8,
+        8
+      ],
+      "rng": "random.Random (MT19937)",
+      "seed": 8128,
+      "steps_per_sample": 2,
+      "update_schedule": "random_single_site",
+      "work_unit": "single_site_conditional_evaluation"
+    },
+    "samples": [
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        1,
+        -1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        1
+      ]
+    ],
+    "state_traces": [
+      [
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ]
+      ],
+      [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          1
+        ]
+      ]
+    ],
+    "transitions": [
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": null,
+        "stage": "warmup",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 0,
+        "uniform": 0.4174434066960012,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.34073961154861454,
+        "retained_index": null,
+        "stage": "warmup",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 1,
+        "uniform": 0.5618320067531645,
+        "variable": "b"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.34073961154861454,
+        "retained_index": null,
+        "stage": "warmup",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 2,
+        "uniform": 0.8549107398275277,
+        "variable": "b"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": 0,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 0,
+        "uniform": 0.6462444512260965,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 0,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          -1
+        ],
+        "step_index": 1,
+        "uniform": 0.14544314665480407,
+        "variable": "b"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 1,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.6884564153647447,
+        "variable": "b"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 1,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.4417955846233179,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 2,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.3003345376111819,
+        "variable": "b"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 2,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.35598531611502604,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 3,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.8520800804986899,
+        "variable": "b"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 3,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.3051209818319822,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 4,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.3903318645509254,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 4,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.8669679373847302,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 5,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.7468773757797483,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 5,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.9915032297370622,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 6,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.21530479431487537,
+        "variable": "b"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 6,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.962786422811243,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 7,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.14163258953299285,
+        "variable": "a"
+      },
+      {
+        "chain_id": 0,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 7,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.6737629681343795,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.34073961154861454,
+        "retained_index": null,
+        "stage": "warmup",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.7927442688870342,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.34073961154861454,
+        "retained_index": null,
+        "stage": "warmup",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 1,
+        "uniform": 0.7478232500630068,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.34073961154861454,
+        "retained_index": null,
+        "stage": "warmup",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 2,
+        "uniform": 0.6164432458176298,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": 0,
+        "stage": "sample",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 0,
+        "uniform": 0.10083961736432612,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": 0,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 1,
+        "uniform": 0.7795752534066878,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": 1,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          -1
+        ],
+        "state_before": [
+          -1,
+          -1
+        ],
+        "step_index": 0,
+        "uniform": 0.9340725960380166,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": 1,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          -1
+        ],
+        "state_before": [
+          -1,
+          -1
+        ],
+        "step_index": 1,
+        "uniform": 0.9200023048801869,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 2,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          -1
+        ],
+        "step_index": 0,
+        "uniform": 0.5714913005013417,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 2,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.10966325932317966,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 3,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.12947542416583735,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 3,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          -1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.9370932202400175,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": 4,
+        "stage": "sample",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          -1,
+          -1
+        ],
+        "step_index": 0,
+        "uniform": 0.036258666291035135,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.6082590307465143,
+        "retained_index": 4,
+        "stage": "sample",
+        "state_after": [
+          1,
+          -1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 1,
+        "uniform": 0.0796770365964371,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          -1
+        ],
+        "phase_index": null,
+        "probability_up": 0.34073961154861454,
+        "retained_index": 5,
+        "stage": "sample",
+        "state_after": [
+          1,
+          1
+        ],
+        "state_before": [
+          1,
+          -1
+        ],
+        "step_index": 0,
+        "uniform": 0.33226073493113173,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 5,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.5735826218278537,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 6,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.6473730199906417,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 6,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.1998628646302406,
+        "variable": "a"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.8786811621082631,
+        "retained_index": 7,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 0,
+        "uniform": 0.5623460552805828,
+        "variable": "b"
+      },
+      {
+        "chain_id": 1,
+        "conditioned_state": [
+          -1,
+          1
+        ],
+        "phase_index": null,
+        "probability_up": 0.09975048911968513,
+        "retained_index": 7,
+        "stage": "sample",
+        "state_after": [
+          -1,
+          1
+        ],
+        "state_before": [
+          -1,
+          1
+        ],
+        "step_index": 1,
+        "uniform": 0.4652085124984333,
+        "variable": "a"
+      }
+    ],
+    "variables": [
+      "a",
+      "b"
+    ]
+  }
+}
