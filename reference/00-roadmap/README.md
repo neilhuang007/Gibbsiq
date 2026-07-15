@@ -27,12 +27,12 @@ does not replace the ledger.
 
 ## Status Snapshot — 2026-07-15
 
-The verified foundation remains commit `c62169e` (`feat: add audited ThermoMap analysis
-foundation`). The 2026-07-15 first-frontier tranche adds the independent CPU Gibbs/exact-kernel
-verifier, complete target-fact schema, and artifact-only Inspector core. Its commands, raw
-artifacts, checksums, review findings, and final integration evidence are recorded in the four
-dated 2026-07-15 journals. Test counts belong to those recorded commands rather than being a
-permanent property of the repository.
+The verified foundation is commit `c62169e` (`feat: add audited ThermoMap analysis foundation`).
+Commit `42c2409` (`feat: implement first ThermoMap frontier`) adds the independent CPU
+Gibbs/exact-kernel verifier, complete target-fact schema, and artifact-only Inspector core. Its
+commands, raw artifacts, checksums, review findings, and final integration evidence are recorded
+in the four dated 2026-07-15 journals. Test counts belong to those recorded commands rather than
+being a permanent property of the repository.
 
 The detailed audit reports two separate scores:
 

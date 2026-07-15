@@ -7,11 +7,12 @@
 | Observed date | 2026-07-15 |
 | Verified implementation base | `c62169e` (`feat: add audited ThermoMap analysis foundation`) |
 | Verified control-plane documentation | `21c2a71` (`docs: add autonomous ThermoMap execution roadmap`) |
+| Verified first-frontier implementation | `42c2409` (`feat: implement first ThermoMap frontier`) |
 | Implementation score at base | 8/20 ThermoMap rows = 40%, using the equal-row audit in `thermomap-plan-status-2026-07-14.md` |
 | Public backend | THRML JAX simulator; no production TSU artifact is present |
 | Control-plane state | `TM-GOV-001` is `complete`; `21c2a71` verifies the control documents and this ledger transition closes the task |
 | Active governance owner | none |
-| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `verified` implementation candidates; worker ownership is released and coordinator `/root` owns integration |
+| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `complete`; `TM-IR-001` is the sole dependency-ready task and is unclaimed |
 | Scratch state observed before this pass | Untracked `Project_GOAL.md` supplied as task input; excluded from the implementation commit |
 
 The implementation base has a recorded full-suite result of 457 tests in 120.615 seconds at
@@ -21,9 +22,9 @@ historical evidence tied to that command and commit. Every later completion reco
 skips, duration, dependencies, and environment from the command actually run.
 
 During the 2026-07-15 implementation pass, all three lanes advanced through `claimed`,
-`in_progress`, and `review` before the coordinator set the current `verified` state. The worker
-claims and review corrections are preserved in the dated task and integration journals; the
-intermediate dirty-worktree states are not separate Git commits.
+`in_progress`, `review`, and `verified` before feature commit `42c2409` allowed this ledger to
+set them `complete`. The worker claims and review corrections are preserved in the dated task
+and integration journals; the intermediate dirty-worktree states are not separate Git commits.
 
 ## Source Control Rules
 
@@ -44,10 +45,10 @@ prose. Reconcile a conflict before selecting a feature task.
 | `TM-FND-001` | `complete` | none | Canonical model, runtime, diagnostics, and witness oracle are verified at `c62169e`. |
 | `TM-FND-002` | `complete` | none | Target-analysis and finite-state foundation is verified at `c62169e`. |
 | `TM-GOV-001` | `complete` | none | Control documents, links, task graph, reader test, and evidence were verified in `21c2a71`; this ledger transition closes the task. |
-| `TM-VERIFY-01` | `verified` | `TM-FND-001`, `TM-GOV-001` | Focused, independent-oracle, artifact, static, and final 518-test repository gates pass; awaiting the feature commit. |
-| `TM-TARGET-01` | `verified` | `TM-FND-002`, `TM-GOV-001` | Focused, exhaustive-topology, artifact, compatibility, static, and final 518-test repository gates pass; awaiting the feature commit. |
-| `GQ-INSPECT-01` | `verified` | `TM-FND-001`, `TM-GOV-001` | Focused, independent fingerprint/energy, artifact, static, and final 518-test repository gates pass; awaiting the feature commit. |
-| `TM-IR-001` | `dependency_blocked` | `TM-VERIFY-01` | The implementation is verified but the dependency becomes `complete` only in the post-feature ledger transition. |
+| `TM-VERIFY-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Independent CPU Gibbs and exact verifier evidence is committed in `42c2409`. |
+| `TM-TARGET-01` | `complete` | `TM-FND-002`, `TM-GOV-001` | Complete target-fact/topology evidence is committed in `42c2409`. |
+| `GQ-INSPECT-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Artifact-only Inspector evidence is committed in `42c2409`. |
+| `TM-IR-001` | `ready` | `TM-VERIFY-01` | Its sole dependency is complete; owner is unclaimed. |
 
 ## Historical Governance Closure — `TM-GOV-001`
 
@@ -96,11 +97,11 @@ Worker-capacity selection is deterministic after that transition:
 This is a prefix rule. Reconcile an earlier task that ceases to be `ready` before claiming a
 later lane. Each worker owns one bounded task, and each lane remains serial.
 
-## Verified First-Frontier Commit Candidate
+## Completed First Frontier
 
 ### `TM-VERIFY-01` — Independent CPU Gibbs And Exact Kernel Verifier
 
-- Gate/state: M1 compiler kernel; `verified`.
+- Gate/state: M1 compiler kernel; `complete`.
 - Dependencies: `TM-FND-001`, `TM-GOV-001`.
 - Owner: none; implementation worker `/root/tm_verify_01`, coordinator reviewer `/root`.
 - Blocker: none; both dependencies are complete.
@@ -136,10 +137,11 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
   final 518-test suite with 0 skips in 108.136 seconds, Ruff, format, mypy, Markdown math, and
   diff checks. Seven manifest-covered files rehashed successfully; manifest SHA-256 is
   `7c203e5672a3d8ff1f976ee163778a43f877131e2f452f9362ba7ad20008e253`.
+  Feature commit: `42c2409`.
 
 ### `TM-TARGET-01` — Complete Provenanced Target Specification
 
-- Gate/state: M1 compiler kernel; `verified`.
+- Gate/state: M1 compiler kernel; `complete`.
 - Dependencies: `TM-FND-002`, `TM-GOV-001`.
 - Owner: none; implementation worker `/root/tm_target_01`, coordinator reviewer `/root`.
 - Blocker: none; both dependencies are complete.
@@ -177,10 +179,11 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
   nodes, the final 518-test suite with 0 skips in 108.136 seconds, and all static gates. Eight
   manifest entries rehashed successfully; manifest SHA-256 is
   `5fc6a3a32087561936dff69beebcc619d28cbee2e0bb0b3ae220a5b7121e94df`.
+  Feature commit: `42c2409`.
 
 ### `GQ-INSPECT-01` — Artifact-Only Inspector Core
 
-- Gate/state: M2 software MVP; `verified`.
+- Gate/state: M2 software MVP; `complete`.
 - Dependencies: `TM-FND-001`, `TM-GOV-001`.
 - Owner: none; implementation worker `/root/gq_inspect_01`, coordinator reviewer `/root`.
 - Blocker: none; both dependencies are complete.
@@ -228,6 +231,30 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
   the final 518-test suite with 0 skips in 108.136 seconds, and all static gates. Six
   manifest-covered files rehashed successfully; manifest SHA-256 is
   `7aae3476248a9483bfdf9b4f5de7489bdd94112859170a695f1d85cf1f44804e`.
+  Feature commit: `42c2409`.
+
+## Next Dependency-Ready Task
+
+### `TM-IR-001` — Thermodynamic Program Envelope, Clamping, And Coordinates
+
+- Gate/state: M1 compiler kernel; `ready`.
+- Dependencies: `TM-VERIFY-01`, now complete in `42c2409`.
+- Owner: unclaimed.
+- Objective: add an immutable, target-independent `ThermodynamicProgram` envelope around one
+  audited logical model with deterministic free/clamped roles, clamp values, optional logical
+  coordinates, observation metadata, and factor/source identities.
+- Suggested ownership: new `src/gibbsiq/program.py`; narrow changes to `model.py`,
+  `categorical.py`, `result.py`, public exports, and `test_thermodynamic_program.py`.
+- Public gate: exhaustive energy equivalence after clamping; conflicting or out-of-domain
+  clamps fail; relabeling and serialization are deterministic; offsets survive projection.
+- Blind contract: hidden relabel, isolated-variable, clamp/unclamp, offset-shift, and spin-gauge
+  mutations.
+- Independent oracle: enumerate free variables and compare every projected energy with direct
+  substitution into the original model.
+- Exit evidence: equation-audit entry before any new formula, tests written before production
+  code, serialized round trip, raw fixtures/checksums, and a journal with rejected schema
+  alternatives.
+- Blocker: none.
 
 ## Shared Acceptance Commands
 
