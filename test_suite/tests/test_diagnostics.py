@@ -236,6 +236,46 @@ class TraceHelperTests(unittest.TestCase):
         best_sample = {"a": 1, "b": 1}
         self.assertEqual(distance_to_best_trace(chains, best_sample, variables), [[0, 1], [2]])
 
+    def test_sample_helpers_reject_equality_alias_variable_keys(self) -> None:
+        aliases = (
+            (True, 1),
+            ((True,), (1,)),
+            (frozenset({True}), frozenset({1})),
+        )
+        for sample_label, variable in aliases:
+            sample = {sample_label: 1}
+            calls = (
+                lambda sample=sample, variable=variable: state_counts([sample], [variable]),
+                lambda sample=sample, variable=variable: magnetization_trace([[sample]], [variable]),
+                lambda sample=sample, variable=variable: distance_to_best_trace(
+                    [[sample]], sample, [variable]
+                ),
+                lambda sample=sample, variable=variable: compute_diagnostics(
+                    energy_chains=[[0.0]],
+                    samples=[sample],
+                    variables=[variable],
+                ),
+            )
+            for call in calls:
+                with self.subTest(sample_label=sample_label, variable=variable, call=call):
+                    with self.assertRaisesRegex(ValueError, "sample variable labels"):
+                        call()
+            spin_section = diagnostics.spin_chain_section([sample], [variable], [[0.0]])
+            self.assertEqual(spin_section["status"], diagnostics.STATUS_NOT_AVAILABLE)
+            self.assertIn("sample variable labels", spin_section["reason"])
+
+    def test_empty_variable_magnetization_is_explicitly_undefined(self) -> None:
+        with self.assertRaisesRegex(ValueError, "at least one variable"):
+            magnetization_trace([[{}]], [])
+
+    def test_large_reordered_sample_key_lookup_smoke(self) -> None:
+        variables = tuple(range(5_000))
+        sample = {variable: 1 for variable in reversed(variables)}
+
+        counts = state_counts([sample], variables)
+
+        self.assertEqual(counts, {(1,) * len(variables): 1})
+
 
 class ComputeDiagnosticsPayloadTests(unittest.TestCase):
     def test_payload_top_level_keys_are_json_safe(self) -> None:
@@ -286,6 +326,30 @@ class ComputeDiagnosticsPayloadTests(unittest.TestCase):
         round_tripped = json.loads(json.dumps(payload))
         self.assertEqual(round_tripped, payload)
         self.assertIsNone(find_nan_or_inf(payload))
+
+    def test_large_finite_energy_scale_does_not_overflow(self) -> None:
+        magnitude = 1e154
+        energy_chains = [
+            [magnitude, -magnitude, magnitude, -magnitude],
+            [magnitude, -magnitude, magnitude, -magnitude],
+        ]
+
+        payload = compute_diagnostics(energy_chains=energy_chains)
+
+        self.assertEqual(payload["energy"]["mean"], 0.0)
+        self.assertEqual(payload["energy"]["variance"], 1e308)
+        self.assertEqual(payload["energy"]["ess_status"], "ok")
+        self.assertTrue(math.isfinite(payload["energy"]["ess"]))
+        self.assertTrue(math.isfinite(payload["energy"]["tau_hat"]))
+        json.dumps(payload, allow_nan=False)
+
+    def test_unequal_chain_truncation_reports_every_discarded_draw(self) -> None:
+        section = chain_section([[0.0] * 100, [1.0] * 4, [], [2.0] * 7])
+
+        self.assertEqual(section["original_draws_by_chain"], [100, 4, 0, 7])
+        self.assertEqual(section["diagnostic_draws_used_by_chain"], [4, 4, 0, 4])
+        self.assertEqual(section["diagnostic_discarded_draws_by_chain"], [96, 0, 0, 3])
+        self.assertEqual(section["diagnostic_discarded_draws"], 99)
 
 
 class ReadsPerSecondTests(unittest.TestCase):

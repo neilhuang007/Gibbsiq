@@ -73,6 +73,30 @@ class GroundTruthGeneratorTest(unittest.TestCase):
                 )
                 self.assertEqual(fixture["expected"]["best_cut_value"], optimum)
 
+    def test_path_graph_has_n_minus_one_edges_and_full_maxcut(self) -> None:
+        for num_vertices in range(1, 9):
+            with self.subTest(num_vertices=num_vertices):
+                edges = self.generator.path_graph_edges(num_vertices)
+                self.assertEqual(len(edges), num_vertices - 1)
+                self.assertEqual(edges, [(index, index + 1) for index in range(num_vertices - 1)])
+                solved = self.generator.solve_maxcut(num_vertices, edges)
+                self.assertEqual(solved["num_edges"], num_vertices - 1)
+                self.assertEqual(solved["best_cut_value"], num_vertices - 1)
+
+    def test_knapsack_optimal_weight_is_a_tie_breaking_contract(self) -> None:
+        solved = self.generator.solve_knapsack([1, 2], [5, 5], capacity=2)
+
+        self.assertEqual(solved["max_value"], 5)
+        self.assertEqual(solved["weight_at_optimum"], 1)
+        self.assertEqual(solved["num_optimal_selections"], 1)
+        self.assertEqual(solved["witness_selections"], [[0]])
+
+    def test_generic_ising_solver_does_not_round_ground_energy_to_six_decimals(self) -> None:
+        solved = self.generator.solve_ising(1, {}, {0: 0.1234567894})
+
+        self.assertEqual(solved["ground_state_energy"], -0.1234567894)
+        self.assertLess(abs(solved["ground_state_energy"] - (-0.1234567894)), 1e-9)
+
 
 if __name__ == "__main__":
     unittest.main()

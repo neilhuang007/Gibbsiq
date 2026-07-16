@@ -7,6 +7,7 @@ import math
 import random
 import sys
 import unittest
+from collections.abc import Mapping
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -14,6 +15,25 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from gibbsiq.cluster_moves import isoenergetic_cluster_move  # noqa: E402
 from gibbsiq.model import IsingModel  # noqa: E402
+
+
+class _AliasMapping(Mapping):
+    """Mapping that can expose equality-alias keys a dict would collapse."""
+
+    def __init__(self, items):
+        self._items = tuple(items)
+
+    def __iter__(self):
+        return iter(key for key, _ in self._items)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __getitem__(self, requested):
+        for key, value in self._items:
+            if type(key) is type(requested) and key == requested:
+                return value
+        raise KeyError(requested)
 
 
 class IsoenergeticClusterMoveTests(unittest.TestCase):
@@ -234,6 +254,16 @@ class IsoenergeticClusterMoveTests(unittest.TestCase):
             invalid = dict(replica_a, extra=-1)
             with self.assertRaisesRegex(ValueError, "extra"):
                 isoenergetic_cluster_move(model, invalid, replica_b, seed=1)
+        with self.subTest("extra equality-alias variable"):
+            boolean_model = self._model(variables=(True,))
+            invalid = _AliasMapping(((True, 1), (1, -1)))
+            with self.assertRaisesRegex(ValueError, "extra"):
+                isoenergetic_cluster_move(
+                    boolean_model,
+                    invalid,
+                    {True: -1},
+                    component_index=0,
+                )
         for invalid_spin in (True, False, 0, 2):
             with self.subTest(invalid_spin=invalid_spin):
                 invalid = dict(replica_a, a=invalid_spin)

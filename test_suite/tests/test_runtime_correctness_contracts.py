@@ -18,11 +18,13 @@ from gibbsiq.thrml_runtime import (  # noqa: E402
     _advance_block_state,
     _local_sweep_accounting,
     _reads_by_chain,
+    _replica_exchange_accepts,
     _replica_exchange_log_ratio,
     _replica_exchange_pairs,
 )
 
 try:  # noqa: SIM105
+    import jax  # noqa: E402
     import jax.numpy as jnp  # noqa: E402
     import thrml  # noqa: F401, E402
 
@@ -63,6 +65,9 @@ class _FakeThrml:
 
 
 class RuntimeMathContractTests(unittest.TestCase):
+    def test_zero_uniform_accepts_any_finite_log_ratio(self) -> None:
+        self.assertTrue(_replica_exchange_accepts(-1e300, 0.0))
+
     def test_replica_exchange_log_ratio_sign(self) -> None:
         beta_hot, beta_cold = 0.5, 2.0
         low_energy, high_energy = -3.0, 1.0
@@ -211,6 +216,10 @@ class RuntimeBackendContractTests(unittest.TestCase):
         self.assertEqual(accounting["active_chains"], 1)
         self.assertEqual(accounting["backend_generated_reads_by_chain"], [1, 0, 0, 0])
         self.assertEqual(accounting, result.metadata["local_sweep_accounting"])
+        self.assertEqual(
+            result.metadata["jax_default_prng_impl"],
+            jax.config.jax_default_prng_impl,
+        )
 
     def test_invalid_empty_block_fails_at_gibbsiq_boundary(self) -> None:
         model = compile_ising({"s": 1.0})
@@ -236,6 +245,12 @@ class RuntimeBackendContractTests(unittest.TestCase):
         self.assertNotIn("parallel_tempering", result.traces)
         self.assertEqual(result.metadata["local_transition_rng"], "not_used_constant_model")
         self.assertEqual(result.traces["local_sweep_accounting"]["executed_total_sweeps"], 0)
+        spin_diagnostics = result.diagnostics["chains"]["spins"]
+        self.assertEqual(spin_diagnostics["status"], "not_available")
+        self.assertEqual(
+            spin_diagnostics["reason"],
+            "spin diagnostics are not applicable to a zero-variable model",
+        )
 
     def test_offset_only_model_uses_exact_deterministic_shortcut(self) -> None:
         model = compile_ising({}, offset=4.25)

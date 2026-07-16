@@ -275,6 +275,28 @@ class DomainWallPenaltyAndCodecTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not in the domain"):
             encoding.encode({"x": "unknown"})
 
+    def test_codec_uses_exact_type_categorical_membership(self) -> None:
+        encoding = compile_domain_wall(
+            CategoricalModel(
+                variables=("x",),
+                domains={"x": (0, 1)},
+            ),
+            penalty=2.0,
+        )
+        for alias in (False, True, 0.0, 1.0):
+            with (
+                self.subTest(alias=alias),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "not in the domain",
+                ),
+            ):
+                encoding.encode({"x": alias})
+
+        decoded = encoding.decode({encoding.wall_variables["x"][0]: 1})
+        self.assertEqual(decoded, {"x": 1})
+        self.assertIs(type(decoded["x"]), int)
+
 
 class DomainWallEvidenceAndIdentityTests(unittest.TestCase):
     def test_private_wall_labels_are_frozen_user_collision_safe_and_deterministic(self) -> None:

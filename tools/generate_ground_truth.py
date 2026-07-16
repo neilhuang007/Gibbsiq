@@ -87,11 +87,6 @@ def binary_assignments(n: int) -> Iterable[tuple[int, ...]]:
         yield bits
 
 
-def round6(value: float) -> float:
-    """Round to 6 decimals to keep JSON stable and well inside 1e-9 tolerance."""
-    return round(value + 0.0, 6)
-
-
 def _spin_witness(spins: tuple[int, ...], n: int) -> dict[str, int]:
     """Serialize a spin vector as a ``{variable_name: +-1}`` witness state."""
     return {str(i): spins[i] for i in range(n)}
@@ -238,6 +233,7 @@ def number_partition_fixture(
 # 0/1 Knapsack, exact optimum by enumeration
 # --------------------------------------------------------------------------- #
 def solve_knapsack(weights: list[int], values: list[int], capacity: int) -> dict[str, Any]:
+    """Solve lexicographically by maximum value, then minimum selected weight."""
     n = len(weights)
     best_value = 0
     best_weight = 0
@@ -251,12 +247,12 @@ def solve_knapsack(weights: list[int], values: list[int], capacity: int) -> dict
             continue
         value = sum(values[i] * bits[i] for i in range(n))
         selection = [i for i in range(n) if bits[i] == 1]
-        if value > best_value:
+        if value > best_value or (value == best_value and weight < best_weight):
             best_value = value
             best_weight = weight
             degeneracy = 1
             witnesses = [selection]
-        elif value == best_value:
+        elif value == best_value and weight == best_weight:
             degeneracy += 1
             if len(witnesses) < MAX_WITNESSES:
                 witnesses.append(selection)
@@ -279,14 +275,16 @@ def knapsack_fixture(fixture_id: str, n: int, max_weight: int, max_value: int, s
         "id": fixture_id,
         "family": "knapsack",
         "purpose": (
-            f"Exact 0/1 knapsack optimum for {n} seeded items, verified by full "
-            f"2^{n} enumeration (Lucas 2014, sec. 5.2)."
+            f"Exact lexicographic 0/1 knapsack optimum (maximum feasible value, then "
+            f"minimum selected weight) for {n} seeded items, verified by full 2^{n} "
+            "enumeration (Lucas 2014, sec. 5.2; tie-break is EVAL-EQ-024)."
         ),
         "provenance": {
             "generator": GENERATOR,
             "method": "exhaustive_enumeration",
             "seed": seed,
             "capacity_rule": "floor(sum(weights)/2)",
+            "optimum_rule": "maximize value, then minimize selected weight",
             "source_basis": ["reference/05-theory/papers/lucas-2014-ising-formulations.md"],
             "formulation_source": CITATIONS["lucas2014"],
         },
@@ -393,7 +391,7 @@ def solve_ising(n: int, couplings: dict[tuple[int, int], float], fields: dict[in
                 witnesses.append(_spin_witness(spins, n))
     return {
         "num_spins": n,
-        "ground_state_energy": round6(best_energy),
+        "ground_state_energy": float(best_energy),
         "ground_state_degeneracy": degeneracy,
         "witness_spin_samples": witnesses,
     }
@@ -455,6 +453,13 @@ def _normalize_edges(edges: Iterable[tuple[int, int]]) -> list[tuple[int, int]]:
 
 def complete_graph_edges(n: int) -> list[tuple[int, int]]:
     return _normalize_edges((u, v) for u in range(n) for v in range(u + 1, n))
+
+
+def path_graph_edges(n: int) -> list[tuple[int, int]]:
+    """Edges of the simple path on vertices 0 through n - 1."""
+    if isinstance(n, bool) or not isinstance(n, int) or n < 1:
+        raise ValueError("path graph vertex count must be a positive integer")
+    return [(vertex, vertex + 1) for vertex in range(n - 1)]
 
 
 def cycle_graph_edges(n: int) -> list[tuple[int, int]]:

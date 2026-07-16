@@ -17,12 +17,33 @@ from typing import Any, TypeAlias
 DEFAULT_TOLERANCE = 1e-9
 
 
+def validate_tolerance(tolerance: Any) -> float:
+    """Return a finite non-negative absolute tolerance, rejecting booleans."""
+    if isinstance(tolerance, bool):
+        raise ValueError(f"tolerance must be a finite non-negative number, got {tolerance!r}")
+    try:
+        canonical = float(tolerance)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"tolerance must be a finite non-negative number, got {tolerance!r}") from error
+    if not math.isfinite(canonical) or canonical < 0.0:
+        raise ValueError(f"tolerance must be a finite non-negative number, got {tolerance!r}")
+    return canonical
+
+
 def close_within(actual: Any, expected: float, tolerance: float) -> bool:
     """True when ``actual`` is a non-bool real number within ``tolerance`` of ``expected``."""
-    return (
-        isinstance(actual, (int, float))
-        and not isinstance(actual, bool)
-        and math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=tolerance)
+    absolute_tolerance = validate_tolerance(tolerance)
+    if not isinstance(actual, (int, float)) or isinstance(actual, bool):
+        return False
+    try:
+        canonical_actual = float(actual)
+    except (ValueError, OverflowError):
+        return False
+    return math.isclose(
+        canonical_actual,
+        expected,
+        rel_tol=0.0,
+        abs_tol=absolute_tolerance,
     )
 
 
@@ -246,6 +267,7 @@ def score_candidate(
     (still checked when volunteered). Full characterization passes an empty set;
     the optimization-claim criterion passes the enumeration-only keys.
     """
+    tolerance = validate_tolerance(tolerance)
     fixture_id = fixture["id"]
     family = fixture.get("family")
     if not isinstance(family, str):
@@ -307,6 +329,20 @@ def score_candidate(
                     actual=computed,
                 )
             )
+            continue
+        if family == "knapsack":
+            witness_weight = sum(model["weights"][item] for item in witness)
+            expected_weight = expected["weight_at_optimum"]
+            if witness_weight != expected_weight:
+                differences.append(
+                    _diff(
+                        witness_path,
+                        "witness_weight_mismatch",
+                        "optimal-value witness does not match the declared optimum weight",
+                        expected=expected_weight,
+                        actual=witness_weight,
+                    )
+                )
     return differences
 
 

@@ -12,7 +12,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE, close_within, verify_benchmark_fixture
+from gibbsiq.benchmark_oracle import (
+    DEFAULT_TOLERANCE,
+    close_within,
+    validate_tolerance,
+    verify_benchmark_fixture,
+)
 
 
 UNORDERED_LIST_KEYS = {
@@ -310,6 +315,7 @@ def evaluate_candidate(
     fixture_dir: Path | None = None,
     tolerance: float = DEFAULT_TOLERANCE,
 ) -> dict[str, Any]:
+    tolerance = validate_tolerance(tolerance)
     fixture_dir = fixture_dir or default_fixture_dir()
     fixture_sets = load_fixture_sets(fixture_dir)
     fixtures: dict[str, dict[str, Any]] = fixture_sets["fixtures"]

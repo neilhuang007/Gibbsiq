@@ -182,6 +182,15 @@ class DistributionComparisonTests(unittest.TestCase):
                 target_beta=1.0,
                 implemented_beta=1.0,
             )
+        integer_label = compile_ising({1: 0.0}, variables=(1,))
+        boolean_label = compile_ising({True: 0.0}, variables=(True,))
+        with self.assertRaisesRegex(ValueError, "variable order"):
+            compare_boltzmann_distributions(
+                integer_label,
+                boolean_label,
+                target_beta=1.0,
+                implemented_beta=1.0,
+            )
         with self.assertRaisesRegex(TypeError, "target_model"):
             compare_boltzmann_distributions(  # type: ignore[arg-type]
                 {}, left, target_beta=1.0, implemented_beta=1.0

@@ -375,6 +375,21 @@ class DegenerateAndValidationTests(unittest.TestCase):
         self.assertEqual(len(payload["link_loads"]), 399)
         json.dumps(payload, allow_nan=False)
 
+    def test_no_edge_2000_partition_validation_smoke(self) -> None:
+        variables = tuple(range(2_000))
+        profile = profile_chain_communication(
+            compile_ising({}, variables=variables),
+            {variable: (variable,) for variable in variables},
+            chain_order=tuple(reversed(variables)),
+            link_usable_pins=(1,) * (len(variables) - 1),
+            num_colors=1,
+            communication_frequency_hz=1.0,
+        )
+
+        self.assertEqual(profile.active_pair_count, 0)
+        self.assertEqual(len(profile.partition_summaries), len(variables))
+        self.assertEqual(len(profile.link_loads), len(variables) - 1)
+
     def test_colliding_partition_audit_keys_are_rejected(self) -> None:
         first = _CollidingPartitionLabel()
         second = _CollidingPartitionLabel()
@@ -408,6 +423,28 @@ class DegenerateAndValidationTests(unittest.TestCase):
                     communication_frequency_hz=1.0,
                 )
 
+    def test_partition_coverage_rejects_equality_alias_variables(self) -> None:
+        aliases = (
+            (True, 1),
+            ((True,), (1,)),
+            (frozenset({True}), frozenset({1})),
+        )
+        for supplied_variable, model_variable in aliases:
+            with self.subTest(
+                supplied_variable=supplied_variable,
+                model_variable=model_variable,
+            ):
+                model = compile_ising({}, variables=(model_variable,))
+                with self.assertRaisesRegex(ValueError, "cover model variables exactly"):
+                    profile_chain_communication(
+                        model,
+                        {"one": (supplied_variable,)},
+                        chain_order=("one",),
+                        link_usable_pins=(),
+                        num_colors=1,
+                        communication_frequency_hz=1.0,
+                    )
+
     def test_invalid_chain_orders_routes_and_clocks_are_rejected(self) -> None:
         model = compile_ising({}, {("a", "b"): 1.0}, variables=("a", "b"))
         partitions = {"A": ("a",), "B": ("b",)}
@@ -428,6 +465,15 @@ class DegenerateAndValidationTests(unittest.TestCase):
                     num_colors=1,
                     communication_frequency_hz=1.0,
                 )
+        with self.assertRaisesRegex(ValueError, "partition label exactly once"):
+            profile_chain_communication(
+                compile_ising({}, variables=("a",)),
+                {1: ("a",)},
+                chain_order=(True,),
+                link_usable_pins=(),
+                num_colors=1,
+                communication_frequency_hz=1.0,
+            )
         for colors in (0, True, 1.5):
             with self.subTest(colors=colors), self.assertRaises(ValueError):
                 profile_chain_communication(

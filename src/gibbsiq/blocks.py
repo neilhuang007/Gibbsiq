@@ -21,7 +21,7 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Any
 
-from gibbsiq.model import IsingModel, Variable, variable_index
+from gibbsiq.model import IsingModel, Variable, exact_label_key, variable_index
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,24 +65,28 @@ def color_blocks(model: IsingModel) -> BlockPartition:
     Depends only on graph topology (cached), not coefficient values; each
     block lists variables in canonical order.
     """
-    return BlockPartition(blocks=_color_blocks_cached(model.variables, model.graph))
+    blocks, strategy = _color_blocks_cached(model.variables, model.graph)
+    return BlockPartition(blocks=blocks, strategy=strategy)
 
 
 @functools.lru_cache(maxsize=128)
 def _color_blocks_cached(
     variables: tuple[Variable, ...], edges: tuple[tuple[Variable, Variable], ...]
-) -> tuple[tuple[Variable, ...], ...]:
+) -> tuple[tuple[tuple[Variable, ...], ...], str]:
     """Topology-only cached coloring backend."""
     if not variables:
-        return ()
+        return (), "empty-model"
     neighbors = _neighbors_from_edges(variables, edges)
     if not edges:
-        return (variables,)
+        return (variables,), "edgeless-single-block"
 
     colors = _bipartite_coloring(variables, neighbors)
     if colors is None:
         colors = _dsatur_coloring(variables, neighbors)
-    return _blocks_from_colors(variables, colors)
+        strategy = "dsatur-coloring"
+    else:
+        strategy = "bipartite-coloring"
+    return _blocks_from_colors(variables, colors), strategy
 
 
 def _neighbors_from_edges(
@@ -185,16 +189,24 @@ def validate_partition(model: IsingModel, partition: BlockPartition) -> None:
     if empty_blocks:
         raise ValueError(f"partition contains empty blocks at indices {empty_blocks!r}")
     placed = [variable for block in partition.blocks for variable in block]
-    if len(placed) != len(set(placed)):
-        raise ValueError("partition places at least one variable in multiple blocks")
-    missing = set(model.variables) - set(placed)
-    extra = set(placed) - set(model.variables)
+    placed_blocks: dict[tuple[Any, Any], int] = {}
+    for block_position, block in enumerate(partition.blocks):
+        for variable in block:
+            key = exact_label_key(variable)
+            if key in placed_blocks:
+                raise ValueError("partition places at least one variable in multiple blocks")
+            placed_blocks[key] = block_position
+    model_keys = {exact_label_key(variable) for variable in model.variables}
+    missing = tuple(
+        variable for variable in model.variables if exact_label_key(variable) not in placed_blocks
+    )
+    extra = tuple(candidate for candidate in placed if exact_label_key(candidate) not in model_keys)
     if missing:
-        raise ValueError(f"partition is missing variables {sorted(missing, key=repr)!r}")
+        raise ValueError(f"partition is missing variables {missing!r}")
     if extra:
-        raise ValueError(f"partition references unknown variables {sorted(extra, key=repr)!r}")
+        raise ValueError(f"partition references unknown variables {extra!r}")
 
-    block_of = {variable: position for position, block in enumerate(partition.blocks) for variable in block}
+    block_of = {variable: placed_blocks[exact_label_key(variable)] for variable in model.variables}
     for left, right in model.quadratic:
         if block_of[left] == block_of[right]:
             raise ValueError(

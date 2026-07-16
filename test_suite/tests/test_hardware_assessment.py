@@ -19,6 +19,7 @@ from gibbsiq.hardware import (  # noqa: E402
     TSUSpec,
 )
 from gibbsiq.hardware_assessment import assess_target_admissibility  # noqa: E402
+from gibbsiq.topology import ExplicitTopology  # noqa: E402
 
 
 class _OpaqueLabel:
@@ -166,6 +167,145 @@ class ConstraintDecisionTests(unittest.TestCase):
                 "topology_locality",
             },
         )
+
+    def test_accumulator_range_failure_prevents_admissible_status(self) -> None:
+        target = TSUSpec(
+            name="narrow-accumulator",
+            accumulator_format=FixedPointSpec(0, 0),
+            provenance={
+                "accumulator_format": ParameterProvenance(
+                    "assumed",
+                    "unit-test accumulator fixture",
+                    sensitivity_note="compare wider signed accumulators",
+                )
+            },
+        )
+        assessment = assess_target_admissibility(
+            compile_ising({"x": 0.5}),
+            target,
+        )
+
+        self.assertEqual(assessment.status, "inadmissible")
+        accumulator = assessment.check("accumulator_format")
+        self.assertEqual(accumulator.status, "fail")
+        self.assertIn("0.5", str(accumulator.observed))
+        self.assertIn("[-1.0, 0.0]", str(accumulator.limit))
+
+    def test_accumulator_pass_requires_range_and_grid_representability(self) -> None:
+        target = TSUSpec(
+            name="accumulator-grid",
+            accumulator_format=FixedPointSpec(1, 1),
+            provenance={
+                "accumulator_format": ParameterProvenance(
+                    "assumed",
+                    "unit-test accumulator fixture",
+                    sensitivity_note="compare accumulator width and fractional precision",
+                )
+            },
+        )
+        exact = assess_target_admissibility(
+            compile_ising(
+                {"x": 0.5},
+                {("x", "y"): 0.5},
+                variables=("x", "y"),
+            ),
+            target,
+        )
+        self.assertEqual(exact.check("accumulator_format").status, "pass")
+        self.assertEqual(
+            exact.check("accumulator_format").observed,
+            "[-0.5, 1.0]",
+        )
+
+        rounded = assess_target_admissibility(
+            compile_ising({"x": 0.25}),
+            target,
+        )
+        self.assertEqual(rounded.status, "conditional")
+        self.assertEqual(
+            rounded.check("accumulator_format").status,
+            "not_evaluated",
+        )
+        self.assertIn("not exactly representable", rounded.check("accumulator_format").reason)
+
+    def test_accumulator_uses_implemented_quantized_coefficients(self) -> None:
+        target = TSUSpec(
+            name="quantized-accumulator",
+            coefficient_format=FixedPointSpec(1, 0, rounding="toward_zero"),
+            accumulator_format=FixedPointSpec(0, 1),
+            provenance={
+                parameter: ParameterProvenance(
+                    "assumed",
+                    f"unit-test {parameter} fixture",
+                    sensitivity_note="compare alternate fixed-point formats",
+                )
+                for parameter in ("coefficient_format", "accumulator_format")
+            },
+        )
+        assessment = assess_target_admissibility(
+            compile_ising({"x": 0.75}),
+            target,
+        )
+
+        self.assertEqual(
+            assessment.quantization.maximum_absolute_coefficient_error,
+            0.75,
+        )
+        self.assertEqual(
+            assessment.quantization.zeroed_nonzero_count,
+            1,
+        )
+        accumulator = assessment.check("accumulator_format")
+        self.assertEqual(accumulator.status, "pass")
+        self.assertEqual(accumulator.observed, "[0.0, 0.0]")
+
+    def test_topology_capacity_is_used_when_scalar_capacity_is_absent(self) -> None:
+        topology = ExplicitTopology(node_count=1, edges=())
+        target = TSUSpec(
+            name="one-node-topology",
+            topology=topology,
+            provenance={
+                "topology": ParameterProvenance(
+                    "assumed",
+                    "unit-test topology fixture",
+                    sensitivity_note="compare topologies with more nodes",
+                )
+            },
+        )
+        assessment = assess_target_admissibility(
+            compile_ising({}, variables=("a", "b")),
+            target,
+        )
+
+        self.assertEqual(assessment.status, "inadmissible")
+        capacity = assessment.check("pbit_capacity")
+        self.assertEqual(capacity.status, "fail")
+        self.assertEqual(capacity.limit, 1)
+        self.assertIn("topology capacity", capacity.reason)
+
+    def test_topology_locality_reason_distinguishes_topology_from_placement(self) -> None:
+        topology = ExplicitTopology(node_count=2, edges=((0, 1),))
+        target = TSUSpec(
+            name="two-node-topology",
+            topology=topology,
+            provenance={
+                "topology": ParameterProvenance(
+                    "assumed",
+                    "unit-test topology fixture",
+                    sensitivity_note="compare alternate physical adjacencies",
+                )
+            },
+        )
+        assessment = assess_target_admissibility(
+            compile_ising({}, {("a", "b"): 1.0}, variables=("a", "b")),
+            target,
+        )
+
+        locality = assessment.check("topology_locality")
+        self.assertEqual(locality.status, "not_evaluated")
+        self.assertIn("physical topology", locality.reason)
+        self.assertIn("placement", locality.reason)
+        self.assertNotIn("has no physical topology", locality.reason)
 
     def test_dsatur_upper_bound_above_limit_without_matching_lower_bound_is_conditional(self) -> None:
         # A wheel with an odd rim needs four colors, but the deliberately cheap

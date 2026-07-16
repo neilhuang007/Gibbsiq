@@ -211,6 +211,14 @@ class KernelVerificationTrapTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "beta"):
             verify_transition_kernel(model, 2.0, kernel)
 
+        integer_model = compile_ising({1: 0.0}, variables=(1,))
+        boolean_kernel = build_exact_transition_kernel(
+            compile_ising({True: 0.0}, variables=(True,)),
+            1.0,
+        )
+        with self.assertRaisesRegex(ValueError, "variable order"):
+            verify_transition_kernel(integer_model, 1.0, boolean_kernel)
+
     def test_forged_reversibility_flag_cannot_bypass_schedule_contract(self) -> None:
         model = compile_ising({"s": 0.5})
         kernel = build_exact_transition_kernel(model, 1.0)
@@ -304,10 +312,46 @@ class EmpiricalVerificationTests(unittest.TestCase):
         self.assertEqual(report.sample_count, sample_count)
         self.assertEqual(
             report.num_comparisons,
-            2 + 1 + len({model.energy(dict(zip(model.variables, state))) for state in states}),
+            2 + 1 + len({model.energy(dict(zip(model.variables, state))) for state in states}) + len(states),
         )
+        self.assertEqual(report.independence_assumption_status, "caller_asserted_unverified")
+        self.assertFalse(report.independence_verified)
         self.assertTrue(all(interval.covered for interval in report.intervals))
         json.dumps(report.to_dict(), allow_nan=False)
+
+    def test_even_parity_law_fails_full_state_probability_checks(self) -> None:
+        """First/second moments and energy levels do not identify a joint law."""
+        model = compile_ising({"a": 0.0, "b": 0.0, "c": 0.0})
+        even_parity_states = (
+            {"a": -1, "b": -1, "c": 1},
+            {"a": -1, "b": 1, "c": -1},
+            {"a": 1, "b": -1, "c": -1},
+            {"a": 1, "b": 1, "c": 1},
+        )
+        samples = [dict(even_parity_states[index % 4]) for index in range(10_000)]
+
+        report = verify_empirical_distribution(
+            model,
+            samples,
+            beta=1.0,
+            familywise_confidence=0.99,
+            sampling_design="independent_chains",
+        )
+
+        self.assertFalse(report.passed)
+        failed_state_intervals = [
+            interval
+            for interval in report.failed_intervals
+            if interval.observable.startswith("state_probability:")
+        ]
+        self.assertEqual(len(failed_state_intervals), 8)
+        self.assertTrue(
+            all(
+                interval.covered
+                for interval in report.intervals
+                if not interval.observable.startswith("state_probability:")
+            )
+        )
 
     def test_bad_empirical_law_fails_multiple_intervals(self) -> None:
         model = compile_ising({"s": 1.0}, offset=2.0)

@@ -289,11 +289,21 @@ class Stage01ImplementationConformanceTest(unittest.TestCase):
     @unittest.skipIf(compile_ising is None, "Stage 1 compile_ising API is not implemented yet")
     def test_compile_ising_matches_reference_contract(self) -> None:
         expected = reference_compile_ising({1: 2.0}, {(1, 0): -0.5}, offset=4.0)
-        actual = as_mapping(type(self).compile_ising({1: 2.0}, {(1, 0): -0.5}, offset=4.0))
+        model = type(self).compile_ising({1: 2.0}, {(1, 0): -0.5}, offset=4.0)
+        actual = {
+            "variables": list(model.variables),
+            "linear": dict(model.linear),
+            "quadratic": {
+                pair_key(left, right): coefficient for (left, right), coefficient in model.quadratic.items()
+            },
+            "offset": model.offset,
+            "vartype": model.vartype,
+            "source_format": model.source_format,
+        }
 
         for key in ("variables", "linear", "quadratic", "offset", "vartype", "source_format"):
             self.assertEqual(actual[key], expected[key])
-        self.assertTrue(REQUIRED_IR_FIELDS.issubset(actual))
+        self.assertTrue(REQUIRED_IR_FIELDS.issubset(as_mapping(model)))
 
     @unittest.skipIf(sample_result_type is None, "Stage 1 SampleResult API is not implemented yet")
     def test_sample_result_exposes_minimum_schema(self) -> None:

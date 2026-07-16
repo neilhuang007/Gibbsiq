@@ -64,6 +64,15 @@ class SamplerConfigValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SamplerConfig(beta=-1.0)
 
+    def test_rejects_boolean_temperature_controls(self) -> None:
+        for values in (
+            {"beta": True},
+            {"warmup_beta_ladder": (True,)},
+            {"beta": 2.0, "parallel_tempering_betas": (True, 2.0)},
+        ):
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                SamplerConfig(**values)
+
     def test_rejects_unknown_init_policy(self) -> None:
         with self.assertRaises(ValueError):
             SamplerConfig(init="warm")

@@ -72,6 +72,7 @@ class ColoringStructureTests(unittest.TestCase):
         partition = color_blocks(model)
         self.assertEqual(partition.num_blocks, 1)
         self.assertEqual(partition.blocks[0], model.variables)
+        self.assertEqual(partition.strategy, "edgeless-single-block")
 
     def test_path_graph_uses_two_blocks(self) -> None:
         model = compile_ising(
@@ -80,6 +81,7 @@ class ColoringStructureTests(unittest.TestCase):
         )
         partition = color_blocks(model)
         self.assertEqual(partition.num_blocks, 2)
+        self.assertEqual(partition.strategy, "bipartite-coloring")
         validate_partition(model, partition)
 
     def test_grid_graph_uses_two_blocks(self) -> None:
@@ -117,6 +119,7 @@ class DsaturEdgeCaseTests(unittest.TestCase):
         )
         partition = color_blocks(model)
         self.assertEqual(partition.num_blocks, 3)
+        self.assertEqual(partition.strategy, "dsatur-coloring")
         validate_partition(model, partition)
 
     def test_star_graph_separates_center_from_leaves(self) -> None:
@@ -160,6 +163,11 @@ class ValidatePartitionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_partition(model, BlockPartition(blocks=(("a",), ("b", "c"))))
 
+    def test_rejects_equal_but_differently_typed_variable_alias(self) -> None:
+        model = compile_ising({True: 0.0}, variables=(True,))
+        with self.assertRaises(ValueError):
+            validate_partition(model, BlockPartition(blocks=((1,),)))
+
     def test_rejects_duplicate_placement(self) -> None:
         model = compile_ising({"a": 0.0, "b": 0.0}, {("a", "b"): 1.0})
         with self.assertRaises(ValueError):
@@ -177,12 +185,18 @@ class ValidatePartitionTests(unittest.TestCase):
         )
         validate_partition(model, singletons)
 
+    def test_large_edgeless_partition_validation_smoke(self) -> None:
+        variables = tuple(range(20_000))
+        model = compile_ising({}, variables=variables)
+
+        validate_partition(model, BlockPartition(blocks=(variables,)))
+
 
 class MetadataTests(unittest.TestCase):
     def test_partition_metadata_keys(self) -> None:
         partition = color_blocks(random_model(SEEDS[0]))
         metadata = partition.to_metadata()
-        self.assertEqual(metadata["block_strategy"], "dsatur-coloring")
+        self.assertEqual(metadata["block_strategy"], "bipartite-coloring")
         self.assertEqual(metadata["num_blocks"], partition.num_blocks)
         self.assertEqual(metadata["block_sizes"], list(partition.block_sizes))
 

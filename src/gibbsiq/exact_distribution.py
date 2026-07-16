@@ -12,7 +12,7 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
-from gibbsiq.model import IsingModel, Variable, finite_float, finite_sum
+from gibbsiq.model import IsingModel, Variable, exact_variable_order, finite_float, finite_sum
 
 
 class ExactDistributionNumericalError(ValueError):
@@ -275,7 +275,7 @@ def compare_boltzmann_distributions(
         raise TypeError(f"target_model must be IsingModel, got {type(target_model).__name__}")
     if not isinstance(implemented_model, IsingModel):
         raise TypeError(f"implemented_model must be IsingModel, got {type(implemented_model).__name__}")
-    if target_model.variables != implemented_model.variables:
+    if not exact_variable_order(implemented_model.variables, target_model.variables):
         raise ValueError("target and implemented models must have identical variable order")
     target = exact_boltzmann_distribution(
         target_model,

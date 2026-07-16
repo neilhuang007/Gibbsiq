@@ -40,6 +40,12 @@ def complete_candidate_from_fixtures() -> dict:
 
 
 class EvaluationHarnessTest(unittest.TestCase):
+    def test_evaluator_rejects_invalid_tolerance_before_scoring(self) -> None:
+        for tolerance in (-1.0, float("inf"), float("nan"), True):
+            with self.subTest(tolerance=tolerance):
+                with self.assertRaisesRegex(ValueError, "tolerance"):
+                    evaluate_candidate({}, tolerance=tolerance)
+
     def test_candidate_normalization_accepts_supported_shapes(self) -> None:
         self.assertEqual(
             normalize_candidate({"results": [{"id": "a", "actual": {"x": 1}}]}),
