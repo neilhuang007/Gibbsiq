@@ -47,7 +47,7 @@ enumeration). The families are:
 | --- | --- | --- | --- |
 | `maxcut` | `2^n` spin configs | max cut value, min Ising energy, degeneracy | seeded Erdos-Renyi, n = 8..14; invariant `E = |edges| - 2*cut` |
 | `number_partition` | `2^n` sign vectors | min subset-sum difference (Lucas `H=(Sum a_i s_i)^2`) | includes perfect (optimum 0) and frustrated (optimum > 0, forced odd sum) instances |
-| `knapsack` | `2^n` item subsets | max feasible value, weight at optimum, count | capacity = `floor(Sum weights / 2)` |
+| `knapsack` | `2^n` item subsets | lexicographic optimum: max feasible value, then minimum weight; count at both optima | capacity = `floor(Sum weights / 2)` |
 | `tsp` | `(n-1)!/2` tours | optimal tour length, count of optimal tours | rounded-Euclidean (TSPLIB EUC_2D style), n = 6..9 |
 | `sk_spin_glass` | `2^n` spin configs | ground-state energy, degeneracy | Sherrington-Kirkpatrick, J in {-1,+1}, h = 0, n = 8..12 |
 | `maxcut` (structured) | `2^n` spin configs, plus a closed-form cross-check | max cut value, degeneracy, witness | named graphs K_n, C_n, K_{m,n}, Q_3, Petersen |
@@ -83,6 +83,12 @@ following hold:
    recomputes that witness's objective directly from the input model — cut value, Ising
    energy, tour length, knapsack value and feasibility, or partition discrepancy — and
    confirms it is feasible and attains the optimum.
+
+For knapsack, “optimum” is explicitly lexicographic: maximize feasible value first, then
+minimize selected weight among maximum-value selections. `weight_at_optimum`,
+`num_optimal_selections`, and every submitted witness are evaluated under that same contract.
+This prevents a candidate from combining the scalar weight of one degenerate optimum with an
+unrelated witness of another weight.
 
 The third check is the important one: the oracle never trusts a candidate's self-reported
 numbers. Witnesses are re-checked against the fixture's proven optimum, so a solver cannot
@@ -140,7 +146,8 @@ OR-Library BQP (Beasley) — unconstrained binary quadratic.
 
 Closed-form Max-Cut families (no download, exact by formula).
 - Complete graph K_n: maxcut = `floor(n^2/4)`. Cycle C_n: `n` (even) / `n-1` (odd).
-  Path P_n: `floor(n/2)`. Useful as analytic regression checks.
+  Path P_n on `n` vertices: `n-1`, because every path is bipartite and all edges can be cut.
+  Useful as analytic regression checks.
 
 ### Spin glass
 

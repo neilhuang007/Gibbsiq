@@ -45,15 +45,17 @@ count suggests.
 
 ### Verified Present
 
-- canonical offset-preserving Ising/QUBO/BQM model and `SampleResult`;
+- canonical offset-preserving Ising/QUBO/BQM model and `SampleResult`, with versioned lossless
+  typed-label serialization;
 - audited fixed-beta and parallel-tempering THRML execution with deterministic DSATUR blocks,
   seed/schedule/init controls, raw retained samples, traces, and work accounting;
 - sampler-health diagnostics, strict witness oracle, anti-echo bridge, and exact 27-fixture
   corpus;
-- exact capped Boltzmann comparison, declared stored-coefficient quantization, and direct
-  logical target assessment;
+- exact capped Boltzmann comparison, declared stored-coefficient quantization, direct
+  accumulator-range checks, and logical target assessment using topology capacity when supplied;
 - THRML-independent seeded CPU Gibbs traces plus capped transition, stationarity,
-  detailed-balance, ergodicity, and simultaneous empirical-law verification;
+  detailed-balance, ergodicity, and simultaneous full-state empirical-law verification
+  conditional on caller-asserted independent retained states;
 - complete provenanced `TSUSpec` facts for grid/explicit topology, coefficient and accumulator
   formats, communication, host transfer, programming/reprogramming, and optional cell facts;
 - pairwise categorical IR and exact domain-wall lowering;

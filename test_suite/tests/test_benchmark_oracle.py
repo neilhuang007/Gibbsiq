@@ -16,6 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from gibbsiq.benchmark_oracle import (  # noqa: E402
+    DEFAULT_TOLERANCE,
     FAMILY_SPECS,
     _scalar_diffs,
     verify_benchmark_fixture,
@@ -52,6 +53,20 @@ class BenchmarkOracleTest(unittest.TestCase):
 
         self.assertEqual(len(differences), 1)
         self.assertEqual(differences[0]["code"], "value_mismatch")
+
+    def test_huge_integer_candidate_is_a_mismatch_not_an_oracle_crash(self) -> None:
+        differences = _scalar_diffs(1.0, 10**10_000, "$.energy", 1e-9)
+
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0]["code"], "float_mismatch")
+
+    def test_invalid_tolerances_are_rejected(self) -> None:
+        fixture = self.fixtures[0]
+        actual = correct_actual(fixture)
+        for tolerance in (-1.0, float("inf"), float("nan"), True):
+            with self.subTest(tolerance=tolerance):
+                with self.assertRaisesRegex(ValueError, "tolerance"):
+                    verify_benchmark_fixture(fixture, actual, tolerance)
 
     def test_exact_int_float_equality_remains_accepted(self) -> None:
         self.assertEqual(_scalar_diffs(12, 12.0, "$.count", 1e-9), [])
@@ -124,6 +139,34 @@ class BenchmarkOracleTest(unittest.TestCase):
         actual["witness_selections"] = [list(range(len(fixture["input"]["weights"])))]
         diffs = verify_benchmark_fixture(fixture, actual, 1e-9)
         self.assertTrue(any(d["code"] == "witness_not_optimal" for d in diffs))
+
+    def test_knapsack_witness_must_match_declared_optimal_weight(self) -> None:
+        fixture = {
+            "id": "knapsack_weight_tie",
+            "family": "knapsack",
+            "input": {
+                "format": "knapsack",
+                "weights": [1, 2],
+                "values": [5, 5],
+                "capacity": 2,
+            },
+            "expected": {
+                "max_value": 5,
+                "weight_at_optimum": 1,
+                "capacity": 2,
+                "num_optimal_selections": 1,
+                "witness_selections": [[0]],
+            },
+        }
+        actual = copy.deepcopy(fixture["expected"])
+        actual["witness_selections"] = [[1]]
+
+        differences = verify_benchmark_fixture(fixture, actual, DEFAULT_TOLERANCE)
+
+        self.assertTrue(
+            any(difference["code"] == "witness_weight_mismatch" for difference in differences),
+            differences,
+        )
 
     def test_partition_witness_must_use_all_numbers(self) -> None:
         fixture = self.by_family["number_partition"]

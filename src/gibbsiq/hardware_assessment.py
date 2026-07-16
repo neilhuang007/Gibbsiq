@@ -1,9 +1,8 @@
 """Conservative direct-target admissibility checks for an Ising model.
 
-This layer composes assessed interaction-graph facts, deterministic block coloring, and
-fixed-point sensitivity analysis.  It deliberately does not estimate physical
-placement, routing, mixing, latency, energy, or ESS: ``TSUSpec`` currently has
-no topology description from which those claims could be supported.
+This layer composes assessed interaction-graph facts, deterministic block coloring,
+fixed-point sensitivity analysis, and direct target-format bounds. It deliberately
+does not estimate physical placement, routing, mixing, latency, energy, or ESS.
 """
 
 from __future__ import annotations
@@ -368,6 +367,157 @@ def _upper_bound_check(
     )
 
 
+def _capacity_check(graph: GraphFacts, target: TSUSpec) -> AdmissibilityCheck:
+    """Check logical variable count against an explicit scalar or topology capacity."""
+    if target.pbit_capacity is not None:
+        return _upper_bound_check(
+            name="pbit_capacity",
+            observed=graph.variable_count,
+            limit=target.pbit_capacity,
+            parameter="pbit_capacity",
+            target=target,
+        )
+    if target.topology is None:
+        return _upper_bound_check(
+            name="pbit_capacity",
+            observed=graph.variable_count,
+            limit=None,
+            parameter="pbit_capacity or topology capacity",
+            target=target,
+        )
+
+    limit = target.topology.capacity
+    passed = graph.variable_count <= limit
+    return AdmissibilityCheck(
+        name="pbit_capacity",
+        status="pass" if passed else "fail",
+        observed=graph.variable_count,
+        limit=limit,
+        reason=(
+            f"observed {graph.variable_count} is within declared topology capacity={limit}"
+            if passed
+            else (f"observed {graph.variable_count} exceeds declared topology capacity={limit}")
+        ),
+        provenance=_provenance(target, "topology"),
+    )
+
+
+def _accumulator_check(
+    model: IsingModel,
+    target: TSUSpec,
+    *,
+    beta: float,
+    implemented_effective_model: IsingModel | None,
+) -> AdmissibilityCheck | None:
+    """Bound every beta-scaled conditional local field against the accumulator.
+
+    For spin ``i``, the exact extrema over all neighbor assignments are
+    ``b_i +/- sum_j abs(w_ij)``. Here ``b`` and ``w`` are the implemented
+    quantized effective coefficients when a coefficient format is declared,
+    or the beta-scaled originals otherwise. If the extrema fit but an input
+    contribution is not on the accumulator grid, the result remains conditional:
+    this contract does not declare an acceptable accumulator-rounding error.
+    """
+    fixed_point = target.accumulator_format
+    if fixed_point is None:
+        return None
+
+    if target.coefficient_format is None:
+        accumulator_model = model
+        coefficient_scale = beta
+        coefficient_semantics = "beta-scaled original"
+    elif implemented_effective_model is None:
+        return AdmissibilityCheck(
+            name="accumulator_format",
+            status="not_evaluated",
+            observed=None,
+            limit=f"[{fixed_point.minimum}, {fixed_point.maximum}]",
+            reason=(
+                "the implemented quantized effective coefficients are unavailable because "
+                "coefficient-format analysis failed"
+            ),
+            provenance=_provenance(target, "accumulator_format"),
+        )
+    else:
+        accumulator_model = implemented_effective_model
+        coefficient_scale = 1.0
+        coefficient_semantics = "implemented quantized effective"
+
+    incident: dict[Any, list[float]] = {variable: [] for variable in accumulator_model.variables}
+    off_grid = 0
+    for variable in accumulator_model.variables:
+        effective = coefficient_scale * accumulator_model.linear[variable]
+        off_grid += not (effective / fixed_point.step).is_integer()
+    for (left, right), coefficient in accumulator_model.quadratic.items():
+        effective = coefficient_scale * coefficient
+        off_grid += not (effective / fixed_point.step).is_integer()
+        incident[left].append(effective)
+        incident[right].append(effective)
+
+    lower = math.inf
+    upper = -math.inf
+    try:
+        for variable in accumulator_model.variables:
+            center = coefficient_scale * accumulator_model.linear[variable]
+            radius = math.fsum(abs(value) for value in incident[variable])
+            lower = min(lower, center - radius)
+            upper = max(upper, center + radius)
+    except OverflowError:
+        lower = -math.inf
+        upper = math.inf
+    if not accumulator_model.variables:
+        lower = upper = 0.0
+
+    observed = f"[{lower}, {upper}]"
+    limit = f"[{fixed_point.minimum}, {fixed_point.maximum}]"
+    provenance = _provenance(target, "accumulator_format")
+    if not math.isfinite(lower) or not math.isfinite(upper):
+        return AdmissibilityCheck(
+            name="accumulator_format",
+            status="fail",
+            observed=observed,
+            limit=limit,
+            reason="beta-scaled local-field accumulation has a non-finite bound",
+            provenance=provenance,
+        )
+    if lower < fixed_point.minimum or upper > fixed_point.maximum:
+        return AdmissibilityCheck(
+            name="accumulator_format",
+            status="fail",
+            observed=observed,
+            limit=limit,
+            reason=(
+                f"the exact {coefficient_semantics} local-field range exceeds the declared accumulator range"
+            ),
+            provenance=provenance,
+        )
+
+    if off_grid:
+        return AdmissibilityCheck(
+            name="accumulator_format",
+            status="not_evaluated",
+            observed=off_grid,
+            limit=0,
+            reason=(
+                f"{off_grid} beta-scaled local-field contribution(s) are not exactly "
+                "representable on the accumulator grid, and no acceptable rounding-error "
+                "threshold is declared"
+            ),
+            provenance=provenance,
+        )
+    return AdmissibilityCheck(
+        name="accumulator_format",
+        status="pass",
+        observed=observed,
+        limit=limit,
+        reason=(
+            f"every exact {coefficient_semantics} local-field extremum fits the declared "
+            "accumulator range and every contribution is on its representable grid"
+        ),
+        provenance=provenance,
+    )
+
+
 def _color_phase_check(graph: GraphFacts, target: TSUSpec) -> AdmissibilityCheck:
     limit = target.max_color_phases
     if limit is None:
@@ -493,7 +643,7 @@ def _quantization_check(
     *,
     beta: float,
     max_exact_variables: int,
-) -> tuple[AdmissibilityCheck, QuantizationEvidence]:
+) -> tuple[AdmissibilityCheck, QuantizationEvidence, IsingModel | None]:
     fixed_point = target.coefficient_format
     if fixed_point is None:
         return (
@@ -512,6 +662,7 @@ def _quantization_check(
                 out_of_range_count=None,
                 nonfinite_effective_count=None,
             ),
+            None,
         )
 
     coefficient_count, outside_count, nonfinite_count = _effective_range_counts(
@@ -553,6 +704,7 @@ def _quantization_check(
                     else None
                 ),
             ),
+            None,
         )
 
     quantization = _computed_quantization_evidence(
@@ -576,6 +728,7 @@ def _quantization_check(
                 provenance=provenance,
             ),
             quantization,
+            analysis.implemented_effective_model,
         )
     if not analysis.exactly_representable:
         return (
@@ -592,6 +745,7 @@ def _quantization_check(
                 provenance=provenance,
             ),
             quantization,
+            analysis.implemented_effective_model,
         )
     return (
         AdmissibilityCheck(
@@ -606,6 +760,7 @@ def _quantization_check(
             provenance=provenance,
         ),
         quantization,
+        analysis.implemented_effective_model,
     )
 
 
@@ -638,13 +793,7 @@ def assess_target_admissibility(
     graph = _assessed_graph_facts(graph_model)
 
     checks = [
-        _upper_bound_check(
-            name="pbit_capacity",
-            observed=graph.variable_count,
-            limit=target.pbit_capacity,
-            parameter="pbit_capacity",
-            target=target,
-        ),
+        _capacity_check(graph, target),
         _upper_bound_check(
             name="maximum_degree",
             observed=graph.maximum_degree,
@@ -654,13 +803,21 @@ def assess_target_admissibility(
         ),
         _color_phase_check(graph, target),
     ]
-    quantization_check, quantization = _quantization_check(
+    quantization_check, quantization, implemented_effective_model = _quantization_check(
         model,
         target,
         beta=canonical_beta,
         max_exact_variables=exact_limit,
     )
     checks.append(quantization_check)
+    accumulator_check = _accumulator_check(
+        model,
+        target,
+        beta=canonical_beta,
+        implemented_effective_model=implemented_effective_model,
+    )
+    if accumulator_check is not None:
+        checks.append(accumulator_check)
     if graph.edge_count == 0:
         checks.append(
             AdmissibilityCheck(
@@ -675,16 +832,24 @@ def assess_target_admissibility(
             )
         )
     else:
+        if target.topology is None:
+            locality_reason = (
+                "TSUSpec does not declare a physical topology, allowed-neighbor, placement, "
+                "routing, or communication constraints; logical coloring is not physical mapping"
+            )
+        else:
+            locality_reason = (
+                "TSUSpec declares a physical topology, but no logical-to-physical placement "
+                "or routed-edge association was supplied; topology adjacency alone cannot "
+                "certify locality"
+            )
         checks.append(
             AdmissibilityCheck(
                 name="topology_locality",
                 status="not_evaluated",
                 observed=f"{graph.edge_count} assessed fixed-beta interaction edges",
                 limit=None,
-                reason=(
-                    "TSUSpec has no physical topology, allowed-neighbor, placement, routing, "
-                    "or communication constraints; logical coloring is not physical mapping"
-                ),
+                reason=locality_reason,
             )
         )
 

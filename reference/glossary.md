@@ -92,9 +92,9 @@ witness recomputation rather than by trusting reported energies.
 
 ## Inspector
 
-The planned reporting layer for `SampleResult` artifacts. It should present topology,
-traces, diagnostics, warnings, best states, feasibility, and baseline comparisons while
-preserving links to raw evidence.
+The artifact-only Inspector core consumes stored `SampleResult` data without rerunning the
+sampler and can verify stored energies when an associated model is supplied. Full HTML/CLI
+reporting, topology views, feasibility integration, and baseline comparisons remain planned.
 
 ## Ising Model
 
@@ -167,9 +167,11 @@ schedule control, trace capture, diagnostics, baselines, benchmarks, and reports
 
 ## THRML Runtime
 
-The planned Stage 2 layer that lowers canonical Ising IR into THRML nodes, factors, blocks,
-programs, schedules, seeds, initialization policies, raw samples, and traces. It is the next
-implementation target, not current completed functionality.
+The implemented layer that lowers canonical Ising IR into THRML nodes, factors, graph-colored
+blocks, programs, schedules, seeds, initialization policies, raw samples, and traces. The
+current correctness path supports fixed-beta execution, warmup beta schedules, independent
+chains, and opt-in parallel tempering on the THRML JAX simulator; hardware execution and
+performance claims remain open.
 
 ## Thermodynamic Sampling Unit
 

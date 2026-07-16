@@ -32,6 +32,7 @@ from gibbsiq import (  # noqa: E402
     ParameterProvenance,
     PhysicalQuantity,
     PottsObjectiveEvaluation,
+    PROGRAM_SCHEMA_VERSION,
     ProgrammingSpec,
     QuantizationAnalysis,
     ReferenceGibbsSampler,
@@ -40,6 +41,7 @@ from gibbsiq import (  # noqa: E402
     ReferenceTransitionEvent,
     SampleResult,
     TSUSpec,
+    ThermodynamicProgram,
     TransitionVerificationReport,
     analyze_quantization,
     assess_target_admissibility,
@@ -80,6 +82,7 @@ THERMOMAP_PUBLIC_NAMES = (
     "ParameterProvenance",
     "PhysicalQuantity",
     "PottsObjectiveEvaluation",
+    "PROGRAM_SCHEMA_VERSION",
     "ProgrammingSpec",
     "QuantizationAnalysis",
     "ReferenceGibbsSampler",
@@ -87,6 +90,7 @@ THERMOMAP_PUBLIC_NAMES = (
     "ReferenceSamplerConfig",
     "ReferenceTransitionEvent",
     "TSUSpec",
+    "ThermodynamicProgram",
     "TransitionVerificationReport",
     "analyze_quantization",
     "assess_target_admissibility",
@@ -115,6 +119,8 @@ class ThermoMapPublicApiTests(unittest.TestCase):
         for name in THERMOMAP_PUBLIC_NAMES:
             with self.subTest(name=name):
                 self.assertTrue(hasattr(gibbsiq, name))
+        self.assertEqual(PROGRAM_SCHEMA_VERSION, gibbsiq.PROGRAM_SCHEMA_VERSION)
+        self.assertIs(ThermodynamicProgram, gibbsiq.ThermodynamicProgram)
         self.assertTrue(issubclass(ExactDistributionNumericalError, ValueError))
 
     def test_tiny_end_to_end_analysis_path_uses_only_public_imports(self) -> None:

@@ -19,7 +19,7 @@ from typing import Any, cast
 
 from gibbsiq._frozen import freeze, thaw
 from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE
-from gibbsiq.model import IsingModel, Variable, Vartype
+from gibbsiq.model import IsingModel, Variable, Vartype, exact_variable_order
 from gibbsiq.result import SampleResult
 
 SUMMARY_SCHEMA_VERSION = "gibbsiq.inspector.summary.v1"
@@ -165,7 +165,7 @@ def _stored_section(source: str, data: Mapping[str, Any], absent_reason: str) ->
 
 
 def _verify_model_association(result: SampleResult, model: IsingModel) -> dict[str, Any]:
-    if tuple(result.variables) != tuple(model.variables):
+    if not exact_variable_order(result.variables, model.variables):
         raise ValueError("caller-supplied model variable order mismatch")
     if result.vartype not in {"SPIN", "BINARY"}:
         raise ValueError(

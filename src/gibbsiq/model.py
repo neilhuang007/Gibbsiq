@@ -6,17 +6,239 @@ All inputs normalize to this form before sampling/diagnostics.
 
 from __future__ import annotations
 
+import base64
+import binascii
+import json
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Literal, TypeAlias
 
-from gibbsiq._frozen import freeze, thaw
+from gibbsiq._frozen import freeze, freeze_json_evidence, thaw
 
 Variable: TypeAlias = Any
 SpinSample: TypeAlias = Mapping[Variable, int]
 Vartype: TypeAlias = Literal["SPIN", "BINARY"]
+ISING_MODEL_SCHEMA_VERSION = 2
+LEGACY_ISING_MODEL_SCHEMA_VERSION = 1
+
+
+def _encoded_label_sort_key(payload: Mapping[str, Any]) -> str:
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def encode_variable_label(variable: Variable) -> dict[str, Any]:
+    """Encode a supported hashable label without JSON key coercion or repr fallback."""
+    variable_type = type(variable)
+    if variable is None:
+        return {"kind": "none"}
+    if variable_type is bool:
+        return {"kind": "bool", "value": variable}
+    if variable_type is int:
+        return {"kind": "int", "value": str(variable)}
+    if variable_type is float:
+        if not math.isfinite(variable):
+            raise TypeError("unsupported variable label: float labels must be finite")
+        return {"kind": "float", "value": variable.hex()}
+    if variable_type is str:
+        return {"kind": "str", "value": variable}
+    if variable_type is bytes:
+        return {
+            "kind": "bytes",
+            "value": base64.b64encode(variable).decode("ascii"),
+        }
+    if variable_type is tuple:
+        return {
+            "kind": "tuple",
+            "items": [encode_variable_label(item) for item in variable],
+        }
+    if variable_type is frozenset:
+        items = [encode_variable_label(item) for item in variable]
+        items.sort(key=_encoded_label_sort_key)
+        return {"kind": "frozenset", "items": items}
+    raise TypeError(
+        "unsupported variable label type "
+        f"{variable_type.__module__}.{variable_type.__qualname__}; "
+        "supported labels are None, bool, int, finite float, str, bytes, tuple, and frozenset"
+    )
+
+
+def decode_variable_label(payload: Any) -> Variable:
+    """Decode :func:`encode_variable_label` output and reject malformed records."""
+    if not isinstance(payload, Mapping):
+        raise ValueError("encoded variable label must be a mapping")
+    kind = payload.get("kind")
+    if kind == "none":
+        if set(payload) != {"kind"}:
+            raise ValueError("encoded none label contains unexpected fields")
+        return None
+    if kind == "bool":
+        value = payload.get("value")
+        if type(value) is not bool:
+            raise ValueError("encoded bool label must contain a boolean value")
+        return value
+    if kind == "int":
+        value = payload.get("value")
+        if not isinstance(value, str):
+            raise ValueError("encoded int label must contain a decimal string")
+        try:
+            decoded = int(value)
+        except ValueError as error:
+            raise ValueError("encoded int label contains an invalid decimal string") from error
+        if str(decoded) != value:
+            raise ValueError("encoded int label is not in canonical decimal form")
+        return decoded
+    if kind == "float":
+        value = payload.get("value")
+        if not isinstance(value, str):
+            raise ValueError("encoded float label must contain a hexadecimal string")
+        try:
+            decoded_float = float.fromhex(value)
+        except ValueError as error:
+            raise ValueError("encoded float label contains an invalid hexadecimal string") from error
+        if not math.isfinite(decoded_float) or decoded_float.hex() != value:
+            raise ValueError("encoded float label must be finite and canonical")
+        return decoded_float
+    if kind == "str":
+        value = payload.get("value")
+        if not isinstance(value, str):
+            raise ValueError("encoded str label must contain a string value")
+        return value
+    if kind == "bytes":
+        value = payload.get("value")
+        if not isinstance(value, str):
+            raise ValueError("encoded bytes label must contain a base64 string")
+        try:
+            return base64.b64decode(value, validate=True)
+        except (ValueError, binascii.Error) as error:
+            raise ValueError("encoded bytes label contains invalid base64") from error
+    if kind in {"tuple", "frozenset"}:
+        items = payload.get("items")
+        if not isinstance(items, list):
+            raise ValueError(f"encoded {kind} label must contain an items list")
+        decoded_items = [decode_variable_label(item) for item in items]
+        if kind == "tuple":
+            return tuple(decoded_items)
+        try:
+            decoded_set = frozenset(decoded_items)
+        except TypeError as error:
+            raise ValueError("encoded frozenset label contains an unhashable item") from error
+        if len(decoded_set) != len(decoded_items):
+            raise ValueError("encoded frozenset label contains duplicate items")
+        return decoded_set
+    raise ValueError(f"unsupported encoded variable label kind {kind!r}")
+
+
+def canonical_variable_sort_key(variable: Variable) -> str:
+    """Return a stable typed key, failing for labels without a canonical encoding."""
+    return _encoded_label_sort_key(encode_variable_label(variable))
+
+
+def legacy_wire_safe(variables: Sequence[Variable]) -> bool:
+    """Return whether labels are lossless in the version-1 object-key schema."""
+    return all(type(variable) is str and "," not in variable for variable in variables)
+
+
+def exact_variable_order(value: Any, variables: Sequence[Variable]) -> bool:
+    """Return whether evidence repeats ``variables`` without equality-type aliases."""
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        return False
+    return len(value) == len(variables) and all(
+        exact_label_equal(candidate, variable) for candidate, variable in zip(value, variables)
+    )
+
+
+def exact_label_equal(candidate: Any, variable: Variable) -> bool:
+    """Compare labels recursively without bool/int or other equality aliases."""
+    if type(variable) is tuple:
+        return (
+            type(candidate) is tuple
+            and len(candidate) == len(variable)
+            and all(exact_label_equal(child, expected) for child, expected in zip(candidate, variable))
+        )
+    if type(variable) is frozenset:
+        if type(candidate) is not frozenset or len(candidate) != len(variable):
+            return False
+        unmatched = list(candidate)
+        for expected in variable:
+            for position, child in enumerate(unmatched):
+                if exact_label_equal(child, expected):
+                    unmatched.pop(position)
+                    break
+            else:
+                return False
+        return True
+    try:
+        return type(candidate) is type(variable) and bool(candidate == variable)
+    except (TypeError, ValueError):
+        return False
+
+
+def exact_variable_position(
+    variable: Variable,
+    variables: Sequence[Variable],
+    index: Mapping[Variable, int] | None = None,
+) -> int:
+    """Return the exact typed-label position, rejecting equality aliases."""
+    if index is not None:
+        try:
+            position = index[variable]
+        except (KeyError, TypeError) as error:
+            raise KeyError(variable) from error
+        if exact_label_equal(variable, variables[position]):
+            return position
+        raise KeyError(variable)
+    for position, expected in enumerate(variables):
+        if exact_label_equal(variable, expected):
+            return position
+    raise KeyError(variable)
+
+
+def exact_label_key(value: Variable) -> tuple[Any, Any]:
+    """Return a hashable recursive type-and-value key for an exact label."""
+    if type(value) is tuple:
+        return (tuple, tuple(exact_label_key(child) for child in value))
+    if type(value) is frozenset:
+        return (frozenset, frozenset(exact_label_key(child) for child in value))
+    try:
+        hash(value)
+    except TypeError as error:
+        raise TypeError(f"variable label {value!r} must be hashable") from error
+    return (type(value), value)
+
+
+def exact_mapping_index(mapping: Mapping[Any, Any]) -> dict[tuple[Any, Any], Any]:
+    """Index mapping keys by recursive typed identity in one pass."""
+    index: dict[tuple[Any, Any], Any] = {}
+    for candidate in mapping:
+        key = exact_label_key(candidate)
+        if key in index:
+            raise ValueError(f"mapping contains duplicate exact key {candidate!r}")
+        index[key] = candidate
+    return index
+
+
+def exact_mapping_key(
+    mapping: Mapping[Any, Any],
+    variable: Variable,
+    key_index: Mapping[tuple[Any, Any], Any] | None = None,
+) -> Any:
+    """Return the actual mapping key exactly matching ``variable``."""
+    if key_index is not None:
+        try:
+            candidate = key_index[exact_label_key(variable)]
+        except (KeyError, TypeError) as error:
+            raise KeyError(variable) from error
+        if exact_label_equal(candidate, variable):
+            return candidate
+        raise KeyError(variable)
+    matches = [candidate for candidate in mapping if exact_label_equal(candidate, variable)]
+    if len(matches) == 1:
+        return matches[0]
+    if not matches:
+        raise KeyError(variable)
+    raise ValueError(f"mapping contains multiple exact keys for variable {variable!r}")
 
 
 def variable_sort_key(variable: Variable) -> tuple[str, str, str]:
@@ -63,10 +285,13 @@ def sample_to_spin(
     """Validates sample; returns spins keyed by variable."""
     normalized = normalize_vartype(vartype)
     spins: dict[Variable, int] = {}
+    sample_key_index = exact_mapping_index(sample)
     for variable in variables:
-        if variable not in sample:
-            raise ValueError(f"sample is missing variable {variable!r}")
-        value = sample[variable]
+        try:
+            sample_key = exact_mapping_key(sample, variable, sample_key_index)
+        except KeyError:
+            raise ValueError(f"sample is missing variable {variable!r}") from None
+        value = sample[sample_key]
         if isinstance(value, bool):
             raise ValueError(f"sample value for {variable!r} must not be boolean")
         if normalized == "SPIN":
@@ -88,9 +313,10 @@ def sample_to_spin_values(
     """Validates sample; returns spins as tuple aligned to variables."""
     normalized = normalize_vartype(vartype)
     values: list[int] = []
+    sample_key_index = exact_mapping_index(sample)
     for variable in variables:
         try:
-            value = sample[variable]
+            value = sample[exact_mapping_key(sample, variable, sample_key_index)]
         except KeyError as error:
             raise ValueError(f"sample is missing variable {variable!r}") from error
         if isinstance(value, bool):
@@ -143,43 +369,74 @@ class IsingModel:
     _neighbors: tuple[tuple[tuple[int, float], ...], ...] | None = field(
         init=False, repr=False, compare=False
     )
+    _metadata_has_canonical_variable_order: bool = field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
 
     def __post_init__(self) -> None:
         variables = tuple(self.variables)
         if len(set(variables)) != len(variables):
             raise ValueError("variables must be unique")
+        if type(self.vartype) is not str or self.vartype != "SPIN":
+            raise ValueError("IsingModel vartype must be exactly 'SPIN'")
 
         order = variables if self.variable_order is None else tuple(self.variable_order)
-        if order != variables:
+        if not exact_variable_order(order, variables):
             raise ValueError("variable_order must match variables exactly")
 
+        exact_mapping_index(self.linear)
+        exact_mapping_index(self.quadratic)
         index = variable_index(variables)
         for variable in self.linear:
-            if variable not in index:
-                raise ValueError(f"linear bias for {variable!r} references unknown variable")
+            try:
+                exact_variable_position(variable, variables, index)
+            except KeyError:
+                raise ValueError(f"linear bias for {variable!r} references unknown variable") from None
         linear = {
-            variable: finite_float(self.linear.get(variable, 0.0), name=f"linear bias for {variable!r}")
-            for variable in variables
+            variable: finite_float(
+                self.linear.get(variable, 0.0),
+                name=f"linear bias at variable position {position}",
+            )
+            for position, variable in enumerate(variables)
         }
-        quadratic: dict[tuple[Variable, Variable], float] = {}
-        for pair, coefficient in self.quadratic.items():
+        quadratic_terms: dict[tuple[Variable, Variable], list[float]] = {}
+        for interaction_position, (pair, coefficient) in enumerate(self.quadratic.items()):
             if len(pair) != 2:
                 raise ValueError(f"quadratic key {pair!r} must contain two variables")
             left, right = pair
-            if left == right:
+            try:
+                left_position = exact_variable_position(left, variables, index)
+                right_position = exact_variable_position(right, variables, index)
+            except KeyError:
+                raise ValueError(f"quadratic pair {pair!r} references unknown variable") from None
+            if left_position == right_position:
                 raise ValueError("Ising diagonal terms should be folded into offset before IR construction")
-            if left not in index or right not in index:
-                raise ValueError(f"quadratic pair {pair!r} references unknown variable")
-            ordered = (left, right) if index[left] < index[right] else (right, left)
-            quadratic[ordered] = quadratic.get(ordered, 0.0) + finite_float(
-                coefficient, name=f"quadratic bias for {pair!r}"
+            ordered_positions = (
+                (left_position, right_position)
+                if left_position < right_position
+                else (right_position, left_position)
             )
-        # Sum of finite duplicates can still overflow (e.g. 1e308+1e308); re-check here.
+            ordered = (variables[ordered_positions[0]], variables[ordered_positions[1]])
+            quadratic_terms.setdefault(ordered, []).append(
+                finite_float(
+                    coefficient,
+                    name=f"quadratic bias at interaction position {interaction_position}",
+                )
+            )
+        quadratic = {
+            pair: finite_sum(values, name=f"canonical quadratic bias for {pair!r}")
+            for pair, values in quadratic_terms.items()
+        }
         ordered_quadratic: dict[tuple[Variable, Variable], float] = {}
-        for pair, coefficient in sorted(
-            quadratic.items(), key=lambda item: (index[item[0][0]], index[item[0][1]])
+        for interaction_position, (pair, coefficient) in enumerate(
+            sorted(quadratic.items(), key=lambda item: (index[item[0][0]], index[item[0][1]]))
         ):
-            canonical = finite_float(coefficient, name=f"quadratic bias for {pair!r}")
+            canonical = finite_float(
+                coefficient,
+                name=f"canonical quadratic bias at interaction position {interaction_position}",
+            )
             if canonical != 0.0:
                 ordered_quadratic[pair] = canonical
 
@@ -188,6 +445,10 @@ class IsingModel:
         object.__setattr__(self, "quadratic", MappingProxyType(ordered_quadratic))
         object.__setattr__(self, "offset", finite_float(self.offset, name="offset"))
         object.__setattr__(self, "variable_order", variables)
+        metadata_has_canonical_variable_order = exact_variable_order(
+            self.metadata.get("variable_order"),
+            variables,
+        )
         object.__setattr__(
             self,
             "metadata",
@@ -197,6 +458,11 @@ class IsingModel:
         object.__setattr__(self, "_linear_values", None)
         object.__setattr__(self, "_quadratic_edges", None)
         object.__setattr__(self, "_neighbors", None)
+        object.__setattr__(
+            self,
+            "_metadata_has_canonical_variable_order",
+            metadata_has_canonical_variable_order,
+        )
 
     def _linear_cache(self) -> tuple[float, ...]:
         """Lazily cached linear coefficients, ordered by variable index."""
@@ -263,7 +529,7 @@ class IsingModel:
     ) -> float:
         """Return ``gamma_i = h_i + sum_j J_ij s_j`` for one variable."""
         try:
-            position = self._variable_index[variable]
+            position = exact_variable_position(variable, self.variables, self._variable_index)
         except KeyError as error:
             raise ValueError(f"unknown variable {variable!r}") from error
         spins = sample_to_spin_values(sample, self.variables, vartype)
@@ -279,7 +545,7 @@ class IsingModel:
     ) -> float:
         """Flip delta: E(s_i -> -s_i) - E(s) = -2*s_i*gamma_i."""
         try:
-            position = self._variable_index[variable]
+            position = exact_variable_position(variable, self.variables, self._variable_index)
         except KeyError as error:
             raise ValueError(f"unknown variable {variable!r}") from error
         spins = sample_to_spin_values(sample, self.variables, vartype)
@@ -319,19 +585,51 @@ class IsingModel:
         return exp_arg / (1.0 + exp_arg)
 
     def to_dict(self) -> dict[str, Any]:
-        """Serializes IR to dict; quadratic keys as "left,right" strings."""
+        """Serialize the IR, using typed positional rows whenever legacy keys are lossy."""
+        if legacy_wire_safe(self.variables):
+            metadata = thaw(freeze_json_evidence(self.metadata, name="metadata"))
+            return {
+                "schema_version": LEGACY_ISING_MODEL_SCHEMA_VERSION,
+                "variables": list(self.variables),
+                "linear": {variable: self.linear[variable] for variable in self.variables},
+                "quadratic": {
+                    f"{left},{right}": coefficient for (left, right), coefficient in self.quadratic.items()
+                },
+                "graph": [[left, right] for left, right in self.graph],
+                "variable_order": list(self.variables),
+                "offset": self.offset,
+                "vartype": self.vartype,
+                "source_format": self.source_format,
+                "metadata": metadata,
+            }
+
+        positions = variable_index(self.variables)
+        encoded_variables = [encode_variable_label(variable) for variable in self.variables]
+        metadata_source = dict(self.metadata)
+        includes_variable_order = self._metadata_has_canonical_variable_order
+        if includes_variable_order:
+            metadata_source.pop("variable_order")
+        metadata = thaw(freeze_json_evidence(metadata_source, name="metadata"))
+        if includes_variable_order:
+            metadata["variable_order"] = encoded_variables
         return {
-            "variables": list(self.variables),
-            "linear": {variable: self.linear[variable] for variable in self.variables},
-            "quadratic": {
-                f"{left},{right}": coefficient for (left, right), coefficient in self.quadratic.items()
-            },
+            "schema_version": ISING_MODEL_SCHEMA_VERSION,
+            "variables": encoded_variables,
+            "linear": [self.linear[variable] for variable in self.variables],
+            "quadratic": [
+                {
+                    "left": positions[left],
+                    "right": positions[right],
+                    "coefficient": coefficient,
+                }
+                for (left, right), coefficient in self.quadratic.items()
+            ],
+            "graph": [[positions[left], positions[right]] for left, right in self.graph],
+            "variable_order": encoded_variables,
             "offset": self.offset,
             "vartype": self.vartype,
-            "graph": [[left, right] for left, right in self.graph],
             "source_format": self.source_format,
-            "variable_order": list(self.variables),
-            "metadata": thaw(self.metadata),
+            "metadata": metadata,
         }
 
     def to_dimod(self) -> Any:

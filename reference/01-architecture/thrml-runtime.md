@@ -22,7 +22,7 @@ Pipeline:
 
 ```text
 QUBO/BQM/Ising input
--> Gibbsiq IsingIR
+-> Gibbsiq IsingModel
 -> THRML nodes/blocks/factors/program
 -> raw states/traces
 -> SampleResult
@@ -35,19 +35,18 @@ programs coordinate sampling, and schedules specify warmup and sample collection
 owns the optimization layer around those primitives: conversion, block strategy, schedules,
 seeds, trace capture, schema, diagnostics, baselines, and reports.
 
-## Internal IR
+## Internal Model
 
 ```python
-class IsingIR:
-    variables: list
-    linear: dict
-    quadratic: dict
+class IsingModel:
+    variables: tuple
+    linear: Mapping
+    quadratic: Mapping
     offset: float
     vartype: str  # "SPIN"
-    graph: object
     source_format: str  # "qubo" | "ising" | "bqm"
-    variable_order: list
-    metadata: dict
+    variable_order: tuple
+    metadata: Mapping
 ```
 
 Canonical energy:
@@ -57,20 +56,13 @@ E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j
 s_i in {-1, +1}
 ```
 
-## THRML Bundle
+## Runtime Lowering Boundary
 
-```python
-class THRMLProgramBundle:
-    nodes: list
-    variable_to_node: dict
-    node_to_variable: dict
-    free_blocks: list
-    clamped_blocks: list
-    model: object
-    program: object
-    schedule: object
-    metadata: dict
-```
+The current runtime uses private `_Lowering` artifacts containing the THRML nodes, canonical
+edge positions, sign-corrected biases and weights, graph-colored free blocks, observed blocks,
+lowered dtypes, and per-beta lowered targets. `_Lowering.program(beta)` constructs the THRML
+energy model and sampling program for one inverse temperature. A public
+`THRMLProgramBundle` remains a roadmap proposal rather than a production class.
 
 ## v0 Block Strategy
 
@@ -88,11 +80,13 @@ Risks:
 
 ## Runtime Strategy
 
-The Stage 2 runtime should keep the public configuration compatible with:
+The Stage 2 correctness path implements:
 
 - fixed-temperature correctness tests;
-- annealing schedules;
-- batched independent chains;
-- future beta-ladder / parallel-tempering execution;
-- clamped-block conditional probes;
-- dense-graph fallbacks or explicit baseline comparison.
+- warmup beta ladders followed by fixed-target retained reads;
+- vmapped independent fixed-beta chains;
+- opt-in host-loop parallel tempering with cold-slot and per-beta evidence;
+- deterministic graph-colored blocks, including dense and edgeless cases.
+
+Device-side replica exchange, clamped-block execution through `ThermodynamicProgram`, and
+baseline comparison remain separate roadmap work.

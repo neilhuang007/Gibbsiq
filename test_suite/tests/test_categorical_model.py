@@ -70,6 +70,19 @@ class CategoricalModelContractTests(unittest.TestCase):
         self.assertEqual(model.unary["x"], {"a": 0.0, "b": 0.0, "c": 0.0})
         self.assertEqual(model.energy({"x": "b"}), 0.0)
 
+    def test_variable_boundaries_reject_boolean_integer_aliases(self) -> None:
+        model = CategoricalModel(
+            variables=(True,),
+            domains={True: ("off", "on")},
+        )
+        with self.assertRaisesRegex(ValueError, "keys must match variables exactly"):
+            model.energy({1: "on"})
+        with self.assertRaisesRegex(ValueError, "domains must match variables exactly"):
+            CategoricalModel(
+                variables=(True,),
+                domains={1: ("off", "on")},
+            )
+
     def test_reversed_pair_is_transposed_into_variable_order(self) -> None:
         domains = {"a": ("a0", "a1"), "b": ("b0", "b1", "b2")}
         reversed_table = complete_pair(
@@ -213,6 +226,91 @@ class CategoricalModelContractTests(unittest.TestCase):
             model.energy({"x": 0, "y": "a", "z": 1})
         with self.assertRaisesRegex(ValueError, "not in the domain"):
             model.energy({"x": 3, "y": "a"})
+
+    def test_sample_categories_require_exact_type_membership(self) -> None:
+        integer_model = CategoricalModel(
+            variables=("x",),
+            domains={"x": (0, 1)},
+            unary={"x": {0: 2.0, 1: 3.0}},
+        )
+        for alias in (False, True, 0.0, 1.0):
+            with (
+                self.subTest(alias=alias),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "not in the domain",
+                ),
+            ):
+                integer_model.assignment_indices({"x": alias})
+            with (
+                self.subTest(energy_alias=alias),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "not in the domain",
+                ),
+            ):
+                integer_model.energy({"x": alias})
+
+        boolean_model = CategoricalModel(
+            variables=("x",),
+            domains={"x": (False, True)},
+        )
+        for alias in (0, 1, 0.0, 1.0):
+            with (
+                self.subTest(boolean_alias=alias),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "not in the domain",
+                ),
+            ):
+                boolean_model.assignment_indices({"x": alias})
+
+    def test_energy_table_keys_require_exact_type_domain_coverage(self) -> None:
+        alias_tables = (
+            {False: 2.0, True: 3.0},
+            {0.0: 2.0, 1.0: 3.0},
+        )
+        for table in alias_tables:
+            with (
+                self.subTest(unary_keys=tuple(table)),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "cover its domain exactly",
+                ),
+            ):
+                CategoricalModel(
+                    variables=("x",),
+                    domains={"x": (0, 1)},
+                    unary={"x": table},
+                )
+
+        pair_alias_tables = (
+            {
+                (False, "a"): 0.0,
+                (False, "b"): 1.0,
+                (True, "a"): 2.0,
+                (True, "b"): 3.0,
+            },
+            {
+                (0.0, "a"): 0.0,
+                (0.0, "b"): 1.0,
+                (1.0, "a"): 2.0,
+                (1.0, "b"): 3.0,
+            },
+        )
+        for table in pair_alias_tables:
+            with (
+                self.subTest(pair_keys=tuple(table)),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "cover the domain product exactly",
+                ),
+            ):
+                CategoricalModel(
+                    variables=("x", "y"),
+                    domains={"x": (0, 1), "y": ("a", "b")},
+                    pairwise={("x", "y"): table},
+                )
 
 
 if __name__ == "__main__":

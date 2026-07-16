@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Literal
 
-from gibbsiq.model import IsingModel, SpinSample, Variable, sample_to_spin
+from gibbsiq.model import IsingModel, SpinSample, Variable, exact_label_equal, sample_to_spin
 
 SelectionMethod = Literal["component_index", "rng", "seed", "none"]
 MoveReason = Literal["applied", "replicas_identical"]
@@ -103,10 +103,17 @@ def _validated_spins(
     if not isinstance(sample, Mapping):
         raise TypeError(f"{name} must be a mapping from model variables to spins")
 
-    model_variables = set(model.variables)
-    sample_variables = set(sample)
-    missing = tuple(variable for variable in model.variables if variable not in sample_variables)
-    extra = tuple(variable for variable in sample if variable not in model_variables)
+    sample_variables = tuple(sample)
+    missing = tuple(
+        variable
+        for variable in model.variables
+        if not any(exact_label_equal(candidate, variable) for candidate in sample_variables)
+    )
+    extra = tuple(
+        candidate
+        for candidate in sample_variables
+        if not any(exact_label_equal(candidate, variable) for variable in model.variables)
+    )
     if missing or extra:
         raise ValueError(
             f"{name} variables must match model.variables exactly; missing={missing!r}, extra={extra!r}"

@@ -78,11 +78,11 @@ def knapsack_exact(model: dict) -> dict:
         if weight > capacity:
             continue
         value = sum(value * bit for value, bit in zip(values, bits))
-        if value > best_value:
+        if value > best_value or (value == best_value and weight < best_weight):
             best_value = value
             best_weight = weight
             degeneracy = 1
-        elif value == best_value:
+        elif value == best_value and weight == best_weight:
             degeneracy += 1
     return {
         "max_value": best_value,

@@ -1794,12 +1794,13 @@
     {
       "id": "gt_knapsack_n10_s8",
       "family": "knapsack",
-      "purpose": "Exact 0/1 knapsack optimum for 10 seeded items, verified by full 2^10 enumeration (Lucas 2014, sec. 5.2).",
+      "purpose": "Exact lexicographic 0/1 knapsack optimum (maximum feasible value, then minimum selected weight) for 10 seeded items, verified by full 2^10 enumeration (Lucas 2014, sec. 5.2; tie-break is EVAL-EQ-024).",
       "provenance": {
         "generator": "tools/generate_ground_truth.py",
         "method": "exhaustive_enumeration",
         "seed": 8,
         "capacity_rule": "floor(sum(weights)/2)",
+        "optimum_rule": "maximize value, then minimize selected weight",
         "source_basis": [
           "reference/05-theory/papers/lucas-2014-ising-formulations.md"
         ],
@@ -1854,12 +1855,13 @@
     {
       "id": "gt_knapsack_n14_s9",
       "family": "knapsack",
-      "purpose": "Exact 0/1 knapsack optimum for 14 seeded items, verified by full 2^14 enumeration (Lucas 2014, sec. 5.2).",
+      "purpose": "Exact lexicographic 0/1 knapsack optimum (maximum feasible value, then minimum selected weight) for 14 seeded items, verified by full 2^14 enumeration (Lucas 2014, sec. 5.2; tie-break is EVAL-EQ-024).",
       "provenance": {
         "generator": "tools/generate_ground_truth.py",
         "method": "exhaustive_enumeration",
         "seed": 9,
         "capacity_rule": "floor(sum(weights)/2)",
+        "optimum_rule": "maximize value, then minimize selected weight",
         "source_basis": [
           "reference/05-theory/papers/lucas-2014-ising-formulations.md"
         ],
@@ -3996,5 +3998,5 @@
       }
     }
   ],
-  "content_sha256": "afb035eeeae7e0f8cff71846457ff750e14e3455fa72214efd63656f8a5f40fe"
+  "content_sha256": "aca9461839aa199dd154e577a4617e2f56c2d177b1d9a01c5e168fca2bf865c4"
 }

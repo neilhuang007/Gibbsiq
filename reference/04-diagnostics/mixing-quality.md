@@ -67,7 +67,14 @@ equation audit first and version the affected fixtures explicitly.
 - emcee autocorrelation: https://emcee.readthedocs.io/en/stable/tutorials/autocorr/
 - Sampler diagnostics benchmark: https://www.auai.org/uai2018/proceedings/papers/37.pdf
 
-## v0 Metrics
+## Implemented And Planned Metrics
+
+The lists below are the target metric inventory, not a claim that every item is currently
+emitted. The current payload implements best energy, energy autocorrelation/tau/ESS-style
+statistics, sample diversity and top-k mass, Hamming diversity, chain disagreement, and the
+recorded runtime fields shown in the output schema. Median/quantile/gap/time-to-target,
+constraint-feasibility, distance-to-best distributions, and memory accounting remain planned
+or require later layers.
 
 Optimization:
 

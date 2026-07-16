@@ -420,6 +420,30 @@ class InspectorModelAssociationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "result vartype.*SPIN or BINARY"):
             Inspector.from_result(categorical, model=model)
 
+    def test_variable_order_rejects_equality_alias_labels(self) -> None:
+        aliases = (
+            (True, 1),
+            ((True,), (1,)),
+            (frozenset({True}), frozenset({1})),
+        )
+        for result_label, model_label in aliases:
+            with self.subTest(result_label=result_label, model_label=model_label):
+                model = IsingModel(
+                    variables=(model_label,),
+                    linear={model_label: 2.0},
+                    quadratic={},
+                    offset=3.0,
+                )
+                result = SampleResult(
+                    samples=({result_label: 1},),
+                    variables=(result_label,),
+                    energies=(5.0,),
+                    interaction_energies=(2.0,),
+                    vartype="SPIN",
+                )
+                with self.assertRaisesRegex(ValueError, "variable order mismatch"):
+                    Inspector.from_result(result, model=model)
+
     def test_fingerprint_matches_independent_payload_and_golden_digest(self) -> None:
         model, result = _model_and_result()
         expected_digest, expected_payload = _independent_fingerprint(model)

@@ -21,24 +21,31 @@ Sampler methods:
 
 ```python
 class THRMLSampler:
-    def sample(self, bqm_or_model, *, num_reads=1, seed=None, schedule=None, **kwargs): ...
-    def sample_qubo(self, Q, *, num_reads=1, seed=None, **kwargs): ...
-    def sample_ising(self, h, J, *, num_reads=1, seed=None, **kwargs): ...
+    def __init__(self, config: SamplerConfig | None = None): ...
+    def sample(self, model, *, num_reads=1, partition=None): ...
+    def sample_qubo(self, Q, *, num_reads=1, **compile_kwargs): ...
+    def sample_ising(self, h, J=None, *, num_reads=1, **compile_kwargs): ...
 ```
 
 ## Parameters
 
-Required v0:
+`SamplerConfig` controls one run:
 
-- `num_reads`
-- `seed`
+- `beta`
 - `n_warmup`
-- `n_samples`
 - `steps_per_sample`
-- `beta` or `beta_schedule`
-- `initial_states`
-- `block_strategy`
-- `trace`
+- `num_chains`
+- `seed`
+- `init`
+- `warmup_beta_ladder`
+- `parallel_tempering_betas`
+- `parallel_tempering_swap_interval`
+
+`sample()` accepts an already compiled `IsingModel`, `num_reads`, and an optional validated
+`BlockPartition`. It constructs a deterministic coloring when the partition is omitted.
+`sample_qubo()` and `sample_ising()` accept conversion keyword arguments and then enter the
+same model path. Per-call seed, arbitrary initial-state arrays, trace toggles, and a generic
+schedule object are not current API parameters.
 
 ## QUBO Conversion
 
@@ -67,15 +74,17 @@ Implementation requirements:
 
 ```python
 class SampleResult:
-    samples: np.ndarray
-    variables: list
-    energies: np.ndarray
+    samples: tuple[Mapping[Variable, int], ...]
+    variables: tuple[Variable, ...]
+    energies: tuple[float, ...]
+    interaction_energies: tuple[float, ...]
     best_sample: dict
     best_energy: float
     vartype: str
-    traces: dict
-    diagnostics: dict
-    metadata: dict
+    traces: Mapping
+    diagnostics: Mapping
+    metadata: Mapping
+    num_states: Mapping[Variable, int] | None
 
     def to_dimod(self): ...
 ```
@@ -92,3 +101,21 @@ Metadata:
 - device;
 - timing.
 
+## Lossless Machine Serialization
+
+`IsingModel.to_dict()` and `SampleResult.to_dict()` never stringify arbitrary labels into JSON
+object keys. Schema v1 is retained only for comma-free string labels, where the legacy linear
+and `"left,right"` quadratic mappings are injective. Models or results with typed or
+delimiter-bearing labels use schema v2:
+
+- variables are encoded with explicit type tags;
+- linear coefficients and samples are positional in the recorded variable order;
+- quadratic rows store integer endpoint positions and a coefficient;
+- duplicate positional rows and malformed typed labels are rejected during model decoding.
+
+Supported serialized label types are `None`, Boolean, integer, finite float, string, bytes,
+tuple, and frozenset. Opaque labels remain usable with an explicit in-memory variable order but
+fail serialization explicitly rather than falling back to process-specific `repr()` output.
+Metadata mappings retain ordinary JSON-object shape and therefore require string keys; sets are
+serialized in deterministic typed order. `compile_ising(model.to_dict())` accepts both model
+wire schemas.

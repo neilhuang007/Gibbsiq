@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import itertools
 import math
-from collections import deque
+from collections import Counter, deque
 from dataclasses import dataclass
 from typing import Any, Literal, Sequence
 
@@ -19,6 +19,7 @@ from gibbsiq.exact_distribution import exact_boltzmann_distribution
 from gibbsiq.model import (
     IsingModel,
     Variable,
+    exact_variable_order,
     finite_float,
     finite_sum,
     sample_to_spin_values,
@@ -486,7 +487,7 @@ def verify_transition_kernel(
     if not isinstance(kernel, ExactTransitionKernel):
         raise TypeError("kernel must be ExactTransitionKernel")
     canonical_beta = _nonnegative_beta(beta)
-    if model.variables != kernel.variables:
+    if not exact_variable_order(kernel.variables, model.variables):
         raise ValueError("kernel variable order does not match model variable order")
     if canonical_beta != kernel.beta:
         raise ValueError(f"kernel beta {kernel.beta!r} does not match requested beta {canonical_beta!r}")
@@ -543,13 +544,15 @@ class EmpiricalInterval:
 
 @dataclass(frozen=True, slots=True)
 class EmpiricalVerificationReport:
-    """Bonferroni-Hoeffding evidence for independent retained states."""
+    """Bonferroni-Hoeffding evidence conditional on caller-asserted independence."""
 
     variables: tuple[Variable, ...]
     beta: float
     sample_count: int
     familywise_confidence: float
     sampling_design: str
+    independence_assumption_status: str
+    independence_verified: bool
     interval_method: str
     num_comparisons: int
     intervals: tuple[EmpiricalInterval, ...]
@@ -566,6 +569,8 @@ class EmpiricalVerificationReport:
             "sample_count": self.sample_count,
             "familywise_confidence": self.familywise_confidence,
             "sampling_design": self.sampling_design,
+            "independence_assumption_status": self.independence_assumption_status,
+            "independence_verified": self.independence_verified,
             "interval_method": self.interval_method,
             "num_comparisons": self.num_comparisons,
             "intervals": [interval.to_dict() for interval in self.intervals],
@@ -583,11 +588,13 @@ def verify_empirical_distribution(
     sampling_design: str = "independent_chains",
     max_variables: int = 8,
 ) -> EmpiricalVerificationReport:
-    """Check independent states using predeclared simultaneous intervals.
+    """Check retained states using predeclared simultaneous intervals.
 
-    The method deliberately rejects a single autocorrelated trace.  Its
-    Hoeffding guarantee is only asserted for independently initialized and
-    independently randomized retained states.
+    The Hoeffding guarantee is conditional on independently initialized and
+    independently randomized retained states.  ``sampling_design`` preserves
+    the public compatibility gate, but a caller-provided string cannot verify
+    how samples were generated, so accepted reports explicitly record the
+    independence premise as an unverified caller assertion.
     """
     if not isinstance(model, IsingModel):
         raise TypeError(f"model must be IsingModel, got {type(model).__name__}")
@@ -651,6 +658,22 @@ def verify_empirical_distribution(
         estimate = math.fsum(sample_energy == energy for sample_energy in sample_energies) / sample_count
         observables.append((f"energy_probability:{energy!r}", target_value, estimate, 0.0, 1.0))
 
+    # Low-order moments and the energy histogram do not identify a general
+    # joint law.  At the supported <=8-variable scale, include one Bernoulli
+    # indicator per state so any fixed alternative distribution is visible.
+    sample_state_counts = Counter(spin_samples)
+    for state_index, (state, target_value) in enumerate(zip(exact.states, exact.probabilities)):
+        estimate = sample_state_counts[state] / sample_count
+        observables.append(
+            (
+                f"state_probability:{state_index}:{state!r}",
+                target_value,
+                estimate,
+                0.0,
+                1.0,
+            )
+        )
+
     num_comparisons = len(observables)
     alpha = 1.0 - confidence
     intervals: list[EmpiricalInterval] = []
@@ -677,6 +700,8 @@ def verify_empirical_distribution(
         sample_count=sample_count,
         familywise_confidence=confidence,
         sampling_design=sampling_design,
+        independence_assumption_status="caller_asserted_unverified",
+        independence_verified=False,
         interval_method="bonferroni_hoeffding",
         num_comparisons=num_comparisons,
         intervals=tuple(intervals),

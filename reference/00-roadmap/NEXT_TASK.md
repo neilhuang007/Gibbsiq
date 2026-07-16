@@ -12,7 +12,7 @@
 | Public backend | THRML JAX simulator; no production TSU artifact is present |
 | Control-plane state | `TM-GOV-001` is `complete`; `21c2a71` verifies the control documents and this ledger transition closes the task |
 | Active governance owner | none |
-| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `complete`; `TM-IR-001` is the sole dependency-ready task and is unclaimed |
+| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `complete`; `TM-IR-001` is a locally `verified` working-tree candidate under coordinator `/root` and awaits an authorized implementation commit before `complete` |
 | Scratch state observed before this pass | Untracked `Project_GOAL.md` supplied as task input; excluded from the implementation commit |
 
 The implementation base has a recorded full-suite result of 457 tests in 120.615 seconds at
@@ -48,7 +48,7 @@ prose. Reconcile a conflict before selecting a feature task.
 | `TM-VERIFY-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Independent CPU Gibbs and exact verifier evidence is committed in `42c2409`. |
 | `TM-TARGET-01` | `complete` | `TM-FND-002`, `TM-GOV-001` | Complete target-fact/topology evidence is committed in `42c2409`. |
 | `GQ-INSPECT-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Artifact-only Inspector evidence is committed in `42c2409`. |
-| `TM-IR-001` | `ready` | `TM-VERIFY-01` | Its sole dependency is complete; owner is unclaimed. |
+| `TM-IR-001` | `verified` | `TM-VERIFY-01` | Its sole dependency is complete; focused, neighboring, full, static, documentation, fixed-seed oracle, checksum, and reader gates are green in the working tree. A verified implementation commit is still required for `complete`. |
 
 ## Historical Governance Closure — `TM-GOV-001`
 
@@ -237,24 +237,72 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
 
 ### `TM-IR-001` — Thermodynamic Program Envelope, Clamping, And Coordinates
 
-- Gate/state: M1 compiler kernel; `ready`.
+- Gate/state: M1 compiler kernel; `verified` working-tree candidate.
 - Dependencies: `TM-VERIFY-01`, now complete in `42c2409`.
-- Owner: unclaimed.
+- Owner: coordinator `/root`. Workers `/root/tm_ir_001`, `/root/tm_ir_impl`, and
+  `/root/tm_ir_red` were interrupted before editing. Worker `/root/tm_ir_worker` produced the
+  initial implementation but returned no usable handoff and touched reserved integration files;
+  the coordinator audited the actual diff. Fresh reviewer `/root/tm_ir_reviewer` and its
+  edge-case child added falsifying tests and corrections for projected lineage positions, exact
+  schema-version typing, and categorical valid-path `repr()` calls, but returned no usable
+  narrative before interruption. Independent reviewer `/root/tm_ir_review` then returned a
+  complete handoff after checking the implementation and having its child apply the same three
+  corrections. The earlier process failures are retained in the task journal; acceptance relies
+  on inspected code, executable regressions, independent calculations, and raw oracle evidence.
 - Objective: add an immutable, target-independent `ThermodynamicProgram` envelope around one
   audited logical model with deterministic free/clamped roles, clamp values, optional logical
   coordinates, observation metadata, and factor/source identities.
-- Suggested ownership: new `src/gibbsiq/program.py`; narrow changes to `model.py`,
-  `categorical.py`, `result.py`, public exports, and `test_thermodynamic_program.py`.
-- Public gate: exhaustive energy equivalence after clamping; conflicting or out-of-domain
-  clamps fail; relabeling and serialization are deterministic; offsets survive projection.
+- Worker-owned files: new `src/gibbsiq/program.py`; narrow changes to
+  `src/gibbsiq/model.py`, `src/gibbsiq/categorical.py`, and `src/gibbsiq/result.py`;
+  `test_suite/tests/test_thermodynamic_program.py`;
+  `reference/08-evaluation/equation-audit.md` entry assigned to this task; deterministic raw
+  evidence under `reference/00-roadmap/artifacts/tm-ir-001/`; and the append-only task journal
+  `reference/research-journal/2026-07-15-tm-ir-001.md`.
+- Shared integration files reserved for coordinator: `src/gibbsiq/__init__.py`, this ledger,
+  `reference/claims-evidence-map.md`, root guidance/status files, and final integration review.
+- Public gate: immutable defensive freezing; exactly one `IsingModel` or `CategoricalModel`;
+  deterministic variable/domain/free/clamped order; strict unknown, duplicate, conflicting,
+  Boolean-alias, and out-of-domain clamp rejection; logical coordinates, observations, and
+  factor/source identities; all-free, partial, full, and isolated-variable projection;
+  exhaustive energy equivalence; same-type zero-variable constant projection; offset and
+  source-factor preservation; deterministic relabeling; and deterministic versioned lossless
+  serialization.
 - Blind contract: hidden relabel, isolated-variable, clamp/unclamp, offset-shift, and spin-gauge
   mutations.
-- Independent oracle: enumerate free variables and compare every projected energy with direct
-  substitution into the original model.
-- Exit evidence: equation-audit entry before any new formula, tests written before production
-  code, serialized round trip, raw fixtures/checksums, and a journal with rejected schema
-  alternatives.
-- Blocker: none.
+- Independent oracle: test code enumerates every free assignment, merges it with clamps,
+  evaluates the original model directly without the production projection helper, and compares
+  it with the projected model at `rel_tol=0.0`, `abs_tol=1e-9`.
+- Artifact target: `reference/00-roadmap/artifacts/tm-ir-001/<run-id>/` with serialization and
+  projection fixtures, environment/configuration, manifest, and SHA-256 values.
+- Review evidence: run `2026-07-15-program-envelope` contains 42 deterministic programs and
+  248 independently recomputed free assignments; every energy, serialization round trip, and
+  lineage-destination check passed with maximum absolute energy error `0.0`. The manifest
+  records SHA-256 values for all six evidence files, including nine pinned source/test files,
+  and the generator refuses overwrite unless `--overwrite` is explicit.
+- Last verified: 2026-07-15 on CPython 3.13.5 / Windows 11 against base
+  `b22406d582f5b723a0a70b7751bf1e6140f46e96`; the adversarial math/routing audit added exact
+  typed-label and scaling traps, and the resulting 599-test full suite passed with zero skips in
+  249.925 seconds. Markdown math, Ruff check/format, mypy over 24 source files, all six manifest
+  hashes, all nine pinned source hashes, deterministic-payload comparison, and `git diff --check`
+  passed. The refreshed manifest SHA-256 is
+  `f8687b54a8081fb51ddba495c98e57968ae32181c807b36a157667c13bbb870a`; the pinned-source
+  aggregate is `98836a51f10159b4c379604e69f89874a2b2892c4fad8eda7714b7f3ee8ae1ce`.
+  The implementation remains uncommitted.
+- Adversarial remediation: typed-label/delimiter/JSON-key serialization, exact categorical
+  identity, topology-derived capacity, accumulator bounds over implemented coefficients,
+  full-state empirical-law checks, extreme-scale diagnostics, PRNG provenance, and strict
+  knapsack characterization were independently regressed. The exact 27-fixture corpus was
+  regenerated under EVAL-EQ-024; its canonical content SHA-256 is
+  `aca9461839aa199dd154e577a4617e2f56c2d177b1d9a01c5e168fca2bf865c4`.
+- Acceptance commands: focused discovery with `test_thermodynamic_program.py`; the nearest
+  model, categorical, result, immutability, Inspector, and public-API modules; then the shared
+  full/static commands below.
+- Exit evidence: equation-audit entry before production code, recorded test-first red phase,
+  serialized round trip, raw fixtures/checksums, worker handoff, independent reviewer, and a
+  journal with rejected schema alternatives.
+- Completion condition: an explicitly authorized commit must record the verified code, tests,
+  journal, and artifacts. Until then `TM-IMP-001` remains dependency-blocked because this task
+  is `verified` rather than `complete`.
 
 ## Shared Acceptance Commands
 

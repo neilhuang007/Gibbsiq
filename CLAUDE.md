@@ -65,10 +65,12 @@ constant-beta collection window (guaranteed by the runtime; see EVAL-EQ-007). Th
 corrective patch removes the raw-energy `low_ess` threshold, names
 `occupancy_efficiency` accurately, and separates observable/progress statuses from
 sampler-failure flags; the 2026-07-14 verification closes that correction.
-Rank-normalized bulk/tail ESS, complete joint-mode coverage, Inspector, general constraint
-encoding, and baseline runners remain to be built. Pairwise categorical/domain-wall lowering
-exists and does not fill the general constraint gap. The current ThermoMap analysis surface
-also exports provenanced target facts, coefficient quantization, exact small-law comparison,
+Rank-normalized bulk/tail ESS, complete joint-mode coverage, full Inspector/HTML/CLI
+integration, general constraint encoding, and baseline runners remain to be built. The
+artifact-only Inspector core emits deterministic JSON/Markdown and can verify every stored
+energy row against a caller-supplied model. Pairwise categorical/domain-wall lowering exists
+and does not fill the general constraint gap. The current ThermoMap analysis surface also
+exports provenanced target facts, coefficient quantization, exact small-law comparison,
 logical target assessment, and supplied-partition communication proxies. It does not perform
 automatic partitioning, placement, routing, calibrated costing, or physical TSU execution.
 Record the exact suite and skip counts from the command actually run; do not preserve a

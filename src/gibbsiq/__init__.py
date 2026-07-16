@@ -56,6 +56,7 @@ from gibbsiq.hardware import (
 from gibbsiq.hardware_assessment import HardwareAssessment, assess_target_admissibility
 from gibbsiq.inspector import Inspector
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
+from gibbsiq.program import PROGRAM_SCHEMA_VERSION, ThermodynamicProgram
 from gibbsiq.quantization import QuantizationAnalysis, analyze_quantization
 from gibbsiq.reference_sampler import (
     ReferenceGibbsSampler,
@@ -104,6 +105,7 @@ __all__ = [
     "ParameterProvenance",
     "PhysicalQuantity",
     "PottsObjectiveEvaluation",
+    "PROGRAM_SCHEMA_VERSION",
     "ProgrammingSpec",
     "QuantizationAnalysis",
     "ReferenceGibbsSampler",
@@ -115,6 +117,7 @@ __all__ = [
     "SamplerConfig",
     "THRMLSampler",
     "TSUSpec",
+    "ThermodynamicProgram",
     "TransitionVerificationReport",
     "__version__",
     "analyze_quantization",

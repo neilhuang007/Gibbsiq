@@ -71,6 +71,8 @@ class SamplerConfig:
     parallel_tempering_swap_interval: int = 1
 
     def __post_init__(self) -> None:
+        if isinstance(self.beta, bool):
+            raise ValueError(f"beta must be a finite positive number, got {self.beta!r}")
         beta = finite_float(self.beta, name="beta")
         if beta <= 0.0:
             raise ValueError(f"beta must be positive, got {self.beta!r}")
@@ -100,9 +102,10 @@ class SamplerConfig:
         if self.init not in INIT_POLICIES:
             raise ValueError(f"init must be one of {INIT_POLICIES}, got {self.init!r}")
         if self.warmup_beta_ladder is not None:
-            ladder = tuple(
-                finite_float(value, name="warmup_beta_ladder entry") for value in self.warmup_beta_ladder
-            )
+            raw_ladder = tuple(self.warmup_beta_ladder)
+            if any(isinstance(value, bool) for value in raw_ladder):
+                raise ValueError("warmup_beta_ladder entries must be finite positive numbers")
+            ladder = tuple(finite_float(value, name="warmup_beta_ladder entry") for value in raw_ladder)
             if not ladder:
                 raise ValueError("warmup_beta_ladder must contain at least one beta")
             if any(value <= 0.0 for value in ladder):
@@ -125,10 +128,10 @@ class SamplerConfig:
                     "warmup_beta_ladder and parallel_tempering_betas are separate schedule modes; "
                     "set only one of them"
                 )
-            ladder = tuple(
-                finite_float(value, name="parallel_tempering_betas entry")
-                for value in self.parallel_tempering_betas
-            )
+            raw_ladder = tuple(self.parallel_tempering_betas)
+            if any(isinstance(value, bool) for value in raw_ladder):
+                raise ValueError("parallel_tempering_betas entries must be finite positive numbers")
+            ladder = tuple(finite_float(value, name="parallel_tempering_betas entry") for value in raw_ladder)
             if len(ladder) < 2:
                 raise ValueError("parallel_tempering_betas must contain at least two beta values")
             if any(value <= 0.0 for value in ladder):
@@ -579,6 +582,11 @@ def _replica_exchange_log_ratio(
     )
 
 
+def _replica_exchange_accepts(log_acceptance: float, uniform: float) -> bool:
+    """Apply the log-domain Metropolis test, including ``random() == 0``."""
+    return log_acceptance >= 0.0 or uniform == 0.0 or math.log(uniform) < log_acceptance
+
+
 def _replica_exchange_pairs(replica_count: int, swap_round: int) -> tuple[tuple[int, int], ...]:
     """Return the non-overlapping adjacent pairs for one exchange round."""
     parity = 0 if replica_count == 2 else swap_round % 2
@@ -680,7 +688,7 @@ def _run_tempering_chain(
                     name="lowered replica-exchange log ratio",
                 )
                 uniform = swap_rng.random()
-                accepted = log_acceptance >= 0.0 or math.log(uniform) < log_acceptance
+                accepted = _replica_exchange_accepts(log_acceptance, uniform)
                 pair = _pair_key(left_index, right_index)
                 swap_attempts += 1
                 swap_attempts_by_pair[pair] = swap_attempts_by_pair.get(pair, 0) + 1
@@ -858,6 +866,7 @@ def _build_metadata(
         "thrml_version": getattr(thrml, "__version__", "unknown"),
         "jax_version": jax.__version__,
         "jax_enable_x64": bool(jax.config.read("jax_enable_x64")),
+        "jax_default_prng_impl": str(jax.config.jax_default_prng_impl),
         "lowered_coefficient_dtype": lowered_coefficient_dtype,
         "lowered_beta_dtype": lowered_beta_dtype,
         "max_local_logit_error_bound": max_local_logit_error_bound,

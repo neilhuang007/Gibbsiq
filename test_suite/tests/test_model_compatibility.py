@@ -7,12 +7,26 @@ import json
 import math
 import sys
 import unittest
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from gibbsiq import IsingModel, SampleResult, compile_bqm, compile_ising, compile_qubo  # noqa: E402
+
+
+class _DuplicateExactKeyMapping(Mapping[str, int]):
+    def __getitem__(self, key: str) -> int:
+        if key != "a":
+            raise KeyError(key)
+        return 1
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(("a", "a"))
+
+    def __len__(self) -> int:
+        return 2
 
 
 def load_exact_fixture(fixture_id: str) -> dict:
@@ -97,6 +111,19 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertEqual(model.to_dict()["quadratic"], {"a,b": -1.0})
         self.assertEqual(model.offset, 2.5)
 
+    def test_compile_qubo_duplicate_pair_sum_is_cancellation_stable(self) -> None:
+        model = compile_qubo(
+            {
+                ("a", "b"): 1.0,
+                ("b", "a"): -1e16,
+                "a,b": 1e16,
+            },
+            variables=("a", "b"),
+        )
+
+        self.assertEqual(model.quadratic, {("a", "b"): 0.25})
+        self.assertEqual(model.energy({"a": 1, "b": 1}, vartype="BINARY"), 1.0)
+
     def test_compile_qubo_accepts_structured_diagonal_terms(self) -> None:
         model = compile_qubo(
             {
@@ -119,6 +146,23 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertEqual(model.offset, 4.0)
         self.assertEqual(model.energy({"a": 1, "z": -1}), -2.0)
 
+    def test_compile_ising_diagonal_fold_is_order_independent_under_cancellation(self) -> None:
+        forward = compile_ising(
+            {},
+            {("small", "small"): 1.0, ("large", "large"): -1e16},
+            offset=1e16,
+        )
+        reverse = compile_ising(
+            {},
+            {("large", "large"): -1e16, ("small", "small"): 1.0},
+            offset=1e16,
+        )
+
+        self.assertEqual(forward.offset, 1.0)
+        self.assertEqual(reverse.offset, 1.0)
+        self.assertEqual(forward.metadata["input_offset"], 1e16)
+        self.assertEqual(forward.metadata["conversion_offset"], 1.0)
+
     def test_direct_model_rejects_unknown_linear_variables(self) -> None:
         with self.assertRaisesRegex(
             ValueError,
@@ -136,6 +180,59 @@ class ModelCompatibilityTest(unittest.TestCase):
             quadratic={},
         )
         self.assertEqual(model.linear, {"a": 1.0, "b": 0.0})
+
+    def test_direct_model_rejects_non_spin_vartype_and_typed_order_alias(self) -> None:
+        with self.assertRaisesRegex(ValueError, "vartype.*SPIN"):
+            IsingModel(
+                variables=("a",),
+                linear={"a": 0.0},
+                quadratic={},
+                vartype="BINARY",  # type: ignore[arg-type]
+            )
+        with self.assertRaisesRegex(ValueError, "variable_order"):
+            IsingModel(
+                variables=(1,),
+                linear={1: 0.0},
+                quadratic={},
+                variable_order=(True,),
+            )
+        tuple_label = ("node", 1)
+        with self.assertRaisesRegex(ValueError, "variable_order"):
+            IsingModel(
+                variables=(tuple_label,),
+                linear={tuple_label: 0.0},
+                quadratic={},
+                variable_order=(["node", 1],),  # type: ignore[arg-type]
+            )
+
+    def test_model_operations_reject_boolean_variable_aliases(self) -> None:
+        model = IsingModel(variables=(True,), linear={True: 0.5}, quadratic={})
+
+        with self.assertRaisesRegex(ValueError, "missing variable"):
+            model.energy({1: 1})
+        with self.assertRaisesRegex(ValueError, "unknown variable"):
+            model.local_field(1, {True: 1})
+        with self.assertRaisesRegex(ValueError, "unknown variable"):
+            IsingModel(variables=(True,), linear={1: 0.5}, quadratic={})
+
+    def test_pair_aliases_fail_closed_instead_of_becoming_diagonals(self) -> None:
+        with self.assertRaisesRegex(ValueError, "terms reference variables"):
+            compile_qubo({(True, 1): 2.0}, variables=(True,))
+        with self.assertRaisesRegex(ValueError, "terms reference variables"):
+            compile_ising({}, {(True, 1): 2.0}, variables=(True,))
+
+    def test_bulk_sample_alignment_is_linear_and_rejects_duplicate_exact_keys(self) -> None:
+        variables = tuple(range(20_000))
+        model = IsingModel(
+            variables=variables,
+            linear={variable: 0.0 for variable in variables},
+            quadratic={},
+        )
+        sample = {variable: 1 for variable in variables}
+
+        self.assertEqual(model.energy(sample), 0.0)
+        with self.assertRaisesRegex(ValueError, "duplicate exact key"):
+            IsingModel(variables=("a",), linear={"a": 0.0}, quadratic={}).energy(_DuplicateExactKeyMapping())
 
     def test_gibbs_conditional_uses_audited_sign(self) -> None:
         fixture = load_exact_fixture("single_site_conditional_sign")

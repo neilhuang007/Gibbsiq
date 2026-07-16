@@ -223,6 +223,10 @@ an independent path:
 | Diagnostics | Healthy, unhealthy, and `not_enough_data` trap fixtures. |
 | Benchmark claim | Witness recomputation from the input model. |
 | Performance/cost model | Dimensional checks, sensitivity cases, and measured-vs-modeled labels. |
+| Serialization/evidence | JSON round trip with typed-label and delimiter collisions; compare canonical bytes across hash seeds. |
+| Empirical distribution | A higher-order parity trap that matches lower-order moments but has known nonzero total variation. |
+| Numeric telemetry | Finite extreme-magnitude and imbalanced-chain cases with independently scaled statistics. |
+| Target admissibility | A supplied fact that contradicts the model while every unrelated target check passes. |
 
 ### 5. Implement the smallest coherent surface
 
@@ -242,6 +246,19 @@ Public tests teach the contract. Design the code to survive private variants inv
 relabeling, coefficient scaling, offset shifts, spin gauges, key reordering, hidden seeds,
 diagnostic traps, and resource-accounting omissions. Hidden fixtures and seeds stay outside the
 agent-visible repository and outside the package import path.
+
+Before declaring a cross-layer audit complete, exercise the boundary-attack matrix below. These
+cases are cheap and should be selected before broad exploratory reading because they target the
+failure modes most likely to survive ordinary happy-path tests:
+
+- Python equality aliases such as `True == 1` and `1 == 1.0` at typed-label boundaries;
+- delimiter collisions and JSON object-key coercion such as `1` versus `"1"`;
+- equal or process-specific `repr()` values and at least two `PYTHONHASHSEED` settings;
+- finite values near overflow/underflow and unequal chain lengths;
+- distributions with correct one- and two-variable moments but wrong higher-order support;
+- omitted versus explicitly supplied target facts, especially topology capacity and accumulator
+  range;
+- generator output scored immediately by its independent oracle at the declared tolerance.
 
 ### 8. Preserve raw evidence
 

@@ -15,7 +15,14 @@ from dataclasses import dataclass
 from fractions import Fraction
 from typing import Any, Literal, TypeAlias
 
-from gibbsiq.model import IsingModel, Variable, finite_float, finite_sum, variable_sort_key
+from gibbsiq.model import (
+    IsingModel,
+    Variable,
+    exact_label_key,
+    finite_float,
+    finite_sum,
+    variable_sort_key,
+)
 
 PartitionLabel: TypeAlias = Any
 BoundaryCollapsePolicy: TypeAlias = Literal["max_directed"]
@@ -124,20 +131,28 @@ def _prepare_partition(
             local_seen.add(variable)
             assignment[variable] = label
 
-    expected = set(model.variables)
-    supplied = set(assignment)
-    missing = _canonical_labels(expected - supplied)
-    unknown = _canonical_labels(supplied - expected)
-    if missing or unknown:
-        raise ValueError(
-            "partitions must cover model variables exactly; "
-            f"missing={list(missing)!r}, unknown={list(unknown)!r}"
-        )
+    model_positions = {
+        exact_label_key(variable): position for position, variable in enumerate(model.variables)
+    }
+    try:
+        supplied_positions = {variable: model_positions[exact_label_key(variable)] for variable in assignment}
+    except (KeyError, TypeError) as error:
+        raise ValueError("partitions must cover model variables exactly without equality aliases") from error
+    if len(set(supplied_positions.values())) != len(model.variables):
+        raise ValueError("partitions must cover model variables exactly without equality aliases")
+
+    canonical_members = {
+        label: tuple(model.variables[supplied_positions[variable]] for variable in cluster_members)
+        for label, cluster_members in members.items()
+    }
+    canonical_assignment = {
+        model.variables[position]: assignment[variable] for variable, position in supplied_positions.items()
+    }
 
     return _PreparedPartition(
         labels=_canonical_partition_labels(members),
-        members=members,
-        assignment=assignment,
+        members=canonical_members,
+        assignment=canonical_assignment,
     )
 
 
@@ -146,12 +161,17 @@ def _validate_chain_order(
     labels: tuple[PartitionLabel, ...],
 ) -> tuple[PartitionLabel, ...]:
     canonical = tuple(order)
-    try:
-        unique = set(canonical)
-    except TypeError as error:
-        raise ValueError("chain_order labels must be hashable") from error
-    expected = set(labels)
-    if len(canonical) != len(labels) or len(unique) != len(canonical) or unique != expected:
+    label_positions = {exact_label_key(label): position for position, label in enumerate(labels)}
+    matched_positions: set[int] = set()
+    for candidate in canonical:
+        try:
+            position = label_positions[exact_label_key(candidate)]
+        except (KeyError, TypeError):
+            raise ValueError("chain_order must contain every partition label exactly once") from None
+        if position in matched_positions:
+            raise ValueError("chain_order must contain every partition label exactly once")
+        matched_positions.add(position)
+    if len(matched_positions) != len(labels):
         raise ValueError("chain_order must contain every partition label exactly once")
     return canonical
 

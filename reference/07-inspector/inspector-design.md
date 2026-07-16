@@ -1,9 +1,8 @@
 # Inspector Design
 
-Status: implementation candidate added on 2026-07-15 in `src/gibbsiq/inspector.py` with
-focused coverage in `test_suite/tests/test_inspector.py`. The core remains in review until the
-coordinator completes the independent audit and integration gates. HTML, CLI, comparison, and
-compiled-manifest integration remain assigned to `TM-REP-001`.
+Status: the artifact-only core is implemented in commit `42c2409` with focused coverage in
+`test_suite/tests/test_inspector.py`. HTML, CLI, comparison, and compiled-manifest integration
+remain assigned to `TM-REP-001`.
 
 ## Authority And Sources
 
@@ -74,8 +73,10 @@ Without `model`:
 
 With `model`:
 
-1. Require `tuple(result.variables) == tuple(model.variables)`. A set match in a different
-   order is not sufficient for this core contract.
+1. Require a position-by-position variable-order match using exact recursive label type and
+   equality. Ordinary Python tuple equality is insufficient because `True == 1`, `1.0 == 1`,
+   and the same aliases can occur inside tuple or frozenset labels. A set match in a different
+   order is also insufficient for this core contract.
 2. Require `result.vartype` to be `SPIN` or `BINARY`. `IsingModel` is internally spin-valued,
    while its energy methods explicitly accept either input encoding; a `CATEGORICAL` result is
    incompatible and fails validation.
@@ -160,7 +161,7 @@ audit between sampler-health flags, observations, and `not_enough_data`/unavaila
 
 #### Summary Schema And Label Encoding
 
-The implementation candidate emits schema `gibbsiq.inspector.summary.v1`. Its top-level fields
+The implementation emits schema `gibbsiq.inspector.summary.v1`. Its top-level fields
 are `artifact`, `stored_energies`, `best_row`, `model_association`, `traces`, `diagnostics`,
 `warnings`, `metadata`, and `availability`. Stored traces, diagnostics, flags, and metadata
 carry their `result.*` source path. Missing data and every deferred integration section carry

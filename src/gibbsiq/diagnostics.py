@@ -16,7 +16,13 @@ from operator import mul
 from statistics import NormalDist, median
 from typing import Any
 
-from gibbsiq.model import Variable, finite_float
+from gibbsiq.model import (
+    Variable,
+    exact_mapping_index,
+    exact_mapping_key,
+    exact_variable_order,
+    finite_float,
+)
 
 STATUS_OK = "ok"
 STATUS_CONSTANT_TRACE = "constant_trace"
@@ -72,17 +78,34 @@ def thresholds_summary() -> dict[str, float]:
 
 
 def _mean(values: Sequence[float]) -> float:
-    return math.fsum(values) / len(values)
+    scale = max(abs(value) for value in values)
+    if scale == 0.0:
+        return 0.0
+    return scale * (math.fsum(value / scale for value in values) / len(values))
 
 
 def _variance(values: Sequence[float], ddof: int = 0) -> float:
-    center = _mean(values)
-    return math.fsum((value - center) ** 2 for value in values) / (len(values) - ddof)
+    denominator = len(values) - ddof
+    if denominator <= 0:
+        raise ValueError("variance requires more values than degrees of freedom")
+    scale = max(abs(value) for value in values)
+    if scale == 0.0:
+        return 0.0
+    scaled = [value / scale for value in values]
+    center = math.fsum(scaled) / len(scaled)
+    normalized = math.fsum((value - center) ** 2 for value in scaled) / denominator
+    variance = scale * (scale * normalized)
+    if not math.isfinite(variance):
+        raise ValueError("variance exceeds the finite float range")
+    return variance
 
 
 def _rectangularize(chains: Sequence[Sequence[float]]) -> list[list[float]]:
-    """Drop empty chains, truncate the rest to the shared minimum length (loses at most
-    ``num_chains - 1`` draws, keeps every chain)."""
+    """Drop empty chains and truncate active chains to their shared minimum length.
+
+    ``chain_section`` reports the original, retained, and discarded draw counts;
+    arbitrary length imbalance can discard substantially more than one draw per chain.
+    """
     rows = []
     for chain_index, chain in enumerate(chains):
         # Non-finite input raises here (EVAL-EQ-007): would otherwise leak into output or
@@ -110,13 +133,24 @@ def split_chains(chains: Sequence[Sequence[float]]) -> list[list[float]]:
     return _split_rows(_rectangularize(chains))
 
 
+def _normalize_rows(rows: list[list[float]]) -> tuple[float, list[list[float]]]:
+    """Apply one common finite scale to rectangular rows."""
+    scale = max(abs(value) for row in rows for value in row)
+    if scale == 0.0:
+        return scale, rows
+    return scale, [[value / scale for value in row] for row in rows]
+
+
 def _geyer_ess(split_rows: list[list[float]]) -> tuple[float, float]:
     """Geyer initial-sequence tau and ESS on split chains (EVAL-EQ-008); autocovariance is
     computed lazily per lag instead of via FFT (arviz ``_ess``)."""
     num_chains = len(split_rows)
     num_draws = len(split_rows[0])
-    chain_means = [_mean(row) for row in split_rows]
-    demeaned = [[value - center for value in row] for row, center in zip(split_rows, chain_means)]
+    # ESS is invariant under a common nonzero scale.  Normalize before forming
+    # products so finite, high-magnitude traces do not overflow autocovariances.
+    _, normalized_rows = _normalize_rows(split_rows)
+    chain_means = [_mean(row) for row in normalized_rows]
+    demeaned = [[value - center for value in row] for row, center in zip(normalized_rows, chain_means)]
 
     def mean_autocovariance(lag: int) -> float:
         total = 0.0
@@ -194,14 +228,31 @@ def _ess_mean_rows(rows: list[list[float]]) -> dict[str, Any]:
     }
 
 
-def _rhat_core(split_rows: list[list[float]]) -> tuple[float, float, float | None]:
+def _rescale_variance(normalized_variance: float, scale: float) -> float | None:
+    """Return a variance in input units, or None when binary64 cannot represent it."""
+    value = scale * (scale * normalized_variance)
+    return value if math.isfinite(value) else None
+
+
+def _rhat_core(
+    split_rows: list[list[float]],
+) -> tuple[float | None, float | None, float | None]:
     """EVAL-EQ-007 core on already-split chains: (W, B, rhat-or-None-if-W-zero)."""
     num_draws = len(split_rows[0])
-    within = _mean([_variance(row, ddof=1) for row in split_rows])
-    between = num_draws * _variance([_mean(row) for row in split_rows], ddof=1)
-    if within == 0.0:
-        return within, between, None
-    return within, between, math.sqrt((between / within + num_draws - 1.0) / num_draws)
+    scale, normalized_rows = _normalize_rows(split_rows)
+    if scale == 0.0:
+        return 0.0, 0.0, None
+    normalized_within = _mean([_variance(row, ddof=1) for row in normalized_rows])
+    normalized_between = num_draws * _variance(
+        [_mean(row) for row in normalized_rows],
+        ddof=1,
+    )
+    within = _rescale_variance(normalized_within, scale)
+    between = _rescale_variance(normalized_between, scale)
+    if normalized_within == 0.0:
+        return 0.0, between, None
+    rhat = math.sqrt((normalized_between / normalized_within + num_draws - 1.0) / num_draws)
+    return within, between, rhat
 
 
 def _split_rows_for_rhat(chains: Sequence[Sequence[float]]) -> list[list[float]] | None:
@@ -213,7 +264,7 @@ def _split_rows_for_rhat(chains: Sequence[Sequence[float]]) -> list[list[float]]
     return _split_rows(rows)
 
 
-def _zero_within_status(between: float) -> str:
+def _zero_within_status(between: float | None) -> str:
     """Status when W == 0: B == 0 is a constant trace; B > 0 is infinite R-hat
     (zero-within-variance)."""
     return STATUS_UNDEFINED_CONSTANT_TRACE if between == 0.0 else STATUS_ZERO_WITHIN_VARIANCE
@@ -302,7 +353,7 @@ def rank_normalized_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, A
     folded_rows = [[abs(value - pooled_median) for value in row] for row in split_rows]
     _, folded_between, folded = _rhat_core(_rank_normalize(folded_rows))
     if folded is None:
-        if folded_between > 0.0:
+        if folded_between is None or folded_between > 0.0:
             return result(STATUS_ZERO_WITHIN_VARIANCE, bulk=bulk)
         return result(STATUS_OK, combined=bulk, bulk=bulk)
     return result(STATUS_OK, combined=max(bulk, folded), bulk=bulk, folded=folded)
@@ -361,10 +412,26 @@ def chain_section(
     """Per-chain statistics, unsplit between-chain variance (EVAL-EQ-007), and split R-hat.
     ``ess`` accepts a precomputed ``ess_mean`` summary to avoid a duplicate Geyer scan."""
     rows = _rectangularize(energy_chains)
+    original_draws_by_chain = [len(chain) for chain in energy_chains]
+    shared_draws = len(rows[0]) if rows else 0
+    diagnostic_draws_used_by_chain = [
+        shared_draws if original_draws else 0 for original_draws in original_draws_by_chain
+    ]
+    diagnostic_discarded_draws_by_chain = [
+        original - used
+        for original, used in zip(
+            original_draws_by_chain,
+            diagnostic_draws_used_by_chain,
+        )
+    ]
     section: dict[str, Any] = {
         "num_chains": len(energy_chains),
         "num_chains_used": len(rows),
-        "draws_per_chain": len(rows[0]) if rows else 0,
+        "draws_per_chain": shared_draws,
+        "original_draws_by_chain": original_draws_by_chain,
+        "diagnostic_draws_used_by_chain": diagnostic_draws_used_by_chain,
+        "diagnostic_discarded_draws_by_chain": diagnostic_discarded_draws_by_chain,
+        "diagnostic_discarded_draws": sum(diagnostic_discarded_draws_by_chain),
     }
     if rows:
         section["chain_means"] = [_mean(row) for row in rows]
@@ -390,7 +457,29 @@ def state_counts(
     samples: Sequence[Mapping[Variable, int]], variables: Sequence[Variable]
 ) -> dict[tuple[int, ...], int]:
     """Count reads per distinct state, keyed by the fixed variable order."""
-    return Counter(tuple(int(sample[variable]) for variable in variables) for sample in samples)
+    return Counter(tuple(int(value) for value in _sample_values(sample, variables)) for sample in samples)
+
+
+def _sample_values(
+    sample: Mapping[Variable, int],
+    variables: Sequence[Variable],
+) -> tuple[int, ...]:
+    """Read requested variables without accepting Python equality aliases."""
+    variable_order = tuple(variables)
+    sample_keys = tuple(sample)
+    if len(sample_keys) == len(variable_order) and exact_variable_order(sample_keys, variable_order):
+        return tuple(sample[key] for key in sample_keys)
+    sample_key_index = exact_mapping_index(sample)
+    values: list[int] = []
+    for variable in variable_order:
+        try:
+            actual_key = exact_mapping_key(sample, variable, sample_key_index)
+        except KeyError as error:
+            raise ValueError(
+                "sample variable labels do not contain every requested variable exactly"
+            ) from error
+        values.append(sample[actual_key])
+    return tuple(values)
 
 
 def diversity_section(
@@ -516,27 +605,25 @@ def spin_chain_section(
             "offending_variables": [],
         }
 
-    sample_chains: list[Sequence[Mapping[Variable, int]]] = []
-    start = 0
-    for chain_draws in draws_by_chain:
-        sample_chains.append(samples[start : start + chain_draws])
-        start += chain_draws
-
+    validated_states: list[tuple[int, ...]] = []
     for sample_index, sample in enumerate(samples):
-        missing = [variable for variable in variable_order if variable not in sample]
-        if missing:
+        try:
+            state = _sample_values(sample, variable_order)
+        except ValueError:
             return {
                 "status": STATUS_NOT_AVAILABLE,
-                "reason": "sample is missing variables required for spin diagnostics",
+                "reason": (
+                    "sample variable labels do not contain every variable required for "
+                    "spin diagnostics exactly"
+                ),
                 "sample_index": sample_index,
-                "missing_variables": missing,
                 "chain_disagreement": False,
                 "offending_variables": [],
             }
         invalid = [
             variable
-            for variable in variable_order
-            if isinstance(sample[variable], bool) or sample[variable] not in (-1, 1)
+            for variable, value in zip(variable_order, state, strict=True)
+            if isinstance(value, bool) or value not in (-1, 1)
         ]
         if invalid:
             return {
@@ -547,21 +634,26 @@ def spin_chain_section(
                 "chain_disagreement": False,
                 "offending_variables": [],
             }
+        validated_states.append(state)
+
+    state_chains: list[Sequence[tuple[int, ...]]] = []
+    start = 0
+    for chain_draws in draws_by_chain:
+        state_chains.append(validated_states[start : start + chain_draws])
+        start += chain_draws
 
     representatives: list[tuple[int, ...]] = []
     all_active_chains_frozen = True
-    for chain in sample_chains:
+    for chain in state_chains:
         if not chain:
             continue
-        representative = tuple(chain[0][variable] for variable in variable_order)
-        if any(
-            tuple(sample[variable] for variable in variable_order) != representative for sample in chain[1:]
-        ):
+        representative = chain[0]
+        if any(state != representative for state in chain[1:]):
             all_active_chains_frozen = False
             break
         representatives.append(representative)
 
-    active_chain_lengths = [len(chain) for chain in sample_chains if chain]
+    active_chain_lengths = [len(chain) for chain in state_chains if chain]
     enough_evidence = (
         len(active_chain_lengths) >= MIN_CHAINS_FOR_RHAT and min(active_chain_lengths) >= MIN_DRAWS_FOR_RHAT
     )
@@ -582,7 +674,7 @@ def spin_chain_section(
         "evidence_status": STATUS_OK if enough_evidence else STATUS_INSUFFICIENT_DATA,
         "method": "whole-state frozen-chain disagreement",
         "draws_by_chain": draws_by_chain,
-        "active_chains": sum(bool(chain) for chain in sample_chains),
+        "active_chains": sum(bool(chain) for chain in state_chains),
         "variables_checked": len(variable_order),
         "offending_variable_count": len(offending_variables),
         "offending_variables": reported_variables,
@@ -662,9 +754,10 @@ def magnetization_trace(
 ) -> list[list[float]]:
     """Per-read mean spin per chain (EVAL-EQ-012), shaped like traces["energy"]."""
     count = len(variables)
+    if count == 0:
+        raise ValueError("magnetization requires at least one variable")
     return [
-        [math.fsum(sample[variable] for variable in variables) / count for sample in chain]
-        for chain in sample_chains
+        [math.fsum(_sample_values(sample, variables)) / count for sample in chain] for chain in sample_chains
     ]
 
 
@@ -675,8 +768,19 @@ def distance_to_best_trace(
 ) -> list[list[int]]:
     """Per-read Hamming distance to the run's best sample (EVAL-EQ-012); ``best_sample``
     must use the first-minimal-index rule (``SampleResult.best_index``)."""
+    best_values = _sample_values(best_sample, variables)
     return [
-        [sum(1 for variable in variables if sample[variable] != best_sample[variable]) for sample in chain]
+        [
+            sum(
+                sample_value != best_value
+                for sample_value, best_value in zip(
+                    _sample_values(sample, variables),
+                    best_values,
+                    strict=True,
+                )
+            )
+            for sample in chain
+        ]
         for chain in sample_chains
     ]
 

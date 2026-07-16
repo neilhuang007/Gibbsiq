@@ -163,9 +163,13 @@ baseline-adapter path where external sampler output enters `compute_diagnostics`
 
 Stationarity contract: R-hat (and EVAL-EQ-008 ESS) assume the recorded draws target a fixed
 distribution. The THRML runtime guarantees this by construction: `warmup_beta_ladder`
-anneals only during warmup and every recorded read is collected at constant `beta`. If
-in-sampling schedules land (parallel tempering), these diagnostics must be computed per
-constant-beta segment keyed off `traces["beta_schedule"]`, never across segments.
+anneals only during warmup and every fixed-beta retained read is collected at constant
+`beta`. Parallel tempering keeps the temperature slots fixed, returns only the cold-slot
+samples at `config.beta`, and runs these diagnostics on the cold-slot energy and magnetization
+chains. The per-beta traces and swap records under `traces["parallel_tempering"]` are separate
+telemetry; they are not concatenated into one non-stationary trace or treated as independent
+retained chains. A future schedule that changes the target beta of retained draws must define
+and diagnose separately named constant-target windows.
 
 Magnetization chain-disagreement wiring (audited 2026-07-03): the runtime payload also runs
 the chain-disagreement estimators (this equation and EVAL-EQ-013) on the per-chain
@@ -354,7 +358,7 @@ separate `observations` list so no evidence is discarded.
 
 Source: standard Ising magnetization; distance-to-best defined by the Stage 3 contract.
 
-For read `t` with spins `s_i(t)` over `n` variables:
+For read `t` with spins `s_i(t)` over `n >= 1` variables:
 
 ```text
 magnetization_t = (1 / n) * sum_i s_i(t)
@@ -365,6 +369,13 @@ The best sample is the read with minimal energy; ties resolve to the FIRST minim
 flat read order, matching `SampleResult.best_index`. Both traces are per-chain
 lists-of-lists with the same shape as `traces["energy"]`. Degenerate optima make
 `distance_to_best` depend on the tie rule, which is why the rule is pinned here.
+
+For a zero-variable constant model, magnetization is undefined. `THRMLSampler` records
+`traces["magnetization"] = null`, and `diagnostics["chains"]["spins"]` records status
+`"not_available"` with the reason that spin diagnostics do not apply to a zero-variable
+model. Distance to the unique empty best state is zero for every retained read. The public
+`magnetization_trace` helper requires at least one variable and raises `ValueError` for an
+empty variable order.
 
 Use: trace capture in the THRML runtime; Stage 4 inspector plots.
 
@@ -590,6 +601,24 @@ remain scored with the original canonical `IsingModel`.
 Nearest-even rounding and toward-zero rounding are separately named policies. Overflow is
 either rejected or explicitly saturated to the nearest endpoint. Silent wraparound is not an
 admissible scientific-computing policy.
+
+Coefficient fit does not imply that the target local-field accumulator fits.  For the stored
+effective coefficients above, the exact extrema over every neighboring spin assignment are
+
+```text
+gamma_i_min = h_i_quantized - sum_j abs(J_ij_quantized)
+gamma_i_max = h_i_quantized + sum_j abs(J_ij_quantized).
+```
+
+Every sign choice in these extrema is attainable independently for the neighbors of one
+variable.  Therefore a supplied accumulator format passes the direct range check only when its
+representable interval contains both extrema for every variable.  A known violation makes the
+target inadmissible.  An absent accumulator fact, or an accumulator behavior that cannot be
+checked from a supplied accumulator contract, cannot support an accumulator claim. When an
+accumulator format is supplied but its implemented coefficient inputs cannot be established, the
+check remains explicitly `not_evaluated`; coefficient fit alone must never substitute for that
+check. This is a range/overflow check, not a model of rounding after each addition or of
+accumulator-induced distribution error.
 
 Use: fixed-point target analysis and exact small-model distribution comparison. This equation
 models coefficient quantization. It does not model quantization of an accumulated local field,
@@ -907,12 +936,13 @@ sole category. Its unary base and any pair-table dependence are folded into the 
 the other variable's first differences. An all-singleton model therefore lowers to a
 zero-variable constant Ising model while preserving the complete categorical energy.
 
-The representation uses the minimum `sum_p (K_p - 1)` wall variables, but algebraic energy
-equivalence says nothing about Markov-chain behavior. Category order changes which states are
-adjacent under a one-bit move; pair-table mixed differences can densify the wall graph; and
-invalid words add new regions of state space. An exact lowering can therefore improve or
-severely worsen mixing. Its graph overhead and sampling diagnostics must be evaluated rather
-than inferred from valid-state energy equality.
+The representation uses `sum_p (K_p - 1)` variables, the minimum for this adjacent domain-wall
+construction, but not the information-theoretic minimum among all unrestricted binary
+encodings. Algebraic energy equivalence says nothing about Markov-chain behavior. Category order
+changes which states are adjacent under a one-bit move; pair-table mixed differences can densify
+the wall graph; and invalid words add new regions of state space. An exact lowering can therefore
+improve or severely worsen mixing. Its graph overhead and sampling diagnostics must be evaluated
+rather than inferred from valid-state energy equality.
 
 Use: auditable lowering of finite pairwise categorical models to the existing QUBO/Ising IR.
 It is not a penalty-selection theorem, a mixing guarantee, or a hardware-performance claim.
@@ -999,10 +1029,14 @@ for strong connectivity and period one. This rejects identity and disconnected
 kernels that can satisfy both stationarity and detailed balance while failing to
 explore the target state space.
 
-Empirical verification uses `N` independently generated retained states and a
-predeclared familywise confidence `1 - alpha`. The compared bounded observables
-are every spin-up indicator, every pair product, and every exact energy-level
-indicator. If there are `m` comparisons and observable `r` lies in `[a_r, b_r]`,
+Empirical verification accepts `N` retained states together with the caller's declaration that
+they were generated independently and a predeclared familywise confidence `1 - alpha`. The
+compared bounded observables are every exact full-state indicator, every spin-up indicator,
+every pair product, and every exact energy-level indicator. Full-state indicators are required:
+one- and two-spin moments plus energy levels do not determine a general joint law. For example,
+the uniform distribution over the four even-parity states of three zero-energy spins matches all
+of those lower-order observables while remaining at total-variation distance `0.5` from the
+uniform eight-state target. If there are `m` comparisons and observable `r` lies in `[a_r, b_r]`,
 the Bonferroni-Hoeffding half-width is
 
 ```text
@@ -1012,12 +1046,113 @@ epsilon_r = (b_r - a_r) * sqrt(log(2 * m / alpha) / (2 * N)).
 The reported interval is the sample mean plus or minus `epsilon_r`, clipped to
 the observable range. Hoeffding's inequality and the union bound give simultaneous
 coverage of at least `1 - alpha` when the retained states are independent. The
-verifier records that assumption explicitly and rejects a correlated-chain design
-for this interval method. MCMC draws from one trajectory require a separately
-audited dependence-aware interval; substituting the raw draw count would produce
+verifier can record but cannot establish that design fact from a flat sample sequence or a caller
+string. It must label independence as an unverified caller assumption unless independently
+checkable restart identities, RNG streams, and provenance are supplied. A caller-declared
+correlated-chain design is rejected for this interval method, but relabeling correlated draws as
+independent does not make the coverage claim valid. MCMC draws from one trajectory require a
+separately audited dependence-aware interval; substituting the raw draw count would produce
 unsupported coverage.
 
-Use: exact row/stationarity/detailed-balance verification, non-ergodic traps,
-wrong-sign traps, and simultaneous empirical marginal/correlation/energy-law
-checks. These intervals measure sampling-law agreement and do not certify mixing
-or optimization quality.
+Use: exact row/stationarity/detailed-balance verification, non-ergodic traps, wrong-sign traps,
+and simultaneous empirical full-state/marginal/correlation/energy-law checks over the declared
+small-state cap. Conditional on genuinely independent retained states, the full-state intervals
+test the enumerated sampling law. They do not establish the independence premise, certify mixing,
+or prove optimization quality.
+
+## EVAL-EQ-023: Exact Clamped Pairwise Program Projection
+
+Sources: direct substitution into EVAL-EQ-001 and EVAL-EQ-020; THRML Ising
+model and block-sampling API documentation, accessed 2026-07-15,
+<https://docs.thrml.ai/en/latest/api/models/ising/> and
+<https://docs.thrml.ai/en/latest/api/block_sampling/>; D-Wave Ocean
+`BinaryQuadraticModel.fix_variable` documentation, accessed 2026-07-15,
+<https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod/generated/dimod.binary.BinaryQuadraticModel.fix_variable.html>.
+Audited 2026-07-15 for `TM-IR-001`.
+
+Partition the variables of an Ising model into free variables `F` and clamped
+variables `C`, with declared clamp spin `c_i` in `{-1, +1}` for every `i` in
+`C`. Direct substitution into EVAL-EQ-001 gives the exact projected model
+
+```text
+E_C(s_F) = offset_C
+         + sum_(i in F) h_i^C s_i
+         + sum_(i<j; i,j in F) J_ij s_i s_j,
+
+h_i^C = h_i + sum_(j in C) J_ij c_j,
+
+offset_C = offset
+           + sum_(i in C) h_i c_i
+           + sum_(i<j; i,j in C) J_ij c_i c_j.
+```
+
+Here `J_ij` denotes the canonical coefficient for the unordered pair, regardless
+of which endpoint appears first in the stored variable order. Free-free
+quadratic terms are unchanged. Each free-clamped quadratic factor contributes
+to the surviving free variable's linear coefficient; each clamped linear or
+clamped-clamped quadratic factor contributes to the offset. Thus, for every
+free assignment `s_F`, evaluating the projected model is exactly the same as
+merging `s_F` with the clamp assignment and evaluating the original model.
+
+For the finite pairwise categorical energy in EVAL-EQ-020, declare one clamped
+category `c_i` from the exact domain of each `i` in `C`. Direct substitution
+gives
+
+```text
+E_C(x_F) = offset_C
+         + sum_(i in F) U_i^C(x_i)
+         + sum_(i<j; i,j in F) V_ij(x_i, x_j),
+
+U_i^C(a) = U_i(a) + sum_(j in C) V_ij(a, c_j),
+
+offset_C = offset
+           + sum_(i in C) U_i(c_i)
+           + sum_(i<j; i,j in C) V_ij(c_i, c_j).
+```
+
+`V_ij` is evaluated in the original stored endpoint orientation. Free-free pair
+tables and free-variable domains are unchanged. A fully clamped Ising or
+categorical program projects to a zero-variable model of the same type whose
+offset is the complete energy of the clamp assignment. An empty clamp set is
+the identity projection. Isolated clamped variables still contribute their
+unary or linear energy to the offset.
+
+Projection keeps additive source-factor lineage rather than pretending that a
+combined coefficient has one parent. Every original factor contributes one
+lineage record naming its stable source identity and its destination kind and
+key (`linear`, `unary`, `quadratic`, `pairwise`, or `offset`). This record is
+provenance only: coefficients are computed from the equations above, never
+reconstructed from lineage metadata. Deterministic variable order, exact-type
+categorical membership, finite coordinates, and immutable clamp state are
+program-envelope contracts, not additional energy equations.
+
+Use: target-independent logical clamping, same-type projection, exhaustive
+small-state energy-equivalence oracles, result reconstruction, and later
+ThermoMap placement/routing stages. It is not a penalty method, an approximate
+reduction, a sampling claim, or permission to discard the canonical offset.
+
+## EVAL-EQ-024: Strict Knapsack Optimum Characterization
+
+Source: direct definition of the repository's exact finite 0/1-knapsack benchmark contract.
+For binary selections `x_i`, positive item weights `w_i`, values `v_i`, and capacity `C`, define
+
+```text
+V(x) = sum_i v_i x_i
+W(x) = sum_i w_i x_i
+F = {x : W(x) <= C}
+
+V_star = max_(x in F) V(x)
+W_star = min_(x in F : V(x) = V_star) W(x)
+X_star = {x in F : V(x) = V_star and W(x) = W_star}.
+```
+
+The fixture fields `max_value`, `weight_at_optimum`, and `num_optimal_selections` mean
+`V_star`, `W_star`, and `|X_star|`, respectively. Every submitted witness must belong to
+`X_star`; reporting `W_star` from one selection while supplying a different-weight
+maximum-value witness is inconsistent evidence. The rejected alternative was to leave
+`weight_at_optimum` singular while counting every maximum-value selection regardless of
+weight, because then the scalar and witness list need not describe the same optimum set.
+
+Use: exhaustive small knapsack fixtures and strict witness scoring. This lexicographic
+characterization is an evaluation convention; it is not a QUBO penalty construction or a
+claim that minimum weight is part of every external knapsack definition.
