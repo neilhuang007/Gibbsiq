@@ -16,6 +16,7 @@ from typing import Any, TypeAlias
 from gibbsiq._frozen import freeze, freeze_json_evidence, thaw
 from gibbsiq.model import (
     Variable,
+    exact_label_key,
     exact_mapping_index,
     exact_mapping_key,
     exact_variable_position,
@@ -56,8 +57,8 @@ def _format_items(values: set[Any]) -> list[Any]:
     return sorted(values, key=variable_sort_key)
 
 
-def _typed_category_key(value: Category) -> tuple[type[Any], Category]:
-    return type(value), value
+def _typed_category_key(value: Category) -> tuple[Any, Any]:
+    return exact_label_key(value)
 
 
 def _typed_pair_key(
@@ -151,7 +152,7 @@ class CategoricalModel:
                 raise ValueError(f"domain for {variable!r} must contain unique categories")
             domains[variable] = domain
             domain_indices[variable] = MappingProxyType(
-                {(type(category), category): position for position, category in enumerate(domain)}
+                {_typed_category_key(category): position for position, category in enumerate(domain)}
             )
 
         if not isinstance(self.unary, Mapping):
@@ -352,7 +353,7 @@ class CategoricalModel:
         for variable in self.variables:
             category = sample[exact_mapping_key(sample, variable, sample_key_index)]
             try:
-                position = self._domain_indices[variable][(type(category), category)]
+                position = self._domain_indices[variable][_typed_category_key(category)]
             except (KeyError, TypeError) as error:
                 raise ValueError(
                     f"sample category {category!r} is not in the domain for {variable!r}"

@@ -15,12 +15,14 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, TypeAlias
 
-from gibbsiq._frozen import freeze, thaw
+from gibbsiq._frozen import freeze
 from gibbsiq.categorical import CategoricalModel
 from gibbsiq.model import (
     IsingModel,
     Variable,
+    decode_variable_label,
     encode_variable_label,
+    exact_label_equal,
     exact_mapping_index,
     exact_mapping_key,
     exact_variable_position,
@@ -54,7 +56,7 @@ def _records(value: Any, *, name: str) -> tuple[tuple[Any, Any], ...]:
 
 
 def _same_exact_value(left: Any, right: Any) -> bool:
-    return type(left) is type(right) and bool(left == right)
+    return exact_label_equal(left, right)
 
 
 def _has_exact_mapping_key(
@@ -96,9 +98,7 @@ def _normalize_clamps(
             canonical_value: Any = value
         else:
             domain = model.domains[variable]
-            exact_matches = [
-                category for category in domain if type(category) is type(value) and category == value
-            ]
+            exact_matches = [category for category in domain if exact_label_equal(value, category)]
             if not exact_matches:
                 if isinstance(value, bool) and any(
                     not isinstance(category, bool) and category == value for category in domain
@@ -258,11 +258,6 @@ def _encode_value(value: Any, *, label: bool = False) -> dict[str, Any]:
             "kind": "bytes",
             "value": base64.b64encode(value).decode("ascii"),
         }
-    if value_type is tuple:
-        return {
-            "kind": "tuple",
-            "items": [_encode_value(item, label=True) for item in value],
-        }
     if value_type is frozenset:
         items = [_encode_value(item, label=True) for item in value]
         items.sort(key=_canonical_json)
@@ -279,10 +274,6 @@ def _encode_value(value: Any, *, label: bool = False) -> dict[str, Any]:
         return {"kind": "mapping", "items": items}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return {"kind": "list", "items": [_encode_value(item) for item in value]}
-    if isinstance(value, (set, frozenset)):
-        items = [_encode_value(item) for item in value]
-        items.sort(key=_canonical_json)
-        return {"kind": "set", "items": items}
     raise _unsupported_value(value, label=False)
 
 
@@ -298,62 +289,27 @@ def _require_list(value: Any, *, name: str) -> list[Any]:
     return value
 
 
+def _decode_label(payload: Any) -> Any:
+    row = _require_mapping(payload, name="encoded label")
+    value = decode_variable_label(row)
+    if encode_variable_label(value) != dict(row):
+        raise ValueError("encoded label must use its canonical typed representation")
+    return value
+
+
 def _decode_value(payload: Any) -> Any:
     row = _require_mapping(payload, name="encoded value")
     kind = row.get("kind")
-    if kind == "none":
-        return None
-    if kind == "bool":
-        value = row.get("value")
-        if type(value) is not bool:
-            raise ValueError("encoded bool must contain a boolean value")
-        return value
-    if kind == "int":
-        value = row.get("value")
-        if not isinstance(value, str):
-            raise ValueError("encoded int must contain a decimal string")
-        try:
-            return int(value)
-        except ValueError as error:
-            raise ValueError("encoded int contains an invalid decimal string") from error
-    if kind == "float":
-        value = row.get("value")
-        if not isinstance(value, str):
-            raise ValueError("encoded float must contain a hexadecimal string")
-        try:
-            decoded_float = float.fromhex(value)
-        except ValueError as error:
-            raise ValueError("encoded float contains an invalid hexadecimal string") from error
-        if not math.isfinite(decoded_float):
-            raise ValueError("encoded float must be finite")
-        return decoded_float
-    if kind == "str":
-        value = row.get("value")
-        if not isinstance(value, str):
-            raise ValueError("encoded str must contain a string value")
-        return value
-    if kind == "bytes":
-        value = row.get("value")
-        if not isinstance(value, str):
-            raise ValueError("encoded bytes must contain a base64 string")
-        try:
-            return base64.b64decode(value, validate=True)
-        except ValueError as error:
-            raise ValueError("encoded bytes contains invalid base64") from error
-    if kind in {"tuple", "frozenset", "list", "set"}:
+    if kind in {"none", "bool", "int", "float", "str", "bytes", "frozenset"}:
+        return _decode_label(row)
+    if kind == "list":
         items = [_decode_value(item) for item in _require_list(row.get("items"), name="items")]
-        if kind == "tuple":
-            return tuple(items)
-        if kind == "frozenset":
-            return frozenset(items)
-        if kind == "set":
-            return set(items)
         return items
     if kind == "mapping":
         decoded_mapping: dict[Any, Any] = {}
         for item in _require_list(row.get("items"), name="mapping items"):
             item_row = _require_mapping(item, name="mapping item")
-            key = _decode_value(item_row.get("key"))
+            key = _decode_label(item_row.get("key"))
             try:
                 duplicate = key in decoded_mapping
             except TypeError as error:
@@ -429,7 +385,7 @@ class ThermodynamicProgram:
         return self._project_categorical()
 
     def _projection_metadata(self, transformations: list[dict[str, Any]]) -> dict[str, Any]:
-        model_metadata = thaw(self.model.metadata)
+        model_metadata = dict(self.model.metadata)
         clamped_set = set(self.clamped_variables)
         model_metadata["thermodynamic_projection"] = {
             "schema_version": PROGRAM_SCHEMA_VERSION,
@@ -611,7 +567,7 @@ class ThermodynamicProgram:
         _, clamped, normalized = _normalize_clamps(self.model, clamps)
         clamped_set = set(clamped)
         observations = {
-            variable: thaw(value)
+            variable: value
             for variable, value in self.observation_metadata.items()
             if variable in clamped_set
         }
@@ -621,7 +577,7 @@ class ThermodynamicProgram:
             coordinates=dict(self.logical_coordinates),
             observations=observations,
             factor_sources=dict(self.factor_sources),
-            metadata=thaw(self.metadata),
+            metadata=dict(self.metadata),
         )
 
     def relabel_variables(self, mapping: Mapping[Variable, Variable]) -> "ThermodynamicProgram":
@@ -659,9 +615,24 @@ class ThermodynamicProgram:
                 },
                 offset=self.model.offset,
                 source_format=self.model.source_format,
-                metadata=thaw(self.model.metadata),
+                metadata=dict(self.model.metadata),
             )
         else:
+            pairwise: dict[
+                tuple[Variable, Variable],
+                Mapping[tuple[Any, Any], float],
+            ] = {}
+            for pair_position, ((left, right), table) in enumerate(self.model.pairwise.items()):
+                target_left = canonical_mapping[left]
+                target_right = canonical_mapping[right]
+                if pair_position < self.model.reversed_pair_count:
+                    pairwise[(target_right, target_left)] = {
+                        (right_category, left_category): table[(left_category, right_category)]
+                        for right_category in self.model.domains[right]
+                        for left_category in self.model.domains[left]
+                    }
+                else:
+                    pairwise[(target_left, target_right)] = table
             model = CategoricalModel(
                 variables=targets,
                 domains={
@@ -672,12 +643,9 @@ class ThermodynamicProgram:
                     canonical_mapping[variable]: self.model.unary[variable]
                     for variable in self.model.variables
                 },
-                pairwise={
-                    (canonical_mapping[left], canonical_mapping[right]): table
-                    for (left, right), table in self.model.pairwise.items()
-                },
+                pairwise=pairwise,
                 offset=self.model.offset,
-                metadata=thaw(self.model.metadata),
+                metadata=dict(self.model.metadata),
             )
         return ThermodynamicProgram(
             model,
@@ -687,11 +655,10 @@ class ThermodynamicProgram:
                 for variable, coordinate in self.logical_coordinates.items()
             },
             observations={
-                canonical_mapping[variable]: thaw(value)
-                for variable, value in self.observation_metadata.items()
+                canonical_mapping[variable]: value for variable, value in self.observation_metadata.items()
             },
             factor_sources=dict(self.factor_sources),
-            metadata=thaw(self.metadata),
+            metadata=dict(self.metadata),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -784,7 +751,7 @@ class ThermodynamicProgram:
             raise ValueError("unsupported thermodynamic program schema version")
         model_row = _require_mapping(root.get("model"), name="model payload")
         variables = tuple(
-            _decode_value(value)
+            _decode_label(value)
             for value in _require_list(model_row.get("variables"), name="model variables")
         )
         kind = model_row.get("kind")
@@ -838,7 +805,7 @@ class ThermodynamicProgram:
                 raise ValueError("categorical domain and unary rows must match variable count")
             domains = {
                 variable: tuple(
-                    _decode_value(value) for value in _require_list(domain_rows[position], name="domain")
+                    _decode_label(value) for value in _require_list(domain_rows[position], name="domain")
                 )
                 for position, variable in enumerate(variables)
             }
@@ -904,7 +871,7 @@ class ThermodynamicProgram:
         for entry in _require_list(root.get("clamps"), name="clamps"):
             row = _require_mapping(entry, name="clamp row")
             position = _position(row.get("variable"), size=len(variables), name="clamp variable")
-            clamp_records.append((variables[position], _decode_value(row.get("value"))))
+            clamp_records.append((variables[position], _decode_label(row.get("value"))))
 
         coordinates: dict[Any, Any] = {}
         for entry in _require_list(root.get("coordinates"), name="coordinates"):
