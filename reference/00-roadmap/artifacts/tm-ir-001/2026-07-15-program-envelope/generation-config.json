@@ -1,0 +1,31 @@
+{
+  "absolute_tolerance": 1e-09,
+  "categorical_case_count": 18,
+  "categorical_domain_size_range": [
+    2,
+    3
+  ],
+  "categorical_variable_count_range": [
+    1,
+    4
+  ],
+  "classification": {
+    "energies": "computed",
+    "hardware_values": "not applicable",
+    "seed": "declared deterministic fixture input",
+    "tolerance": "assumed project-wide floating comparison tolerance from CLAUDE.md"
+  },
+  "generator_seed": 20260715,
+  "ising_case_count": 24,
+  "ising_variable_count_range": [
+    1,
+    5
+  ],
+  "oracle": "enumerate free assignments, merge original clamps, and independently sum the original offset/unary/pair factors without model.energy or program.project",
+  "program_schema_version": 1,
+  "relative_tolerance": 0.0,
+  "reproduction_command": "& .venv/Scripts/python.exe tools/generate_tm_ir_001_artifacts.py --overwrite",
+  "rng": "Python random.Random (MT19937)",
+  "run_id": "2026-07-15-program-envelope",
+  "task_id": "TM-IR-001"
+}

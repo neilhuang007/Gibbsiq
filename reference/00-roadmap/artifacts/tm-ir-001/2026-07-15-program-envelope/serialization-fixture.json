@@ -1,0 +1,214 @@
+{
+  "examples": [
+    {
+      "case_id": "typed-ising",
+      "payload": {
+        "clamps": [
+          {
+            "value": {
+              "kind": "int",
+              "value": "-1"
+            },
+            "variable": 1
+          }
+        ],
+        "coordinates": [],
+        "factor_sources": [
+          {
+            "factor_id": "linear:0",
+            "source_id": "linear:0"
+          },
+          {
+            "factor_id": "linear:1",
+            "source_id": "linear:1"
+          },
+          {
+            "factor_id": "quadratic:0:1",
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "metadata": {
+          "items": [],
+          "kind": "mapping"
+        },
+        "model": {
+          "kind": "ising",
+          "linear": [
+            0.5,
+            -0.75
+          ],
+          "metadata": {
+            "items": [
+              {
+                "key": {
+                  "kind": "str",
+                  "value": "labels"
+                },
+                "value": {
+                  "kind": "str",
+                  "value": "tuple-and-bytes"
+                }
+              }
+            ],
+            "kind": "mapping"
+          },
+          "offset": -2.0,
+          "quadratic": [
+            {
+              "coefficient": 1.25,
+              "left": 0,
+              "right": 1
+            }
+          ],
+          "source_format": "ising",
+          "variables": [
+            {
+              "items": [
+                {
+                  "kind": "str",
+                  "value": "node"
+                },
+                {
+                  "kind": "int",
+                  "value": "1"
+                }
+              ],
+              "kind": "tuple"
+            },
+            {
+              "kind": "bytes",
+              "value": "bm9kZS0y"
+            }
+          ]
+        },
+        "observations": [
+          {
+            "metadata": {
+              "items": [
+                {
+                  "key": {
+                    "kind": "str",
+                    "value": "raw"
+                  },
+                  "value": {
+                    "kind": "bytes",
+                    "value": "b2JzZXJ2ZWQ="
+                  }
+                }
+              ],
+              "kind": "mapping"
+            },
+            "variable": 1
+          }
+        ],
+        "schema_version": 1
+      },
+      "round_trip_equal": true
+    },
+    {
+      "case_id": "reversed-categorical",
+      "payload": {
+        "clamps": [
+          {
+            "value": {
+              "kind": "str",
+              "value": "on"
+            },
+            "variable": 1
+          }
+        ],
+        "coordinates": [],
+        "factor_sources": [
+          {
+            "factor_id": "unary:0",
+            "source_id": "unary:0"
+          },
+          {
+            "factor_id": "unary:1",
+            "source_id": "unary:1"
+          },
+          {
+            "factor_id": "pairwise:0:1",
+            "source_id": "pairwise:0:1"
+          }
+        ],
+        "metadata": {
+          "items": [],
+          "kind": "mapping"
+        },
+        "model": {
+          "domains": [
+            [
+              {
+                "kind": "int",
+                "value": "0"
+              },
+              {
+                "kind": "int",
+                "value": "1"
+              }
+            ],
+            [
+              {
+                "kind": "str",
+                "value": "off"
+              },
+              {
+                "kind": "str",
+                "value": "on"
+              }
+            ]
+          ],
+          "kind": "categorical",
+          "metadata": {
+            "items": [],
+            "kind": "mapping"
+          },
+          "offset": -0.75,
+          "pairwise": [
+            {
+              "left": 0,
+              "right": 1,
+              "values": [
+                [
+                  0.0,
+                  2.0
+                ],
+                [
+                  1.0,
+                  3.0
+                ]
+              ]
+            }
+          ],
+          "reversed_pair_count": 1,
+          "unary": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          "variables": [
+            {
+              "kind": "str",
+              "value": "left"
+            },
+            {
+              "kind": "str",
+              "value": "right"
+            }
+          ]
+        },
+        "observations": [],
+        "schema_version": 1
+      },
+      "round_trip_equal": true
+    }
+  ],
+  "run_id": "2026-07-15-program-envelope",
+  "task_id": "TM-IR-001"
+}

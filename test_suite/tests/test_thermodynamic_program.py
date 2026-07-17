@@ -170,6 +170,28 @@ class ProgramConstructionTests(unittest.TestCase):
             ThermodynamicProgram(model, clamps={"x": "blue"})
         self.assertEqual(ThermodynamicProgram(model, clamps={"y": 1}).clamp_values["y"], 1)
 
+        composite_model = CategoricalModel(
+            variables=("x",),
+            domains={"x": ((1,),)},
+            unary={"x": {(1,): 0.0}},
+        )
+        self.assertEqual(composite_model.assignment_indices({"x": (1,)}), (0,))
+        with self.assertRaisesRegex(ValueError, "not in the domain"):
+            composite_model.assignment_indices({"x": (True,)})
+        with self.assertRaisesRegex(ValueError, "out of domain"):
+            ThermodynamicProgram(composite_model, clamps={"x": (True,)})
+        with self.assertRaisesRegex(ValueError, "conflicting clamps"):
+            ThermodynamicProgram(
+                composite_model,
+                clamps=[("x", (1,)), ("x", (True,))],
+            )
+        with self.assertRaisesRegex(ValueError, "cover its domain exactly"):
+            CategoricalModel(
+                variables=("x",),
+                domains={"x": ((1,),)},
+                unary={"x": {(True,): 0.0}},
+            )
+
     def test_coordinates_are_logical_finite_and_dimensionally_consistent(self) -> None:
         model = _ising_model()
         valid = ThermodynamicProgram(model, coordinates={"a": (0, 1), "c": (2.5, -3)})
@@ -439,6 +461,80 @@ class ReconstructionAndSerializationTests(unittest.TestCase):
                 )
             )
 
+    def test_categorical_relabeling_preserves_pair_normalization_evidence(self) -> None:
+        variables = ("a", "b", "c", "d")
+        domains = {variable: (0, 1) for variable in variables}
+        model = CategoricalModel(
+            variables=variables,
+            domains=domains,
+            pairwise={
+                # Canonical pair positions are reversed, forward, reversed.
+                ("b", "a"): {(b, a): float(10 * a + b) for b in (0, 1) for a in (0, 1)},
+                ("a", "c"): {(a, c): float(20 + 2 * a - 3 * c) for a in (0, 1) for c in (0, 1)},
+                ("d", "b"): {(d, b): float(40 + 5 * b - d) for d in (0, 1) for b in (0, 1)},
+            },
+        )
+        program = ThermodynamicProgram(model)
+        mapping = {variable: ("renamed", position) for position, variable in enumerate(variables)}
+
+        identity = program.relabel_variables({variable: variable for variable in variables})
+        renamed = program.relabel_variables(mapping)
+
+        self.assertEqual(tuple(model.pairwise), (("a", "b"), ("a", "c"), ("b", "d")))
+        self.assertEqual(model.reversed_pair_count, 2)
+        self.assertEqual(identity.to_dict(), program.to_dict())
+        self.assertEqual(renamed.model.reversed_pair_count, model.reversed_pair_count)
+        for assignment in _all_assignments(model):
+            mapped_assignment = {mapping[variable]: value for variable, value in assignment.items()}
+            self.assertTrue(
+                math.isclose(
+                    model.energy(assignment),
+                    renamed.model.energy(mapped_assignment),
+                    rel_tol=0.0,
+                    abs_tol=TOLERANCE,
+                )
+            )
+
+    def test_reconstruction_preserves_set_shaped_metadata(self) -> None:
+        model = IsingModel(
+            variables=("a", "b"),
+            linear={"a": 0.5, "b": -0.25},
+            quadratic={("a", "b"): 1.0},
+            metadata={"model_tags": {"source", "audited"}},
+        )
+        program = ThermodynamicProgram(
+            model,
+            clamps={"b": 1},
+            observations={"b": {"observation_tags": {"sensor", "fixed"}}},
+            metadata={"program_tags": {"logical", "immutable"}},
+        )
+        original_payload = program.to_dict()
+
+        rebuilt = program.with_clamps({"b": 1})
+        relabeled = program.relabel_variables({"a": "x", "b": "y"})
+        projected = program.project()
+        result = SampleResult.from_program(program, ({"a": -1},))
+
+        self.assertEqual(rebuilt.to_dict()["metadata"], original_payload["metadata"])
+        self.assertEqual(
+            rebuilt.to_dict()["observations"][0]["metadata"],
+            original_payload["observations"][0]["metadata"],
+        )
+        self.assertEqual(
+            relabeled.to_dict()["model"]["metadata"],
+            original_payload["model"]["metadata"],
+        )
+        self.assertEqual(relabeled.to_dict()["metadata"], original_payload["metadata"])
+        self.assertEqual(
+            relabeled.to_dict()["observations"][0]["metadata"],
+            original_payload["observations"][0]["metadata"],
+        )
+        self.assertIs(type(projected.metadata["model_tags"]), frozenset)
+        self.assertIs(
+            type(result.metadata["thermodynamic_program_metadata"]["program_tags"]),
+            frozenset,
+        )
+
     def test_serialization_is_versioned_deterministic_json_safe_and_lossless(self) -> None:
         first = ("node", 1)
         second = b"node-2"
@@ -466,6 +562,45 @@ class ReconstructionAndSerializationTests(unittest.TestCase):
         self.assertEqual(restored.observation_metadata[second]["bytes"], b"observed")
         _assert_projection_equivalent(self, restored)
 
+    def test_tuple_shaped_metadata_uses_list_records_and_preserves_exact_labels(self) -> None:
+        program = ThermodynamicProgram(
+            IsingModel(variables=("x",), linear={"x": 0.0}, quadratic={}),
+            metadata={
+                "sequence": ((1,), (True,)),
+                (1, "integer-key"): "integer",
+                (True, "boolean-key"): "boolean",
+                "typed_members": {("integer", 1), ("boolean", True)},
+            },
+        )
+
+        payload = program.to_dict()
+        metadata_items = payload["metadata"]["items"]
+        sequence_row = next(
+            row for row in metadata_items if row["key"] == {"kind": "str", "value": "sequence"}
+        )
+        typed_members_row = next(
+            row for row in metadata_items if row["key"] == {"kind": "str", "value": "typed_members"}
+        )
+        restored = ThermodynamicProgram.from_dict(
+            json.loads(json.dumps(payload, sort_keys=True, allow_nan=False))
+        )
+
+        self.assertEqual(sequence_row["value"]["kind"], "list")
+        self.assertEqual(
+            [item["kind"] for item in sequence_row["value"]["items"]],
+            ["list", "list"],
+        )
+        self.assertIs(type(restored.metadata["sequence"][0][0]), int)
+        self.assertIs(type(restored.metadata["sequence"][1][0]), bool)
+        self.assertEqual(typed_members_row["value"]["kind"], "frozenset")
+        self.assertEqual(
+            restored.metadata["typed_members"],
+            frozenset({("integer", 1), ("boolean", True)}),
+        )
+        self.assertEqual(restored.metadata[(1, "integer-key")], "integer")
+        self.assertEqual(restored.metadata[(True, "boolean-key")], "boolean")
+        self.assertEqual(restored.to_dict(), payload)
+
     def test_serialization_rejects_bool_and_float_schema_version_aliases(self) -> None:
         for invalid_version in (True, 1.0):
             with self.subTest(invalid_version=invalid_version):
@@ -473,6 +608,37 @@ class ReconstructionAndSerializationTests(unittest.TestCase):
                 payload["schema_version"] = invalid_version
                 with self.assertRaisesRegex(ValueError, "unsupported.*schema version"):
                     ThermodynamicProgram.from_dict(payload)
+
+    def test_serialization_rejects_noncanonical_or_lossy_typed_labels(self) -> None:
+        noncanonical_integer = ThermodynamicProgram(
+            IsingModel(variables=(1,), linear={1: 0.0}, quadratic={})
+        ).to_dict()
+        noncanonical_integer["model"]["variables"][0]["value"] = "01"
+
+        duplicate_frozenset = ThermodynamicProgram(
+            IsingModel(
+                variables=(frozenset({"a", "b"}),),
+                linear={frozenset({"a", "b"}): 0.0},
+                quadratic={},
+            )
+        ).to_dict()
+        duplicate_frozenset["model"]["variables"][0] = {
+            "kind": "frozenset",
+            "items": [
+                {"kind": "bool", "value": True},
+                {"kind": "int", "value": "1"},
+            ],
+        }
+
+        for payload in (noncanonical_integer, duplicate_frozenset):
+            with (
+                self.subTest(payload=payload),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "canonical|duplicate",
+                ),
+            ):
+                ThermodynamicProgram.from_dict(payload)
 
     def test_serialization_normalizes_unordered_input_and_detects_duplicate_records(self) -> None:
         model = _ising_model()

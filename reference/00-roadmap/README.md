@@ -25,7 +25,7 @@ this order:
 If `NEXT_TASK.md` or the runbook is absent, the first ready task is `TM-GOV-001`. Chat history
 does not replace the ledger.
 
-## Status Snapshot — 2026-07-15
+## Status Snapshot — 2026-07-17
 
 The verified foundation is commit `c62169e` (`feat: add audited ThermoMap analysis foundation`).
 Commit `42c2409` (`feat: implement first ThermoMap frontier`) adds the independent CPU
@@ -33,6 +33,12 @@ Gibbs/exact-kernel verifier, complete target-fact schema, and artifact-only Insp
 commands, raw artifacts, checksums, review findings, and final integration evidence are recorded
 in the four dated 2026-07-15 journals. Test counts belong to those recorded commands rather than
 being a permanent property of the repository.
+
+The target-independent `ThermodynamicProgram` envelope is now complete. The implementation
+tracked at `35a2ba3` plus the 2026-07-17 closure commit provides exact Ising and pairwise
+categorical clamping, logical coordinates, observation metadata, source-factor lineage,
+deterministic relabeling, and versioned typed serialization. Its retained 42-program corpus
+independently checks 248 projected assignments with maximum absolute energy error `0.0`.
 
 The detailed audit reports two separate scores:
 
@@ -58,6 +64,8 @@ count suggests.
   conditional on caller-asserted independent retained states;
 - complete provenanced `TSUSpec` facts for grid/explicit topology, coefficient and accumulator
   formats, communication, host transfer, programming/reprogramming, and optional cell facts;
+- immutable target-independent `ThermodynamicProgram` roles, clamps, logical coordinates,
+  observations, factor/source identities, same-type projection, reconstruction, and relabeling;
 - pairwise categorical IR and exact domain-wall lowering;
 - supplied-partition chain-order search plus separately named communication algebraic proxies;
 - supplied-assignment Potts objective evaluation and an optimization-only ICM primitive;
@@ -85,7 +93,7 @@ implementation status.
 | Legacy stage | Current evidence-based status |
 | --- | --- |
 | 0 — [Research and framing](stage-00-research-and-framing.md) | Complete for the original Gibbsiq scope: research pack, evaluator, strict oracle, and exact corpus exist. |
-| 1 — [Core model compatibility](stage-01-core-model-compatibility.md) | Complete for binary pairwise QUBO/Ising/BQM. Pairwise categorical/domain-wall modeling is an implemented extension. General factors, clamping, coordinates, and constrained encodings remain open. |
+| 1 — [Core model compatibility](stage-01-core-model-compatibility.md) | Complete for binary pairwise QUBO/Ising/BQM and the target-independent program envelope. Pairwise categorical/domain-wall modeling, strict clamping, logical coordinates, observations, and factor lineage are implemented extensions. General higher-order factors and constrained encodings remain open. |
 | 2 — [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Core correctness complete. The 2026-07-14 correction verifies exchange sign, local transition/work accounting, first retained-sample work, and two-replica attempts. Device-side PT remains a performance refactor, not an open correctness gate. |
 | 3 — [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Core semantic correction complete and integrated. Scalar energy ESS/tau, plain and rank/folded R-hat, diversity, magnetization, and frozen-state checks exist. Rank-normalized bulk/tail ESS, feasibility, and broader joint-mode checks remain future work. |
 | 4 — [Inspector and reporting](stage-04-inspector-and-reporting.md) | Partial. The artifact-only `Inspector` core emits deterministic JSON/Markdown and verifies every stored energy row against an optional caller-supplied model. Unified CLI, HTML, topology, profiler, baseline, and compiled-manifest integration remain under `TM-REP-001`. |
@@ -114,18 +122,11 @@ governance and verified foundation
 -> compatibility matrix and software release
 ```
 
-Three bounded lanes are dependency-ready after `TM-GOV-001` closes and may run in parallel:
-
-| Task | Scope | Exclusive production files |
-| --- | --- | --- |
-| `TM-VERIFY-01` | Independent CPU Gibbs plus capped transition, stationarity, detailed-balance, and empirical verification | `reference_sampler.py`, `verification.py`, focused tests, new equation entries |
-| `TM-TARGET-01` | Complete provenanced topology, communication, host, reprogramming, and numeric target contract | `hardware.py`, `topology.py`, focused tests |
-| `GQ-INSPECT-01` | Artifact-only `Inspector` core over existing `SampleResult` and diagnostics | `inspector.py`, summary schema, focused tests |
-
-When fewer than three worker slots are available, take the deterministic prefix of this lane
-order: `TM-VERIFY-01`, then `TM-TARGET-01`, then `GQ-INSPECT-01`. With one slot, expose the
-first lane; with two, expose the first two. Skip an earlier lane only for a recorded ownership,
-input, or external blocker.
+The first frontier and `TM-IR-001` are complete. The live ledger selects `TM-IMP-001` as the
+earliest dependency-ready unclaimed task: freeze a versioned pairwise factor-JSON contract and
+an optional NetworkX importer without losing typed labels, offsets, clamps, coordinates,
+isolated nodes, or source metadata. Other newly unblocked tasks remain governed by the roadmap
+dependency order and may be exposed only through explicit, disjoint ledger claims.
 
 The mapping passes are sequential because each freezes the artifact consumed by the next:
 

@@ -4,16 +4,17 @@
 
 | Field | Value |
 | --- | --- |
-| Observed date | 2026-07-15 |
+| Observed date | 2026-07-17 |
 | Verified implementation base | `c62169e` (`feat: add audited ThermoMap analysis foundation`) |
 | Verified control-plane documentation | `21c2a71` (`docs: add autonomous ThermoMap execution roadmap`) |
 | Verified first-frontier implementation | `42c2409` (`feat: implement first ThermoMap frontier`) |
+| Reconciled TM-IR implementation base | `35a2ba3` (`feat: comprehensive correctness, robustness, and reference audit`) |
 | Implementation score at base | 8/20 ThermoMap rows = 40%, using the equal-row audit in `thermomap-plan-status-2026-07-14.md` |
 | Public backend | THRML JAX simulator; no production TSU artifact is present |
 | Control-plane state | `TM-GOV-001` is `complete`; `21c2a71` verifies the control documents and this ledger transition closes the task |
 | Active governance owner | none |
-| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, and `GQ-INSPECT-01` are `complete`; `TM-IR-001` is a locally `verified` working-tree candidate under coordinator `/root` and awaits an authorized implementation commit before `complete` |
-| Scratch state observed before this pass | Untracked `Project_GOAL.md` supplied as task input; excluded from the implementation commit |
+| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, `GQ-INSPECT-01`, and `TM-IR-001` are `complete`; `TM-IMP-001` is the earliest dependency-ready unclaimed task |
+| Scratch state observed before this pass | Untracked `Project_GOAL.md` supplied as task input and unrelated concurrent audit journals; preserved and excluded from the TM-IR closure commit |
 
 The implementation base has a recorded full-suite result of 457 tests in 120.615 seconds at
 the environment captured by
@@ -48,7 +49,8 @@ prose. Reconcile a conflict before selecting a feature task.
 | `TM-VERIFY-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Independent CPU Gibbs and exact verifier evidence is committed in `42c2409`. |
 | `TM-TARGET-01` | `complete` | `TM-FND-002`, `TM-GOV-001` | Complete target-fact/topology evidence is committed in `42c2409`. |
 | `GQ-INSPECT-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Artifact-only Inspector evidence is committed in `42c2409`. |
-| `TM-IR-001` | `verified` | `TM-VERIFY-01` | Its sole dependency is complete; focused, neighboring, full, static, documentation, fixed-seed oracle, checksum, and reader gates are green in the working tree. A verified implementation commit is still required for `complete`. |
+| `TM-IR-001` | `complete` | `TM-VERIFY-01` | The implementation at `35a2ba3` plus the adversarial hardening, raw evidence, and ledger transition in the containing commit pass every closure gate. |
+| `TM-IMP-001` | `ready` | `TM-IR-001` | Its sole dependency is complete; it is the earliest ready task in roadmap dependency order and remains unclaimed. |
 
 ## Historical Governance Closure — `TM-GOV-001`
 
@@ -233,22 +235,18 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
   `7aae3476248a9483bfdf9b4f5de7489bdd94112859170a695f1d85cf1f44804e`.
   Feature commit: `42c2409`.
 
-## Next Dependency-Ready Task
+## Completed Thermodynamic IR
 
 ### `TM-IR-001` — Thermodynamic Program Envelope, Clamping, And Coordinates
 
-- Gate/state: M1 compiler kernel; `verified` working-tree candidate.
-- Dependencies: `TM-VERIFY-01`, now complete in `42c2409`.
-- Owner: coordinator `/root`. Workers `/root/tm_ir_001`, `/root/tm_ir_impl`, and
-  `/root/tm_ir_red` were interrupted before editing. Worker `/root/tm_ir_worker` produced the
-  initial implementation but returned no usable handoff and touched reserved integration files;
-  the coordinator audited the actual diff. Fresh reviewer `/root/tm_ir_reviewer` and its
-  edge-case child added falsifying tests and corrections for projected lineage positions, exact
-  schema-version typing, and categorical valid-path `repr()` calls, but returned no usable
-  narrative before interruption. Independent reviewer `/root/tm_ir_review` then returned a
-  complete handoff after checking the implementation and having its child apply the same three
-  corrections. The earlier process failures are retained in the task journal; acceptance relies
-  on inspected code, executable regressions, independent calculations, and raw oracle evidence.
+- Gate/state: M1 compiler kernel; `complete` in the commit containing this ledger transition.
+- Dependencies: `TM-VERIFY-01`, complete in `42c2409`.
+- Owner: none. Coordinator `/root` reconciled the implementation already tracked at `35a2ba3`,
+  delegated the bounded hardening to `/root/tm_ir_impl_audit`, and critically inspected its
+  actual diff. Fresh reviewer `/root/ledger_audit` independently attacked recursive labels,
+  serialization, metadata shape, relabeling, and exhaustive categorical energies. Earlier
+  worker/process history remains in the 2026-07-15 task journal; the 2026-07-17 closure journal
+  records the reconciliation and final corrections.
 - Objective: add an immutable, target-independent `ThermodynamicProgram` envelope around one
   audited logical model with deterministic free/clamped roles, clamp values, optional logical
   coordinates, observation metadata, and factor/source identities.
@@ -279,30 +277,55 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
   lineage-destination check passed with maximum absolute energy error `0.0`. The manifest
   records SHA-256 values for all six evidence files, including nine pinned source/test files,
   and the generator refuses overwrite unless `--overwrite` is explicit.
-- Last verified: 2026-07-15 on CPython 3.13.5 / Windows 11 against base
-  `b22406d582f5b723a0a70b7751bf1e6140f46e96`; the adversarial math/routing audit added exact
-  typed-label and scaling traps, and the resulting 599-test full suite passed with zero skips in
-  249.925 seconds. Markdown math, Ruff check/format, mypy over 24 source files, all six manifest
-  hashes, all nine pinned source hashes, deterministic-payload comparison, and `git diff --check`
-  passed. The refreshed manifest SHA-256 is
-  `f8687b54a8081fb51ddba495c98e57968ae32181c807b36a157667c13bbb870a`; the pinned-source
-  aggregate is `98836a51f10159b4c379604e69f89874a2b2892c4fad8eda7714b7f3ee8ae1ce`.
-  The implementation remains uncommitted.
-- Adversarial remediation: typed-label/delimiter/JSON-key serialization, exact categorical
-  identity, topology-derived capacity, accumulator bounds over implemented coefficients,
-  full-state empirical-law checks, extreme-scale diagnostics, PRNG provenance, and strict
-  knapsack characterization were independently regressed. The exact 27-fixture corpus was
-  regenerated under EVAL-EQ-024; its canonical content SHA-256 is
-  `aca9461839aa199dd154e577a4617e2f56c2d177b1d9a01c5e168fca2bf865c4`.
+- Last verified: 2026-07-17 on CPython 3.13.5 / Windows 11 against source base `35a2ba3`.
+  Recursive typed-label identity, canonical decoding, metadata reconstruction, and categorical
+  relabel evidence have permanent regressions. The focused module passed 31 tests; the final
+  repository suite passed 603 tests with zero skips in 89.427 seconds; Ruff, format, mypy over
+  24 source files, Markdown math, deterministic-payload comparison, manifest/source rehashing,
+  and `git diff --check` passed. Manifest SHA-256 is
+  `8faf62c46b2265eb2982737ec4b6cb3eb7dc766138abf8a4b13eed1a8a74d785`; the pinned-source
+  aggregate is `45c76ad8621d9705e3a3493e8e17cf8915599f04580dacce66369149f3849dd4`.
 - Acceptance commands: focused discovery with `test_thermodynamic_program.py`; the nearest
   model, categorical, result, immutability, Inspector, and public-API modules; then the shared
   full/static commands below.
 - Exit evidence: equation-audit entry before production code, recorded test-first red phase,
   serialized round trip, raw fixtures/checksums, worker handoff, independent reviewer, and a
   journal with rejected schema alternatives.
-- Completion condition: an explicitly authorized commit must record the verified code, tests,
-  journal, and artifacts. Until then `TM-IMP-001` remains dependency-blocked because this task
-  is `verified` rather than `complete`.
+- Completion condition: satisfied by the commit containing the verified code corrections,
+  tests, journals, artifacts, and this transition. Git history is authoritative because a
+  state-transition commit cannot contain its own final SHA.
+
+## Next Dependency-Ready Task
+
+### `TM-IMP-001` — Factor-JSON And NetworkX Frontends
+
+- Gate/state: M1 compiler kernel; `ready`, unclaimed.
+- Dependencies: `TM-IR-001`, now complete in the containing closure commit.
+- Owner: none. Suggested worker ownership is new `src/gibbsiq/importers.py`, a versioned schema
+  under `reference/02-interfaces/`, and `test_suite/tests/test_importers.py`. NetworkX must
+  remain an optional extra. Public exports, this ledger, root docs, and final integration remain
+  coordinator-owned.
+- Objective: import and export a versioned pairwise factor-graph JSON record and import NetworkX
+  graphs into `ThermodynamicProgram` with explicit coefficient, vartype, offset, node-order,
+  clamp, coordinate, and metadata policies.
+- Research boundary: NetworkX 3.6.1 node-link JSON converts attribute keys to strings, so it
+  cannot replace Gibbsiq's typed-label wire schema. Reuse its graph iteration API only. Compare
+  dimod's BQM serialization and pgmpy's factor representation, but copy no implementation until
+  semantic fit, license, and attribution are recorded.
+- Public gate: every supported source round trip preserves all enumerated energies, offset,
+  labels, clamps, coordinates, and metadata; malformed, duplicate, asymmetric, ambiguous
+  directed/multigraph, and unsupported factors fail explicitly; disconnected nodes survive.
+- Blind/metamorphic gate: shuffled JSON keys/records, recursive custom labels, reversed edge
+  order, isolated nodes, offset shifts, equivalent symmetric-QUBO normalization, Boolean/numeric
+  aliases, and JSON-key coercion attacks.
+- Independent oracle: evaluate the source JSON/graph directly, without calling the importer or
+  exported model's energy helper, and exhaustively compare every small assignment after import.
+- Exit evidence: schema decisions and rejected alternatives precede code; optional-dependency
+  behavior is tested both with and without NetworkX; raw round-trip fixtures, generator seed,
+  environment, commands, and SHA-256 manifest are retained in a dated artifact directory and
+  journal.
+- Completion condition: focused importer tests, nearest program/model tests, the full/static
+  gates, independent energy enumeration, critical coordinator review, and an authorized commit.
 
 ## Shared Acceptance Commands
 
@@ -323,9 +346,7 @@ git diff --check
 
 | File family | Owner while lanes run |
 | --- | --- |
-| `reference_sampler.py`, `verification.py`, verifier tests, assigned equation entries | `TM-VERIFY-01` worker |
-| `hardware.py`, `topology.py`, target-spec tests | `TM-TARGET-01` worker |
-| `inspector.py`, inspector tests/design note | `GQ-INSPECT-01` worker |
+| `importers.py`, importer tests, factor-JSON interface schema | Future `TM-IMP-001` worker after claim |
 | `__init__.py`, roadmap, ledger, root docs, integration journal/commit | Coordinator only |
 
 Workers use distinct journal filenames. If an unexpected edit appears inside an owned file,

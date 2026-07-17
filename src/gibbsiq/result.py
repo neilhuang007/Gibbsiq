@@ -313,7 +313,7 @@ class SampleResult:
                     for position, variable in enumerate(program.model.variables)
                     if variable in program.clamp_values
                 ],
-                "thermodynamic_program_metadata": thaw(program.metadata),
+                "thermodynamic_program_metadata": dict(program.metadata),
             }
         )
         return cls.from_model(

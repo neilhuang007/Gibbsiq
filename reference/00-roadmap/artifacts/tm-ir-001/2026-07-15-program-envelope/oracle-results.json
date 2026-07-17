@@ -1,0 +1,346 @@
+{
+  "all_cases_passed": true,
+  "case_count": 42,
+  "cases": [
+    {
+      "case_id": "ising-00",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-01",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-02",
+      "enumerated_assignment_count": 32,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-03",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-04",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-05",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-06",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-07",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-08",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-09",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-10",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-11",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-12",
+      "enumerated_assignment_count": 16,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-13",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-14",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-15",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-16",
+      "enumerated_assignment_count": 16,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-17",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-18",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-19",
+      "enumerated_assignment_count": 8,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-20",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-21",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-22",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "ising-23",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-00",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-01",
+      "enumerated_assignment_count": 4,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-02",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-03",
+      "enumerated_assignment_count": 6,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-04",
+      "enumerated_assignment_count": 12,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-05",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-06",
+      "enumerated_assignment_count": 9,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-07",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-08",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-09",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-10",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-11",
+      "enumerated_assignment_count": 6,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-12",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-13",
+      "enumerated_assignment_count": 18,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-14",
+      "enumerated_assignment_count": 54,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-15",
+      "enumerated_assignment_count": 2,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-16",
+      "enumerated_assignment_count": 1,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    },
+    {
+      "case_id": "categorical-17",
+      "enumerated_assignment_count": 6,
+      "lineage_destinations_valid": true,
+      "maximum_absolute_energy_error": 0.0,
+      "passed": true,
+      "serialization_round_trip_equal": true
+    }
+  ],
+  "maximum_absolute_energy_error": 0.0,
+  "run_id": "2026-07-15-program-envelope",
+  "task_id": "TM-IR-001",
+  "total_enumerated_assignment_count": 248
+}

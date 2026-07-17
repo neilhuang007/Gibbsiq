@@ -1,0 +1,18 @@
+{
+  "gibbsiq_version": "0.1.0",
+  "git_head": "35a2ba3fa6bccc90bf33bc41f9838a8036bd339e",
+  "implementation": "CPython",
+  "os_name": "nt",
+  "platform": "Windows-11-10.0.26220-SP0",
+  "python": "3.13.5 (main, Jun 12 2025, 12:42:35) [MSC v.1943 64 bit (AMD64)]",
+  "run_id": "2026-07-15-program-envelope",
+  "task_id": "TM-IR-001",
+  "timing_seconds": {
+    "compile_fixture_programs": 0.00399150000021109,
+    "diagnostics": 0.0,
+    "projection_serialization_and_oracle": 0.017755299999862473,
+    "sample": 0.0,
+    "tuning": 0.0,
+    "wall_before_artifact_writes": 0.1378826999998637
+  }
+}

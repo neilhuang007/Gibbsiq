@@ -1,0 +1,37 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "bytes": 594,
+      "path": "environment.json",
+      "sha256": "a64de94a704d2953f40cd2c0df75ce0f350e773734eade0316fad5ef1622bc80"
+    },
+    {
+      "bytes": 965,
+      "path": "generation-config.json",
+      "sha256": "98bcc9f46fe37d5c895571c1d948c259d04f99e76bae422c62be428aa588198c"
+    },
+    {
+      "bytes": 10205,
+      "path": "oracle-results.json",
+      "sha256": "73b284e1adc80f6165dd54c33bb08677a07c9dd3aa5ce1f1b2907606e6e8e51e"
+    },
+    {
+      "bytes": 777465,
+      "path": "projection-fixtures.json",
+      "sha256": "7b3fa53fdafe5f19918de6a83e25be7992bff85618313bc2430d1076657e3a72"
+    },
+    {
+      "bytes": 4662,
+      "path": "serialization-fixture.json",
+      "sha256": "9a08a1b5731cb8763114a2102ddf269c1614709bcb29f7b91d2991967a84bb47"
+    },
+    {
+      "bytes": 1709,
+      "path": "source-files.json",
+      "sha256": "f9e617d19eda9163dcde6662315eace47e46f6a0e483aeb890834a00270a42fc"
+    }
+  ],
+  "run_id": "2026-07-15-program-envelope",
+  "task_id": "TM-IR-001"
+}

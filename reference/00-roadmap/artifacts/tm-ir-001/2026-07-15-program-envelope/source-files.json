@@ -1,0 +1,53 @@
+{
+  "aggregate_sha256": "45c76ad8621d9705e3a3493e8e17cf8915599f04580dacce66369149f3849dd4",
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "bytes": 54327,
+      "path": "reference/08-evaluation/equation-audit.md",
+      "sha256": "0d82eb034439f894e625ff0bc55768fb82f7f186aeb809110f9a440ceecc0de0"
+    },
+    {
+      "bytes": 4775,
+      "path": "src/gibbsiq/__init__.py",
+      "sha256": "b664f29baf9d55d70a1c8debccf3e3187c468ecfccea70f32170c966642c709a"
+    },
+    {
+      "bytes": 18164,
+      "path": "src/gibbsiq/categorical.py",
+      "sha256": "191d90dd6d01da4996f4d4a08e8058f459a3a28eeae45e681760cafc3a7faad2"
+    },
+    {
+      "bytes": 27741,
+      "path": "src/gibbsiq/model.py",
+      "sha256": "e9de77f52b0bda13129e06a4832d6aca021d95d7731f3245e048b423a2df9209"
+    },
+    {
+      "bytes": 41812,
+      "path": "src/gibbsiq/program.py",
+      "sha256": "016181a2b27d817c81ce1818e1d4e5469214849f57ca3200a7e26973adb0c793"
+    },
+    {
+      "bytes": 16737,
+      "path": "src/gibbsiq/result.py",
+      "sha256": "2c453803867649b963cd50b00f5760efd212c3954d12927cb97535ed6d53f76c"
+    },
+    {
+      "bytes": 10822,
+      "path": "test_suite/tests/test_public_api_thermomap.py",
+      "sha256": "ce1380efa583d3cc8968999bf7bf3aa4ffb267c39433adcab12db983daa7aab5"
+    },
+    {
+      "bytes": 36906,
+      "path": "test_suite/tests/test_thermodynamic_program.py",
+      "sha256": "9794a52ad56e93d5293a242195fdc743f7cc0f22b6e70dcd64ab070a8b4f0439"
+    },
+    {
+      "bytes": 21196,
+      "path": "tools/generate_tm_ir_001_artifacts.py",
+      "sha256": "94798c39fbb274101168b8aa5d5c640bc74c5c4f2ea41e8917118246259c4fe1"
+    }
+  ],
+  "run_id": "2026-07-15-program-envelope",
+  "task_id": "TM-IR-001"
+}
