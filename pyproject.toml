@@ -40,10 +40,12 @@ dependencies = []
 dimod = ["dimod>=0.12"]
 thrml = ["thrml>=0.1.3"]
 arviz = ["arviz>=0.21"]
+networkx = ["networkx>=3.0"]
 dev = [
     "dimod>=0.12",
     "thrml>=0.1.3",
     "arviz>=0.21",
+    "networkx>=3.0",
     "mypy>=1.16",
     "ruff>=0.12",
 ]

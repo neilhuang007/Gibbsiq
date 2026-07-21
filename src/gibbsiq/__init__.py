@@ -54,6 +54,13 @@ from gibbsiq.hardware import (
     TSUSpec,
 )
 from gibbsiq.hardware_assessment import HardwareAssessment, assess_target_admissibility
+from gibbsiq.importers import (
+    FACTOR_GRAPH_FORMAT,
+    FACTOR_GRAPH_SCHEMA_VERSION,
+    factor_json_from_program,
+    program_from_factor_json,
+    program_from_networkx,
+)
 from gibbsiq.inspector import Inspector
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
 from gibbsiq.program import PROGRAM_SCHEMA_VERSION, ThermodynamicProgram
@@ -95,6 +102,8 @@ __all__ = [
     "ExactDistributionNumericalError",
     "ExactTransitionKernel",
     "ExplicitTopology",
+    "FACTOR_GRAPH_FORMAT",
+    "FACTOR_GRAPH_SCHEMA_VERSION",
     "FixedPointSpec",
     "GridTopology",
     "HardwareAssessment",
@@ -145,11 +154,14 @@ __all__ = [
     "ess_mean",
     "evaluate_potts_assignment",
     "exact_boltzmann_distribution",
+    "factor_json_from_program",
     "graph_density",
     "isoenergetic_cluster_move",
     "magnetization_trace",
     "optimal_spin_witnesses",
     "profile_chain_communication",
+    "program_from_factor_json",
+    "program_from_networkx",
     "rank_normalized_split_rhat",
     "search_optimal_chain_order",
     "spin_to_binary",
