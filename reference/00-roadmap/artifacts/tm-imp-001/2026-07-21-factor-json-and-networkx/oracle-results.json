@@ -1,0 +1,16 @@
+{
+  "documents": {
+    "assignments_checked": 400,
+    "case_count": 36,
+    "export_corpus_sha256": "987952eab1d566609059b6f8c65aab031eac67a50d3ef3ac1e8e452867f634b2",
+    "max_absolute_error": 1.7763568394002505e-15
+  },
+  "graphs": {
+    "assignments_checked": 94,
+    "case_count": 16,
+    "max_absolute_error": 8.881784197001252e-16
+  },
+  "oracle": "enumerate every assignment and sum the raw document factors or graph bias/weight rows directly; importer and model outputs are compared against those sums and never used to produce them",
+  "run_id": "2026-07-21-factor-json-and-networkx",
+  "tolerance": 1e-09
+}

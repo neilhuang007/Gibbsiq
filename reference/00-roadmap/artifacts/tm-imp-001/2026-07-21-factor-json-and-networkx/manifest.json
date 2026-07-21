@@ -1,0 +1,36 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "bytes": 169951,
+      "path": "document-fixtures.json",
+      "sha256": "9865e6051c79e5c4d3899424e2f0a8e30a9a94350d66fb2baec515c458ed2b75"
+    },
+    {
+      "bytes": 439,
+      "path": "environment.json",
+      "sha256": "4d373956b2c033e5583014dba793ecb50d8edc0b301e4658d07b0b058dc70fa7"
+    },
+    {
+      "bytes": 599,
+      "path": "generation-config.json",
+      "sha256": "d17e980545e3603c803f636f4b205dc7426ebba37440b269c7dff0037ae94b60"
+    },
+    {
+      "bytes": 44366,
+      "path": "graph-fixtures.json",
+      "sha256": "4f72bdbc39cfd41df7b2fcbf691c86125240ad57caefa80176c4b5e0760ca1fb"
+    },
+    {
+      "bytes": 618,
+      "path": "oracle-results.json",
+      "sha256": "4c42a4ef16132ef02b2cecf7ab1693644b33f962cb601ce1d18f923e3b507ab8"
+    },
+    {
+      "bytes": 1606,
+      "path": "source-files.json",
+      "sha256": "7217a63fe71551676a780605e056da76a1053897c69ef0f55a401975b5dd355b"
+    }
+  ],
+  "run_id": "2026-07-21-factor-json-and-networkx"
+}

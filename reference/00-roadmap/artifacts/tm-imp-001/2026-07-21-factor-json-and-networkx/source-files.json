@@ -1,0 +1,51 @@
+{
+  "aggregate_sha256": "58e9a4ffc904fad47e1106710a440d0d11c2554e21504c95eb71df19ce7ef7a0",
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "bytes": 3927,
+      "path": "pyproject.toml",
+      "sha256": "8980cc0aa237cda7b37f8413a75f2035e03674973b41140b13d74646f6b9e6c1"
+    },
+    {
+      "bytes": 13280,
+      "path": "reference/02-interfaces/factor-graph-json-v1.md",
+      "sha256": "a9481f305d39eb992844fce2fe7e3d7bade3d634c792a4c03bbb1e8239338309"
+    },
+    {
+      "bytes": 5109,
+      "path": "src/gibbsiq/__init__.py",
+      "sha256": "cf6a4e7eb55c6c902cfaf13fbcbfe646538d5729636025d8fc0369767974c1b8"
+    },
+    {
+      "bytes": 22763,
+      "path": "src/gibbsiq/conversions.py",
+      "sha256": "d858e0e4db1f5f9fecee3f04616256526a410562996b0d3b83fedcee02c2f6b7"
+    },
+    {
+      "bytes": 19617,
+      "path": "src/gibbsiq/importers.py",
+      "sha256": "8f8e03d327d20b3839f06bd6474801f7ee825df1a9ab3e490dcc0730d262ba9d"
+    },
+    {
+      "bytes": 27741,
+      "path": "src/gibbsiq/model.py",
+      "sha256": "e9de77f52b0bda13129e06a4832d6aca021d95d7731f3245e048b423a2df9209"
+    },
+    {
+      "bytes": 42069,
+      "path": "src/gibbsiq/program.py",
+      "sha256": "4d337abbc02cbbd1a7268e92ca50021eb9f01930813c0c6370af8d6ca77bea9b"
+    },
+    {
+      "bytes": 30597,
+      "path": "test_suite/tests/test_importers.py",
+      "sha256": "af33aa420e0571180477d10b5fd6c663761df06f0496d6a3bbc3c20a987db6f2"
+    },
+    {
+      "bytes": 14403,
+      "path": "tools/generate_tm_imp_001_artifacts.py",
+      "sha256": "d59d358cdafd7ffcc5e34992263fbe1ab8cda7f25c9d515a92bb297d7a987251"
+    }
+  ]
+}

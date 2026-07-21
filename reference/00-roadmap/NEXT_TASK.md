@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Observed date | 2026-07-17 |
+| Observed date | 2026-07-21 |
 | Verified implementation base | `c62169e` (`feat: add audited ThermoMap analysis foundation`) |
 | Verified control-plane documentation | `21c2a71` (`docs: add autonomous ThermoMap execution roadmap`) |
 | Verified first-frontier implementation | `42c2409` (`feat: implement first ThermoMap frontier`) |
@@ -13,8 +13,8 @@
 | Public backend | THRML JAX simulator; no production TSU artifact is present |
 | Control-plane state | `TM-GOV-001` is `complete`; `21c2a71` verifies the control documents and this ledger transition closes the task |
 | Active governance owner | none |
-| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, `GQ-INSPECT-01`, and `TM-IR-001` are `complete`; `TM-IMP-001` is the earliest dependency-ready unclaimed task |
-| Scratch state observed before this pass | Untracked `Project_GOAL.md` supplied as task input and unrelated concurrent audit journals; preserved and excluded from the TM-IR closure commit |
+| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, `GQ-INSPECT-01`, `TM-IR-001`, and `TM-IMP-001` are `complete`; `TM-LWR-001`, `TM-CAT-001`, `TM-IMP-002`, and `TM-VAL-001` are dependency-ready and unclaimed, with `TM-LWR-001` earliest in roadmap edge order |
+| Scratch state observed before this pass | Untracked `Project_GOAL.md` and three 2026-07-15 audit journals remain preserved and excluded from task commits; the audit-defect remediation commit `403bbb3` precedes this closure and repaired both confirmed defects on this task's critical paths |
 
 The implementation base has a recorded full-suite result of 457 tests in 120.615 seconds at
 the environment captured by
@@ -50,7 +50,11 @@ prose. Reconcile a conflict before selecting a feature task.
 | `TM-TARGET-01` | `complete` | `TM-FND-002`, `TM-GOV-001` | Complete target-fact/topology evidence is committed in `42c2409`. |
 | `GQ-INSPECT-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Artifact-only Inspector evidence is committed in `42c2409`. |
 | `TM-IR-001` | `complete` | `TM-VERIFY-01` | The implementation at `35a2ba3` plus the adversarial hardening, raw evidence, and ledger transition in the containing commit pass every closure gate. |
-| `TM-IMP-001` | `ready` | `TM-IR-001` | Its sole dependency is complete; it is the earliest ready task in roadmap dependency order and remains unclaimed. |
+| `TM-IMP-001` | `complete` | `TM-IR-001` | Factor-graph JSON schema v1, the NetworkX frontend, tests, artifacts, and journal pass every closure gate in the commit containing this transition. |
+| `TM-LWR-001` | `ready` | `TM-IR-001`, `TM-VERIFY-01` | Both dependencies are complete; it is the earliest ready task in roadmap edge order and remains unclaimed. |
+| `TM-CAT-001` | `ready` | `TM-IR-001`, `TM-VERIFY-01`, `TM-TARGET-01` | All dependencies are complete; unclaimed. |
+| `TM-IMP-002` | `ready` | `TM-IR-001`, `TM-TARGET-01` | Both dependencies are complete; unclaimed. |
+| `TM-VAL-001` | `ready` | `TM-IR-001`, `TM-TARGET-01` | Both dependencies are complete; unclaimed. |
 
 ## Historical Governance Closure — `TM-GOV-001`
 
@@ -295,37 +299,66 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
   tests, journals, artifacts, and this transition. Git history is authoritative because a
   state-transition commit cannot contain its own final SHA.
 
-## Next Dependency-Ready Task
+## Completed Import Frontend
 
 ### `TM-IMP-001` — Factor-JSON And NetworkX Frontends
 
-- Gate/state: M1 compiler kernel; `ready`, unclaimed.
-- Dependencies: `TM-IR-001`, now complete in the containing closure commit.
-- Owner: none. Suggested worker ownership is new `src/gibbsiq/importers.py`, a versioned schema
-  under `reference/02-interfaces/`, and `test_suite/tests/test_importers.py`. NetworkX must
-  remain an optional extra. Public exports, this ledger, root docs, and final integration remain
-  coordinator-owned.
+- Gate/state: M1 compiler kernel; `complete` in the commit containing this ledger transition.
+- Dependencies: `TM-IR-001`, complete in the `cdd0a58` closure.
+- Owner: none. A single session working from remediated base `403bbb3` wrote the schema
+  contract first, the falsifying tests second, and the implementation third; an independent
+  simplification pass reviewed the final module.
 - Objective: import and export a versioned pairwise factor-graph JSON record and import NetworkX
   graphs into `ThermodynamicProgram` with explicit coefficient, vartype, offset, node-order,
   clamp, coordinate, and metadata policies.
-- Research boundary: NetworkX 3.6.1 node-link JSON converts attribute keys to strings, so it
-  cannot replace Gibbsiq's typed-label wire schema. Reuse its graph iteration API only. Compare
-  dimod's BQM serialization and pgmpy's factor representation, but copy no implementation until
-  semantic fit, license, and attribution are recorded.
-- Public gate: every supported source round trip preserves all enumerated energies, offset,
-  labels, clamps, coordinates, and metadata; malformed, duplicate, asymmetric, ambiguous
-  directed/multigraph, and unsupported factors fail explicitly; disconnected nodes survive.
-- Blind/metamorphic gate: shuffled JSON keys/records, recursive custom labels, reversed edge
-  order, isolated nodes, offset shifts, equivalent symmetric-QUBO normalization, Boolean/numeric
-  aliases, and JSON-key coercion attacks.
-- Independent oracle: evaluate the source JSON/graph directly, without calling the importer or
-  exported model's energy helper, and exhaustively compare every small assignment after import.
-- Exit evidence: schema decisions and rejected alternatives precede code; optional-dependency
-  behavior is tested both with and without NetworkX; raw round-trip fixtures, generator seed,
-  environment, commands, and SHA-256 manifest are retained in a dated artifact directory and
-  journal.
-- Completion condition: focused importer tests, nearest program/model tests, the full/static
-  gates, independent energy enumeration, critical coordinator review, and an authorized commit.
+- Delivered files: `src/gibbsiq/importers.py`;
+  `reference/02-interfaces/factor-graph-json-v1.md` (wire contract, written before code);
+  `test_suite/tests/test_importers.py`; `tools/generate_tm_imp_001_artifacts.py`; a
+  `networkx>=3.0` optional extra in `pyproject.toml`; five public exports in
+  `src/gibbsiq/__init__.py`; and the dated journal
+  `reference/research-journal/2026-07-21-tm-imp-001-factor-json-and-networkx-frontends.md`.
+- Research boundary outcome: NetworkX node-link JSON, dimod bqm_schema 3.0.0, pgmpy/UAI/libDAI
+  tables, and the benchmark edge-list formats each lose typed labels, the offset, or program
+  sections; licenses (BSD-3-Clause, Apache-2.0, MIT) are recorded in the schema document and
+  no external implementation or test code was copied. Only NetworkX's public iteration API is
+  consumed, by duck typing, so `importers.py` never imports networkx.
+- Public and blind gates: covered by 39 focused tests, including shuffled records, recursive
+  typed labels, reversed/duplicate edges, isolated nodes, offset shifts, hand-converted
+  symmetric-QUBO equivalence, Boolean/numeric aliases, JSON-key coercion, and a subprocess
+  proof that the module imports and runs with networkx blocked.
+- Independent oracle result: 15,993 enumerated assignments across 1,500 random documents and
+  5,159 across 500 random graphs match direct source evaluation with maximum absolute errors
+  `3.553e-15` and `1.776e-15`; the 1,500-document export corpus SHA-256 is byte-identical
+  under `PYTHONHASHSEED=1` and `31337`.
+- Artifact evidence: run `2026-07-21-factor-json-and-networkx` under
+  `reference/00-roadmap/artifacts/tm-imp-001/` holds 36 document and 16 graph fixtures with
+  494 independently enumerated energies, export fixed-point and insertion-order-invariance
+  checks, environment, seeds, and pinned sources. Manifest SHA-256 is
+  `f904a672dd3959c4d9d23d2bf65d2dcf0a2af208188318ddf957a20b61f69f08`; the pinned-source
+  aggregate is `58e9a4ffc904fad47e1106710a440d0d11c2554e21504c95eb71df19ce7ef7a0`.
+- Last verified: 2026-07-21 on CPython 3.13.5 / Windows 11. Focused module 39 tests in
+  0.158 seconds; nearest program/model/conversion/public-API modules 71 tests; the full
+  suite 647 tests with 0 skips in 101.164 seconds; Markdown math, Ruff check, Ruff format,
+  mypy over 25 source files, and `git diff --check` pass.
+- Completion condition: satisfied by the commit containing the verified code, tests, schema
+  contract, artifacts, journal, and this transition. Git history is authoritative because a
+  state-transition commit cannot contain its own final SHA.
+
+## Next Dependency-Ready Tasks
+
+Four tasks are dependency-ready and unclaimed; full cards live in
+`autonomous-implementation-roadmap.md`. Worker-capacity selection is a prefix rule in roadmap
+edge order:
+
+1. `TM-LWR-001` — Higher-Order And Constraint Lowering (`TM-IR-001` + `TM-VERIFY-01`).
+2. `TM-CAT-001` — Categorical Conditional And THRML Execution
+   (`TM-IR-001` + `TM-VERIFY-01` + `TM-TARGET-01`).
+3. `TM-IMP-002` — Existing-THRML Program Importer (`TM-IR-001` + `TM-TARGET-01`).
+4. `TM-VAL-001` — Whole-Program Validation And Structured Compile Failure
+   (`TM-IR-001` + `TM-TARGET-01`).
+
+Each worker claims exactly one bounded task and records the claim here before editing owned
+files. Reconcile an earlier task that ceases to be `ready` before claiming a later lane.
 
 ## Shared Acceptance Commands
 
@@ -346,7 +379,7 @@ git diff --check
 
 | File family | Owner while lanes run |
 | --- | --- |
-| `importers.py`, importer tests, factor-JSON interface schema | Future `TM-IMP-001` worker after claim |
+| Files named by each ready task's roadmap-card suggested ownership | Future worker after claim |
 | `__init__.py`, roadmap, ledger, root docs, integration journal/commit | Coordinator only |
 
 Workers use distinct journal filenames. If an unexpected edit appears inside an owned file,

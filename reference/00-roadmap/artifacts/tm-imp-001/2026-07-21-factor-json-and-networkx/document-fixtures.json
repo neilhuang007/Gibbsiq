@@ -1,0 +1,8665 @@
+{
+  "cases": [
+    {
+      "case_id": "document-00",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          },
+          {
+            "position": 1,
+            "value": -1
+          },
+          {
+            "position": 2,
+            "value": -1
+          },
+          {
+            "position": 3,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.9713196158670634,
+            "scope": [
+              3
+            ]
+          },
+          {
+            "coefficient": -1.8715711569464961,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": 1.9167240710976658,
+            "scope": [
+              2,
+              3
+            ]
+          },
+          {
+            "coefficient": 0.9902451647577992,
+            "scope": [
+              0,
+              3
+            ]
+          },
+          {
+            "coefficient": -2.7022652974709933,
+            "scope": [
+              0,
+              2
+            ]
+          },
+          {
+            "coefficient": -1.405294321318967,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -0.6163014730685585,
+            "scope": [
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 332497
+        },
+        "offset": 1.3250033450765453,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "m"
+              }
+            ],
+            "kind": "frozenset"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 3.4515546189279753
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 1.580255378951172
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 1.279494757781638
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 7.075091802195498
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 2.2189516727908583
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 0.3476524328140549
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 0.04689181164452094
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": 5.842488856058381
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 4.065006241716429
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 6.154687660770823
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -8.916114809313882
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 0.8404628941311758
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 2.8324032955793124
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 4.922084714633706
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -10.148717755450999
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -0.39214005200594126
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          },
+          {
+            "position": 1,
+            "value": -1
+          },
+          {
+            "position": 2,
+            "value": -1
+          },
+          {
+            "position": 3,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -1.405294321318967,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.6163014730685585,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -1.8715711569464961,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 1.9713196158670634,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -2.7022652974709933,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": 0.9902451647577992,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": 1.9167240710976658,
+            "scope": [
+              2,
+              3
+            ],
+            "source_id": "quadratic:2:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 332497
+        },
+        "offset": 1.3250033450765453,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "m"
+              }
+            ],
+            "kind": "frozenset"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-01",
+      "document": {
+        "factors": [
+          {
+            "coefficient": -1.294481162689775,
+            "scope": [
+              4
+            ]
+          },
+          {
+            "coefficient": -2.3009861636612126,
+            "scope": [
+              0,
+              2
+            ]
+          },
+          {
+            "coefficient": -0.38482434413352706,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": -0.5462070161223749,
+            "scope": [
+              2,
+              3
+            ]
+          },
+          {
+            "coefficient": 0.037432555289586666,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": -2.6414601554502823,
+            "scope": [
+              2,
+              4
+            ]
+          },
+          {
+            "coefficient": 1.8395869640071796,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": 2.8014670144060947,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": -0.5559145175105198,
+            "scope": [
+              3
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 0.3873967836107517,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": 0.3873967836107517
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": -0.9070843790790233
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": -0.1685177338997681
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": -1.462998896589543
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": 0.3873967836107517
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": -3.548544534529306
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": -0.714724750022143
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": -4.6506660681622005
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": 0.42482933890033836
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": -0.8696518237894366
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": -0.13108517861018143
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": -1.4255663412999564
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 3.226296353306433
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": -0.7096449648336243
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 2.1241748196735384
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -1.811766498466519
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": 2.2269837476179313
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": 0.9325025849281563
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": 1.6710692301074115
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": 0.3765880674176365
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": -0.07400241604328128
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": -4.009943734183339
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": -1.176123949676176
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": -5.1120652678162335
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": 1.8795919587739909
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": 0.5851107960842159
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": 1.323677441263471
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": 0.02919627857369611
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 2.380072809518873
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": -1.5558685086211843
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 1.2779512758859783
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -2.657990042254079
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.24834085505490489,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.6228769452129352,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.6717965802069438,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -0.4145090127858536,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -1.307605620207458,
+            "scope": [
+              4
+            ],
+            "source_id": "linear:4"
+          },
+          {
+            "coefficient": -0.09620608603338177,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -0.5752465409153031,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": 0.7003667536015237,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": -0.13655175403059372,
+            "scope": [
+              2,
+              3
+            ],
+            "source_id": "quadratic:2:3"
+          },
+          {
+            "coefficient": -0.6603650388625706,
+            "scope": [
+              2,
+              4
+            ],
+            "source_id": "quadratic:2:4"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -0.3672939630813381,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-02",
+      "document": {
+        "coordinates": [
+          {
+            "coordinate": [
+              8.0,
+              9.0
+            ],
+            "position": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.7257935776784841,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -0.6795832160353643,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1
+          ],
+          "energy": -1.4053767937138484
+        },
+        {
+          "assignment": [
+            1
+          ],
+          "energy": 0.04621036164311976
+        }
+      ],
+      "exported": {
+        "coordinates": [
+          {
+            "coordinate": [
+              8.0,
+              9.0
+            ],
+            "position": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.7257935776784841,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -0.6795832160353643,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-03",
+      "document": {
+        "clamps": [
+          {
+            "position": 4,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              9.0,
+              4.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              8.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              9.0,
+              7.0
+            ],
+            "position": 2
+          },
+          {
+            "coordinate": [
+              7.0,
+              6.0
+            ],
+            "position": 3
+          },
+          {
+            "coordinate": [
+              3.0,
+              8.0
+            ],
+            "position": 4
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -1.6159104529234907,
+            "scope": [
+              3,
+              4
+            ]
+          },
+          {
+            "coefficient": -1.0372408636658748,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": 2.675022119409377,
+            "scope": [
+              3
+            ]
+          },
+          {
+            "coefficient": 1.4918748496629162,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": 0.550178418105383,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -1.2147204272023064,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": -0.9558294530546139,
+            "scope": [
+              2,
+              3
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 770185
+        },
+        "offset": 1.7633382572413927,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "str",
+            "value": "node"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": 1.7633382572413927
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": 1.7633382572413927
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": 4.4383603766507695
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": 2.822449923727279
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": 3.255213106904309
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": 3.255213106904309
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": 4.974405773259072
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": 3.358495320335581
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": 0.5486178300390863
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": 0.5486178300390863
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": 3.2236399494484633
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": 1.6077294965249724
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 1.0032518160361277
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": 1.0032518160361277
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 2.7224444823908907
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 1.1065340294674
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": 2.3135166753467757
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": 2.3135166753467757
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": 4.988538794756153
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": 3.372628341832662
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": 3.805391525009692
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": 3.805391525009692
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": 5.524584191364455
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": 3.908673738440964
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": 1.0987962481444693
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": 1.0987962481444693
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": 3.7738183675538464
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": 2.1579079146303553
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 1.5534302341415107
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": 1.5534302341415107
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 3.2726229004962737
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 1.656712447572783
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 4,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              9.0,
+              4.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              8.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              9.0,
+              7.0
+            ],
+            "position": 2
+          },
+          {
+            "coordinate": [
+              7.0,
+              6.0
+            ],
+            "position": 3
+          },
+          {
+            "coordinate": [
+              3.0,
+              8.0
+            ],
+            "position": 4
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.2750892090526915,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.866670429517622,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.24766984565133593,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.6945760832101623,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -0.40397761323087267,
+            "scope": [
+              4
+            ],
+            "source_id": "linear:4"
+          },
+          {
+            "coefficient": -0.2593102159164687,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": -0.23895736326365347,
+            "scope": [
+              2,
+              3
+            ],
+            "source_id": "quadratic:2:3"
+          },
+          {
+            "coefficient": -0.40397761323087267,
+            "scope": [
+              3,
+              4
+            ],
+            "source_id": "quadratic:3:4"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 770185
+        },
+        "offset": 2.6122705448180827,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "str",
+            "value": "node"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-04",
+      "document": {
+        "clamps": [
+          {
+            "position": 2,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              1.0,
+              7.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              9.0,
+              5.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              6.0,
+              7.0
+            ],
+            "position": 2
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.4596922160041226,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": -0.9283509131297194,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": -1.2893330862393129,
+            "scope": [
+              0,
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 747554
+        },
+        "offset": -1.6559671405564185,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "node"
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -5.333343355929573
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.5572570976618894
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": -0.8979753571915088
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": 0.16470724855729757
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": -2.754677183450948
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": 2.021409074816736
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": -3.4766415296701343
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": -2.413958923921328
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 2,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              1.0,
+              7.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              9.0,
+              5.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              6.0,
+              7.0
+            ],
+            "position": 2
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 1.4596922160041226,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -1.2893330862393129,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -0.9283509131297194,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 747554
+        },
+        "offset": -1.6559671405564185,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "node"
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-05",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.022876679630711827,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": 1.7011713868455418,
+            "scope": [
+              0,
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.4927173492825245,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "str",
+            "value": "linear"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0
+          ],
+          "energy": -1.4927173492825245
+        },
+        {
+          "assignment": [
+            0,
+            1
+          ],
+          "energy": -1.4698406696518127
+        },
+        {
+          "assignment": [
+            1,
+            0
+          ],
+          "energy": -1.4927173492825245
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": 0.2313307171937291
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.42529284671138545,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.43673118652674137,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.42529284671138545,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.0559861627557832,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "str",
+            "value": "linear"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-06",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              5.0,
+              2.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              3.0,
+              6.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              1.0,
+              5.0
+            ],
+            "position": 2
+          },
+          {
+            "coordinate": [
+              6.0,
+              7.0
+            ],
+            "position": 3
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 2.082379888043252,
+            "scope": [
+              1,
+              3
+            ]
+          },
+          {
+            "coefficient": -1.8969664702885929,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": -0.5206543475496872,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -2.6901077487293,
+            "scope": [
+              0,
+              3
+            ]
+          },
+          {
+            "coefficient": 1.491673853462645,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": -2.7431049716824596,
+            "scope": [
+              2
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 559618
+        },
+        "offset": -1.7047469309429144,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "kind": "none"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 0.5459919107772362
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 1.7614476321493329
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -7.9235657395129735
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -6.708110018140877
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -2.8081826316573717
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 6.736792641887732
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -5.311044868097001
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": 4.233930405448103
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 8.678831653713647
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.866143619831456
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 0.2092740034234386
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -9.335701270121666
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -2.2632087698753316
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -3.4786644912474283
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -4.766071006314961
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -5.981526727687058
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              5.0,
+              2.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              3.0,
+              6.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              1.0,
+              5.0
+            ],
+            "position": 2
+          },
+          {
+            "coordinate": [
+              6.0,
+              7.0
+            ],
+            "position": 3
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.5206543475496872,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -2.7431049716824596,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -1.8969664702885929,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -2.6901077487293,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": 1.491673853462645,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": 2.082379888043252,
+            "scope": [
+              1,
+              3
+            ],
+            "source_id": "quadratic:1:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 559618
+        },
+        "offset": -1.7047469309429144,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "kind": "none"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-07",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 0
+          },
+          {
+            "position": 2,
+            "value": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -1.668677278844974,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": -1.9249522833737036,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": 1.3312298219876624,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": 0.7043689589162323,
+            "scope": [
+              0,
+              2
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 419444
+        },
+        "offset": -1.167804954052472,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0
+          ],
+          "energy": -1.167804954052472
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1
+          ],
+          "energy": -1.167804954052472
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0
+          ],
+          "energy": -2.836482232897446
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1
+          ],
+          "energy": -4.76143451627115
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0
+          ],
+          "energy": -1.167804954052472
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1
+          ],
+          "energy": -0.4634359951362397
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0
+          ],
+          "energy": -1.5052524109097836
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": -2.725835735367255
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          },
+          {
+            "position": 2,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.5088996952259737,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.9827692547689972,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.3051458311143678,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.3328074554969156,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": 0.17609223972905808,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": -0.4812380708434259,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 419444
+        },
+        "offset": -1.9744819690924111,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-08",
+      "document": {
+        "factors": [
+          {
+            "coefficient": -0.7048872885210935,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": 1.6531447568256743,
+            "scope": [
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 560012
+        },
+        "offset": 0.20686511928522044,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1
+          ],
+          "energy": -0.7413923490193604
+        },
+        {
+          "assignment": [
+            -1,
+            1
+          ],
+          "energy": 2.5648971646319882
+        },
+        {
+          "assignment": [
+            1,
+            -1
+          ],
+          "energy": -2.1511669260615474
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": 1.1551225875898012
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -0.7048872885210935,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 1.6531447568256743,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 560012
+        },
+        "offset": 0.20686511928522044,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-09",
+      "document": {
+        "clamps": [
+          {
+            "position": 2,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 2.0868583338760107,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": 2.833084009950168,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": 0.3260040618382405,
+            "scope": [
+              0,
+              4
+            ]
+          },
+          {
+            "coefficient": 2.7251247015355524,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": -0.32589269598708226,
+            "scope": [
+              2,
+              4
+            ]
+          },
+          {
+            "coefficient": -0.531925048119763,
+            "scope": [
+              3
+            ]
+          },
+          {
+            "coefficient": -1.5151235171924684,
+            "scope": [
+              1,
+              4
+            ]
+          },
+          {
+            "coefficient": -1.2435021886292088,
+            "scope": [
+              0,
+              3
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.7198038677088614,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": -1.7198038677088614
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": -1.7198038677088614
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": -2.2517289158286244
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": -2.2517289158286244
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": 0.3670544661671493
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": 0.04116177018006706
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": -0.16487058195261373
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": -0.490763277939696
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": -1.7198038677088614
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": -3.23492738490133
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": -2.2517289158286244
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": -3.766852433021093
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 3.0921791677027017
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": 1.251162954523151
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 2.5602541195829387
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 0.719237906403388
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": 1.1132801422413068
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": 1.4392842040795473
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": -0.6621470945076651
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": -0.3361430326694246
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": 3.2001384761173175
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": 3.2002498419684757
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": 1.4247112393683456
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": 1.4248226052195039
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": 1.1132801422413068
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": -0.07583931311292114
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": -0.6621470945076651
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": -1.851266549861893
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 5.9252631776528695
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": 4.41025102631156
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 4.149835940903898
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 2.6348237895625877
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 2,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.187167473277342,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.302500296085771,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 1.6432371683251228,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -0.5768380712171837,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -0.37875303783532754,
+            "scope": [
+              4
+            ],
+            "source_id": "linear:4"
+          },
+          {
+            "coefficient": -0.3108755471573022,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": 0.08150101545956012,
+            "scope": [
+              0,
+              4
+            ],
+            "source_id": "quadratic:0:4"
+          },
+          {
+            "coefficient": 0.6812811753838881,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": -0.3787808792981171,
+            "scope": [
+              1,
+              4
+            ],
+            "source_id": "quadratic:1:4"
+          },
+          {
+            "coefficient": -0.08147317399677056,
+            "scope": [
+              2,
+              4
+            ],
+            "source_id": "quadratic:2:4"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 0.4658573705356049,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-10",
+      "document": {
+        "coordinates": [
+          {
+            "coordinate": [
+              8.0,
+              6.0
+            ],
+            "position": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.2412955244110373,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 389013
+        },
+        "offset": -0.8430104980266102,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "m"
+              }
+            ],
+            "kind": "frozenset"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1
+          ],
+          "energy": -2.0843060224376475
+        },
+        {
+          "assignment": [
+            1
+          ],
+          "energy": 0.3982850263844271
+        }
+      ],
+      "exported": {
+        "coordinates": [
+          {
+            "coordinate": [
+              8.0,
+              6.0
+            ],
+            "position": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.2412955244110373,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 389013
+        },
+        "offset": -0.8430104980266102,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "m"
+              }
+            ],
+            "kind": "frozenset"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-11",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.5582856168553594,
+            "scope": [
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 533249
+        },
+        "offset": 0.06727347844036347,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0
+          ],
+          "energy": 0.06727347844036347
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1
+          ],
+          "energy": 0.06727347844036347
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0
+          ],
+          "energy": -0.4910121384149959
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1
+          ],
+          "energy": -0.4910121384149959
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0
+          ],
+          "energy": 0.06727347844036347
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1
+          ],
+          "energy": 0.06727347844036347
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0
+          ],
+          "energy": -0.4910121384149959
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": -0.4910121384149959
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.2791428084276797,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 533249
+        },
+        "offset": -0.21186932998731622,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-12",
+      "document": {
+        "factors": [
+          {
+            "coefficient": -1.967474452628758,
+            "scope": [
+              0,
+              3
+            ]
+          },
+          {
+            "coefficient": -0.7301899466001989,
+            "scope": [
+              3
+            ]
+          },
+          {
+            "coefficient": 0.8122432219308169,
+            "scope": [
+              1,
+              4
+            ]
+          },
+          {
+            "coefficient": -2.001115120612708,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": 0.43917217501856953,
+            "scope": [
+              3,
+              4
+            ]
+          },
+          {
+            "coefficient": 0.8722150382271661,
+            "scope": [
+              2,
+              3
+            ]
+          },
+          {
+            "coefficient": 0.2879285187026408,
+            "scope": [
+              0,
+              2
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 475776
+        },
+        "offset": 0.6620016660613595,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 3.837391234524701
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 1.3345604406259286
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 3.6891858200903487
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 2.943043726265854
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 1.5171041206650877
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -0.9857266732336851
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 4.857758859139399
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": 4.1116167653149045
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 2.2129047906630674
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 2.959046884487562
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 2.064699376228715
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 4.567530170127488
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -0.10738232319654606
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 0.6387597706279486
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 3.2332724152777654
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 5.736103209176538
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 3.1942528611515204
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 0.6914220672527474
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -4.823850363797865
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -5.56999245762236
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 2.02567982210247
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -0.47715097179630317
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -2.503563249938251
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": -3.249705343762746
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 1.5697664172898864
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 2.3159085111143813
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -6.448336807659499
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -3.945506013760726
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 0.4011933782408359
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 1.1473354720653306
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -4.128049693799885
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -1.625218899901112
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -2.001115120612708,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -0.7301899466001989,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              4
+            ],
+            "source_id": "linear:4"
+          },
+          {
+            "coefficient": 0.2879285187026408,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": -1.967474452628758,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": 0.8122432219308169,
+            "scope": [
+              1,
+              4
+            ],
+            "source_id": "quadratic:1:4"
+          },
+          {
+            "coefficient": 0.8722150382271661,
+            "scope": [
+              2,
+              3
+            ],
+            "source_id": "quadratic:2:3"
+          },
+          {
+            "coefficient": 0.43917217501856953,
+            "scope": [
+              3,
+              4
+            ],
+            "source_id": "quadratic:3:4"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 475776
+        },
+        "offset": 0.6620016660613595,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-13",
+      "document": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 404399
+        },
+        "offset": -0.6841116943117269,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": -0.6841116943117269
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 404399
+        },
+        "offset": -0.6841116943117269,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-14",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.555016985643018,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -0.7616503097516136,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1
+          ],
+          "energy": -2.3166672953946317
+        },
+        {
+          "assignment": [
+            1
+          ],
+          "energy": 0.7933666758914044
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.555016985643018,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -0.7616503097516136,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-15",
+      "document": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.3488604182527726,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": 1.3488604182527726
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.3488604182527726,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-16",
+      "document": {
+        "factors": [
+          {
+            "coefficient": 2.0721889599663683,
+            "scope": [
+              1,
+              3
+            ]
+          },
+          {
+            "coefficient": -1.9382486586101422,
+            "scope": [
+              3
+            ]
+          },
+          {
+            "coefficient": -2.418139676592491,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": 2.321439350352856,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": 1.5551584012934843,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": -1.9320906598491197,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": -1.15518705406001,
+            "scope": [
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 157942
+        },
+        "offset": 1.2551280718756148,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "int",
+            "value": "7"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 7.673082710314878
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.34779252683814277
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 14.647580832600086
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 6.626705595447065
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 0.43963330125464917
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 0.7075139039671015
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -0.3142312158566216
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": -0.04635061314416933
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -1.8060753435758155
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -9.826950580728836
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 5.168422778709393
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -2.8524524584436284
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 0.24623264877537898
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 0.5141132514878313
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -0.5076318683358918
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -0.2397512656234395
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -2.418139676592491,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -1.15518705406001,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 1.5551584012934843,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -1.9382486586101422,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": 2.321439350352856,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -1.9320906598491197,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": 2.0721889599663683,
+            "scope": [
+              1,
+              3
+            ],
+            "source_id": "quadratic:1:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 157942
+        },
+        "offset": 1.2551280718756148,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "int",
+            "value": "7"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-17",
+      "document": {
+        "coordinates": [
+          {
+            "coordinate": [
+              0.0,
+              9.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              9.0,
+              8.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.16499655194533513,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 554639
+        },
+        "offset": -0.14466768501426674,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "7"
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0
+          ],
+          "energy": -0.14466768501426674
+        },
+        {
+          "assignment": [
+            0,
+            1
+          ],
+          "energy": -0.14466768501426674
+        },
+        {
+          "assignment": [
+            1,
+            0
+          ],
+          "energy": 0.02032886693106839
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": 0.02032886693106839
+        }
+      ],
+      "exported": {
+        "coordinates": [
+          {
+            "coordinate": [
+              0.0,
+              9.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              9.0,
+              8.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.08249827597266757,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 554639
+        },
+        "offset": -0.06216940904159918,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "7"
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-18",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 2.7988122527942068,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": 1.741648348036959,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": -1.3716433116639242,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": 1.7770683074544076,
+            "scope": [
+              3
+            ]
+          },
+          {
+            "coefficient": 0.43649711503928135,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": 0.30829728127403744,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": 2.7166606173579595,
+            "scope": [
+              1,
+              3
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.4756742647444443,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "quadratic"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 1.7645254278150357
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.11465919199206809
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -0.34980238169946
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -2.228987001506564
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -9.010020644958809
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -0.022562795334074792
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 0.07090055670352235
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": 9.058358406328257
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -1.5953557580608875
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -3.4745403778679913
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -3.709683567575383
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -5.588868187382487
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -11.136712705738582
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -2.1492548561138483
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -2.055791504076251
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 6.931666345548483
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -1.3716433116639242,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.43649711503928135,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 1.741648348036959,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 1.7770683074544076,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": 0.30829728127403744,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": 2.7988122527942068,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": 2.7166606173579595,
+            "scope": [
+              1,
+              3
+            ],
+            "source_id": "quadratic:1:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.4756742647444443,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "quadratic"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-19",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 0
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              3.0,
+              9.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              1.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.11295464791814958,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -2.9234301277925026,
+            "scope": [
+              0,
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 944783
+        },
+        "offset": -0.6930870057773344,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0
+          ],
+          "energy": -0.6930870057773344
+        },
+        {
+          "assignment": [
+            0,
+            1
+          ],
+          "energy": -0.6930870057773344
+        },
+        {
+          "assignment": [
+            1,
+            0
+          ],
+          "energy": -0.806041653695484
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": -3.7294717814879865
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              3.0,
+              9.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              1.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.7873348559072004,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.7308575319481256,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.7308575319481256,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 944783
+        },
+        "offset": -1.4804218616845348,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "-3"
+          },
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-20",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              8.0,
+              5.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              4.0,
+              4.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 2.789539344983826,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": -0.9647110521060593,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.1104271330748507,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1
+          ],
+          "energy": 4.864677530164736
+        },
+        {
+          "assignment": [
+            -1,
+            1
+          ],
+          "energy": -0.7144011598029159
+        },
+        {
+          "assignment": [
+            1,
+            -1
+          ],
+          "energy": -2.6438232640150345
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": 2.9352554259526173
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              8.0,
+              5.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              4.0,
+              4.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.9647110521060593,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 2.789539344983826,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.1104271330748507,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-21",
+      "document": {
+        "clamps": [
+          {
+            "position": 1,
+            "value": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -2.850234639816216,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -1.7813025093385992,
+            "scope": [
+              0,
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.0747190189063631,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "none"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0
+          ],
+          "energy": -1.0747190189063631
+        },
+        {
+          "assignment": [
+            0,
+            1
+          ],
+          "energy": -1.0747190189063631
+        },
+        {
+          "assignment": [
+            1,
+            0
+          ],
+          "energy": -3.924953658722579
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": -5.706256168061178
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 1,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -1.8704429472427577,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.4453256273346498,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.4453256273346498,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -2.945161966149121,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "none"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-22",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          },
+          {
+            "position": 1,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.173775343509016,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -2.2341183941500002,
+            "scope": [
+              0,
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.9641819694378424,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1
+          ],
+          "energy": -5.372075707096858
+        },
+        {
+          "assignment": [
+            -1,
+            1
+          ],
+          "energy": -0.9038389187968581
+        },
+        {
+          "assignment": [
+            1,
+            -1
+          ],
+          "energy": 1.4437117682211738
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": -3.0245250200788267
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          },
+          {
+            "position": 1,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.173775343509016,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -2.2341183941500002,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.9641819694378424,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-23",
+      "document": {
+        "clamps": [
+          {
+            "position": 1,
+            "value": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -2.3703953909157325,
+            "scope": [
+              0,
+              2
+            ]
+          },
+          {
+            "coefficient": 2.5144489293154244,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": -0.12956173327043707,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": 0.6421365414837279,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -0.124854925235093,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0
+          ],
+          "energy": -0.124854925235093
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1
+          ],
+          "energy": -0.124854925235093
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0
+          ],
+          "energy": -0.2544166585055301
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1
+          ],
+          "energy": -0.2544166585055301
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0
+          ],
+          "energy": 0.5172816162486349
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1
+          ],
+          "energy": -1.8531137746670976
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0
+          ],
+          "energy": 2.9021688122936222
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": 0.5317734213778897
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 1,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.35708165534178693,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.5638313656936376,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.5925988477289331,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.6286122323288561,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -0.5925988477289331,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 0.1674458634714754,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-24",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              0.0,
+              8.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              1.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              0.0,
+              7.0
+            ],
+            "position": 2
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 2.6970206267620114,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": 0.3508074603418976,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": 0.5869442338463471,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": -2.0047122409300866,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 573141
+        },
+        "offset": -0.585730778839793,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 3.1782503946640603
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": 3.8798653153478555
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": -1.0419023911672682
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": -0.3402874704834731
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": -6.225215340720135
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": -5.52360042003634
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": 0.3427143804965813
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": 1.0443293011803765
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              0.0,
+              8.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              1.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              0.0,
+              7.0
+            ],
+            "position": 2
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -2.0047122409300866,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.5869442338463471,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.3508074603418976,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 2.6970206267620114,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 573141
+        },
+        "offset": -0.585730778839793,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-25",
+      "document": {
+        "clamps": [
+          {
+            "position": 1,
+            "value": 0
+          },
+          {
+            "position": 3,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 2.8507581392797032,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": 2.5638170705881596,
+            "scope": [
+              2,
+              3
+            ]
+          },
+          {
+            "coefficient": -0.20328417440395885,
+            "scope": [
+              0,
+              3
+            ]
+          },
+          {
+            "coefficient": -2.242988464106731,
+            "scope": [
+              4
+            ]
+          },
+          {
+            "coefficient": -0.30609028256153303,
+            "scope": [
+              3
+            ]
+          },
+          {
+            "coefficient": -1.7757446793911211,
+            "scope": [
+              0,
+              2
+            ]
+          },
+          {
+            "coefficient": 1.4334280388575227,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": 2.82387701771625,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.677311675132891,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": 1.677311675132891
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": -0.5656767889738399
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": 1.3712213925713579
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": -0.8717670715353729
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": 1.677311675132891
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": -0.5656767889738399
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": 3.9350384631595174
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": 1.6920499990527866
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": 4.528069814412595
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": 2.2850813503058633
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": 4.221979531851061
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": 1.9789910677443303
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 5.961497853270117
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": 3.718509389163386
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 8.219224641296744
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 5.976236177190012
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": 4.501188692849141
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": 2.2582002287424103
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": 3.9918142358836493
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": 1.7488257717769184
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": 2.72544401345802
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": 0.4824555493512892
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": 4.779886627080687
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": 2.536898162973957
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": 7.351946832128844
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": 5.108958368022114
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": 6.8425723751633525
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": 4.599583911056621
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": 7.009630191595246
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": 4.766641727488516
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": 9.064072805217913
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 6.821084341111183
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 1,
+            "value": -1
+          },
+          {
+            "position": 3,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.9171812954093551,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 1.7837360793542323,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.5553751075136403,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.43708808276528366,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -1.1214942320533654,
+            "scope": [
+              4
+            ],
+            "source_id": "linear:4"
+          },
+          {
+            "coefficient": -0.4439361698477803,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": -0.05082104360098971,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": 0.35835700971438067,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": 0.6409542676470399,
+            "scope": [
+              2,
+              3
+            ],
+            "source_id": "quadratic:2:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 3.744643944209386,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "int",
+            "value": "-3"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-26",
+      "document": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 489989
+        },
+        "offset": -0.6394634849857614,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "none"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1
+          ],
+          "energy": -0.6394634849857614
+        },
+        {
+          "assignment": [
+            -1,
+            1
+          ],
+          "energy": -0.6394634849857614
+        },
+        {
+          "assignment": [
+            1,
+            -1
+          ],
+          "energy": -0.6394634849857614
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": -0.6394634849857614
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "y",
+          "trial": 489989
+        },
+        "offset": -0.6394634849857614,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "none"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-27",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.8741016974030762,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -1.4434223404433268,
+            "scope": [
+              1
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.147097197853745,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0
+          ],
+          "energy": -1.147097197853745
+        },
+        {
+          "assignment": [
+            0,
+            1
+          ],
+          "energy": -2.590519538297072
+        },
+        {
+          "assignment": [
+            1,
+            0
+          ],
+          "energy": -2.021198895256821
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": -3.464621235700148
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": -1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.4370508487015381,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.7217111702216634,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -2.3058592167769465,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-28",
+      "document": {
+        "clamps": [
+          {
+            "position": 2,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.0942109723378248,
+            "scope": [
+              2,
+              4
+            ]
+          },
+          {
+            "coefficient": -1.8459131372741044,
+            "scope": [
+              0,
+              4
+            ]
+          },
+          {
+            "coefficient": -0.08439140356296715,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": 1.018631976850136,
+            "scope": [
+              0,
+              3
+            ]
+          },
+          {
+            "coefficient": -0.5606155546943832,
+            "scope": [
+              4
+            ]
+          },
+          {
+            "coefficient": 1.5625828158960555,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": 1.106706384614422,
+            "scope": [
+              1,
+              4
+            ]
+          },
+          {
+            "coefficient": -1.2431534385448622,
+            "scope": [
+              0,
+              2
+            ]
+          },
+          {
+            "coefficient": -0.24271698635476735,
+            "scope": [
+              1,
+              3
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 499094
+        },
+        "offset": -0.30501094784060623,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "kind": "str",
+            "value": "node"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "bool",
+            "value": true
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -1.3348210338506625
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -3.1660605825957138
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -2.8866510148413997
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -4.717890563586451
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -1.2057189085625222
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 1.339885432043726
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -2.7575488895532594
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": -0.2119445489470113
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -3.062799830369972
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.46721384065733496
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -5.5854977567797786
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -2.9899117670671416
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -2.9336977050818316
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 4.038732173982105
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -5.456395631491638
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 1.516034247572298
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 5.93121379587911
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -3.283678301962359
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 8.453911722288916
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -0.7609803755525526
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 1.0877021669878015
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -3.750346041502368
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 3.610400093397608
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": -1.2276481150925616
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 4.2032349993598
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.5848315600239804
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 5.755064980350538
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 0.9669984209667568
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -0.6402766295315079
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -1.0514992995639894
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 0.9115533514592293
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 0.5003306814267479
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 2,
+            "value": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 1.5625828158960555,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.08439140356296715,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -0.5606155546943832,
+            "scope": [
+              4
+            ],
+            "source_id": "linear:4"
+          },
+          {
+            "coefficient": -1.2431534385448622,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": 1.018631976850136,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": -1.8459131372741044,
+            "scope": [
+              0,
+              4
+            ],
+            "source_id": "quadratic:0:4"
+          },
+          {
+            "coefficient": -0.24271698635476735,
+            "scope": [
+              1,
+              3
+            ],
+            "source_id": "quadratic:1:3"
+          },
+          {
+            "coefficient": 1.106706384614422,
+            "scope": [
+              1,
+              4
+            ],
+            "source_id": "quadratic:1:4"
+          },
+          {
+            "coefficient": 1.0942109723378248,
+            "scope": [
+              2,
+              4
+            ],
+            "source_id": "quadratic:2:4"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 499094
+        },
+        "offset": -0.30501094784060623,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "kind": "str",
+            "value": "node"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "bool",
+            "value": true
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-29",
+      "document": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.9347268166662204,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": 1.9347268166662204
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.9347268166662204,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-30",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              5.0,
+              5.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              2.0,
+              8.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              3.0,
+              5.0
+            ],
+            "position": 2
+          },
+          {
+            "coordinate": [
+              3.0,
+              8.0
+            ],
+            "position": 3
+          },
+          {
+            "coordinate": [
+              1.0,
+              7.0
+            ],
+            "position": 4
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 2.599867454310905,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": 0.40448065934384037,
+            "scope": [
+              2
+            ]
+          },
+          {
+            "coefficient": -2.1700947402279844,
+            "scope": [
+              3,
+              4
+            ]
+          },
+          {
+            "coefficient": -1.0713518285020374,
+            "scope": [
+              2,
+              4
+            ]
+          },
+          {
+            "coefficient": 0.16170507593313,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": -1.8231832489133193,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": -2.125080171262333,
+            "scope": [
+              0,
+              3
+            ]
+          },
+          {
+            "coefficient": 0.13766341223895529,
+            "scope": [
+              1,
+              4
+            ]
+          },
+          {
+            "coefficient": -1.1133357052096535,
+            "scope": [
+              0
+            ]
+          },
+          {
+            "coefficient": -0.7776957770275734,
+            "scope": [
+              3
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 345043
+        },
+        "offset": 1.638158590145815,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          },
+          {
+            "kind": "str",
+            "value": "quadratic"
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -6.365499542005292
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.15793322902315898
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 0.6694587269201957
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -1.803353921009609
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -3.7372447181797965
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -1.815085719205813
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 3.297713550745691
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": -3.460506411192263
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 1.881864888098986
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 8.64008485003694
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 8.916823157024474
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 6.99466415805049
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 5.1569400156570016
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 7.629752663586807
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 12.19189828458249
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 5.984331971600357
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -0.6956441120732948
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 5.511922200908838
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -2.1610065281971385
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -4.633819176126943
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 1.9326107117522007
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 3.8547697107261842
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 0.467248295628357
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": -6.290971666309597
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 0.25898732237770616
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": 7.01720728431566
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -1.2063750937461375
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -3.128534092720121
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 3.5340624499357216
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 6.006875097865526
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 2.068700033811878
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -4.138866279170255
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              5.0,
+              5.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              2.0,
+              8.0
+            ],
+            "position": 1
+          },
+          {
+            "coordinate": [
+              3.0,
+              5.0
+            ],
+            "position": 2
+          },
+          {
+            "coordinate": [
+              3.0,
+              8.0
+            ],
+            "position": 3
+          },
+          {
+            "coordinate": [
+              1.0,
+              7.0
+            ],
+            "position": 4
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -1.1133357052096535,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 2.599867454310905,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.40448065934384037,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -0.7776957770275734,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              4
+            ],
+            "source_id": "linear:4"
+          },
+          {
+            "coefficient": -1.8231832489133193,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -2.125080171262333,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": 0.16170507593313,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": 0.13766341223895529,
+            "scope": [
+              1,
+              4
+            ],
+            "source_id": "quadratic:1:4"
+          },
+          {
+            "coefficient": -1.0713518285020374,
+            "scope": [
+              2,
+              4
+            ],
+            "source_id": "quadratic:2:4"
+          },
+          {
+            "coefficient": -2.1700947402279844,
+            "scope": [
+              3,
+              4
+            ],
+            "source_id": "quadratic:3:4"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 345043
+        },
+        "offset": 1.638158590145815,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          },
+          {
+            "kind": "str",
+            "value": "quadratic"
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-31",
+      "document": {
+        "coordinates": [
+          {
+            "coordinate": [
+              7.0,
+              2.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              2.0,
+              2.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.6030860218013832,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": -2.9635820727075703,
+            "scope": [
+              0,
+              1
+            ]
+          },
+          {
+            "coefficient": 0.36882224600664326,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.834590504308542,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0
+          ],
+          "energy": 1.834590504308542
+        },
+        {
+          "assignment": [
+            0,
+            1
+          ],
+          "energy": 2.437676526109925
+        },
+        {
+          "assignment": [
+            1,
+            0
+          ],
+          "energy": 2.2034127503151852
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": -0.15708330059100195
+        }
+      ],
+      "exported": {
+        "coordinates": [
+          {
+            "coordinate": [
+              7.0,
+              2.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              2.0,
+              2.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -0.556484395173571,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.439352507276201,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.7408955181768926,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.5796491200356626,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-32",
+      "document": {
+        "coordinates": [
+          {
+            "coordinate": [
+              3.0,
+              4.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              7.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -2.1473095815092824,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": -2.9466547279683413,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 246736
+        },
+        "offset": 1.0902788833936463,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1
+          ],
+          "energy": 6.18424319287127
+        },
+        {
+          "assignment": [
+            -1,
+            1
+          ],
+          "energy": 1.8896240298527052
+        },
+        {
+          "assignment": [
+            1,
+            -1
+          ],
+          "energy": 0.29093373693458746
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": -4.003685426083978
+        }
+      ],
+      "exported": {
+        "coordinates": [
+          {
+            "coordinate": [
+              3.0,
+              4.0
+            ],
+            "position": 0
+          },
+          {
+            "coordinate": [
+              8.0,
+              7.0
+            ],
+            "position": 1
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": -2.9466547279683413,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -2.1473095815092824,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "tag": "x",
+          "trial": 246736
+        },
+        "offset": 1.0902788833936463,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-33",
+      "document": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              0.0,
+              5.0
+            ],
+            "position": 0
+          }
+        ],
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.972661874479197,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0
+          ],
+          "energy": 1.972661874479197
+        },
+        {
+          "assignment": [
+            1
+          ],
+          "energy": 1.972661874479197
+        }
+      ],
+      "exported": {
+        "clamps": [
+          {
+            "position": 0,
+            "value": 1
+          }
+        ],
+        "coordinates": [
+          {
+            "coordinate": [
+              0.0,
+              5.0
+            ],
+            "position": 0
+          }
+        ],
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": 1.972661874479197,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "t"
+              },
+              {
+                "kind": "int",
+                "value": "1"
+              }
+            ],
+            "kind": "tuple"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-34",
+      "document": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "offset": 0.15456028780679576,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      },
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": 0.15456028780679576
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "offset": 0.15456028780679576,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      }
+    },
+    {
+      "case_id": "document-35",
+      "document": {
+        "factors": [
+          {
+            "coefficient": -1.2700256735581767,
+            "scope": [
+              2,
+              3
+            ]
+          },
+          {
+            "coefficient": -1.879345911054212,
+            "scope": [
+              1
+            ]
+          },
+          {
+            "coefficient": -2.611675000344192,
+            "scope": [
+              0,
+              2
+            ]
+          },
+          {
+            "coefficient": 2.2294942816374697,
+            "scope": [
+              1,
+              2
+            ]
+          },
+          {
+            "coefficient": -0.8555112205899995,
+            "scope": [
+              0
+            ]
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -0.02146160028471389,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "str",
+            "value": "linear"
+          }
+        ],
+        "vartype": "BINARY"
+      },
+      "energy_table": [
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "energy": -0.02146160028471389
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "energy": -0.02146160028471389
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "energy": -0.02146160028471389
+        },
+        {
+          "assignment": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "energy": -1.2914872738428906
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "energy": -1.9008075113389258
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            0,
+            1
+          ],
+          "energy": -1.9008075113389258
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            0
+          ],
+          "energy": 0.3286867702985439
+        },
+        {
+          "assignment": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "energy": -0.9413389032596329
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "energy": -0.8769728208747134
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "energy": -0.8769728208747134
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            0
+          ],
+          "energy": -3.4886478212189056
+        },
+        {
+          "assignment": [
+            1,
+            0,
+            1,
+            1
+          ],
+          "energy": -4.758673494777082
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            0
+          ],
+          "energy": -2.7563187319289253
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            0,
+            1
+          ],
+          "energy": -2.7563187319289253
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            0
+          ],
+          "energy": -3.138499450635648
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": -4.408525124193824
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -1.0806743603810478,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.38229938511773853,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -0.4130515980662248,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -0.3175064183895442,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": -0.652918750086048,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": 0.5573735704093674,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": -0.3175064183895442,
+            "scope": [
+              2,
+              3
+            ],
+            "source_id": "quadratic:2:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "offset": -1.8019417641730444,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "str",
+            "value": "linear"
+          }
+        ],
+        "vartype": "SPIN"
+      }
+    }
+  ],
+  "run_id": "2026-07-21-factor-json-and-networkx"
+}

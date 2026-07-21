@@ -1,0 +1,2223 @@
+{
+  "cases": [
+    {
+      "case_id": "graph-00",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 0.8803279926555527
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": 0.8803279926555527
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": -1.0493063440726926
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": -1.0493063440726926
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": 0.8803279926555527
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": 0.8803279926555527
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": -1.0493063440726926
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": -1.0493063440726926
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.9648171683641227,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": -0.08448917570856995
+          },
+          "source_format": "networkx"
+        },
+        "offset": -0.08448917570856995,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "str",
+            "value": "node"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": -0.08448917570856995
+      },
+      "nodes": [
+        [
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "bias": -0.9648171683641227
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "node"
+          },
+          {}
+        ],
+        [
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {}
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-01",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [
+            -1
+          ],
+          "energy": 0.6211002022713736
+        },
+        {
+          "assignment": [
+            1
+          ],
+          "energy": 0.6211002022713736
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.6211002022713736
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.6211002022713736,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.6211002022713736
+      },
+      "nodes": [
+        [
+          {
+            "kind": "str",
+            "value": "b"
+          },
+          {}
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-02",
+      "edges": [
+        [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "weight": 1.4630384128678653
+          }
+        ],
+        [
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "weight": -0.3771679266059804
+          }
+        ]
+      ],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 1.425382775332892
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": 2.179718628544853
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": -1.4530501253691437
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": -0.6987142721571828
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": -0.2380201772622934
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": -0.9923560304742542
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": 2.735700573507132
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": 1.9813647202951712
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.25416900996429215,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.023821962516847428,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 1.4630384128678653,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -0.3771679266059804,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.6175032615521467
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.6175032615521467,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.6175032615521467
+      },
+      "nodes": [
+        [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "x"
+              },
+              {
+                "kind": "str",
+                "value": "y"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "bias": 0.25416900996429215
+          }
+        ],
+        [
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "bias": 0.023821962516847428
+          }
+        ],
+        [
+          {
+            "kind": "bytes",
+            "value": "AQ=="
+          },
+          {}
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-03",
+      "edges": [
+        [
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "weight": 0.08022163353580591
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "str",
+            "value": "quadratic"
+          },
+          {
+            "weight": 0.08318801594293346
+          }
+        ]
+      ],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 3.0939732876400683
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.27753072687421265
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": 2.5864527915826363
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": -0.7850512229316446
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": 1.629039328134738
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": -1.4097126226078094
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": 1.4424053662205296
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": -1.5963465845220177
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -0.5690573302739259,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": -0.17353861449291008,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": -1.6025639913142071,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.08022163353580591,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": 0.08318801594293346,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.585403702080286
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.585403702080286,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "kind": "str",
+            "value": "quadratic"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.585403702080286
+      },
+      "nodes": [
+        [
+          {
+            "kind": "str",
+            "value": "linear"
+          },
+          {
+            "bias": -0.17353861449291008
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "c"
+          },
+          {
+            "bias": -0.5690573302739259
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "quadratic"
+          },
+          {
+            "bias": -1.6025639913142071
+          }
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-04",
+      "edges": [
+        [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "weight": 0.8374307721748728
+          }
+        ]
+      ],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 0.5290947826523589
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": 0.9152926847121245
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": 0.5290947826523589
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": 0.9152926847121245
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": -1.1457667616973868
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": 2.59015422906187
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": -1.1457667616973868
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": 2.59015422906187
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 1.0305297232047557,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 0.8374307721748728,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.7221937336822417
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.7221937336822417,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "kind": "str",
+            "value": "a"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.7221937336822417
+      },
+      "nodes": [
+        [
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {}
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "bias": 1.0305297232047557
+          }
+        ],
+        [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {}
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-05",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": -0.027305564565006657
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": -0.027305564565006657
+          },
+          "source_format": "networkx"
+        },
+        "offset": -0.027305564565006657,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": -0.027305564565006657
+      },
+      "nodes": []
+    },
+    {
+      "case_id": "graph-06",
+      "edges": [
+        [
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "weight": 1.585324715799464
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "weight": 0.4350158218811737
+          }
+        ]
+      ],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 2.2187165150216552
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.15740702433293752
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -0.3825984884145326
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -2.7587220277691253
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -1.0884249717726178
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -1.7244852236025157
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 2.651558887989051
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": 2.015498636159153
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 2.2187165150216552
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -0.15740702433293752
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -0.3825984884145326
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -2.7587220277691253
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -1.0884249717726178
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": -1.7244852236025157
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 2.651558887989051
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 2.015498636159153
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.3667697942835013,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.2846672140813702,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": -0.7530459477961227,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": 1.585324715799464,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": 0.4350158218811737,
+            "scope": [
+              1,
+              3
+            ],
+            "source_id": "quadratic:1:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.09676703790976626
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.09676703790976626,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.09676703790976626
+      },
+      "nodes": [
+        [
+          {
+            "kind": "int",
+            "value": "1"
+          },
+          {
+            "bias": 0.3667697942835013
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "bias": 0.2846672140813702
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "bias": -0.7530459477961227
+          }
+        ],
+        [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "kind": "str",
+                    "value": "nested"
+                  }
+                ],
+                "kind": "tuple"
+              },
+              {
+                "kind": "float",
+                "value": "0x1.c000000000000p+1"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {}
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-07",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [
+            -1
+          ],
+          "energy": 0.280297373519119
+        },
+        {
+          "assignment": [
+            1
+          ],
+          "energy": -1.6336672939859749
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -0.9569823337525469,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": -0.676684960233428
+          },
+          "source_format": "networkx"
+        },
+        "offset": -0.676684960233428,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "str",
+            "value": "a"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": -0.676684960233428
+      },
+      "nodes": [
+        [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {
+            "bias": -0.9569823337525469
+          }
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-08",
+      "edges": [
+        [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "weight": 1.8787856296426226
+          }
+        ],
+        [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          },
+          {
+            "weight": -1.3428559667231172
+          }
+        ]
+      ],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -1.1953272913053354
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": 4.666856832991302
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": -1.7657028178289018
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": 4.0964813064677355
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": -5.451867620047762
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": -4.9611073626435935
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": 1.4928993719991623
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": 1.9836596294033304
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -1.5923405014517078,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 1.5935978663808394,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 1.5882360954252013,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 1.8787856296426226,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": -1.3428559667231172,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": -0.1417634938705079
+          },
+          "source_format": "networkx"
+        },
+        "offset": -0.1417634938705079,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "str",
+            "value": "b"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": -0.1417634938705079
+      },
+      "nodes": [
+        [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "bias": 1.5935978663808394
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "b"
+          },
+          {
+            "bias": 1.5882360954252013
+          }
+        ],
+        [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "c"
+              },
+              {
+                "kind": "int",
+                "value": "2"
+              }
+            ],
+            "kind": "tuple"
+          },
+          {
+            "bias": -1.5923405014517078
+          }
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-09",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": 0.8363903799216512
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.8363903799216512
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.8363903799216512,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.8363903799216512
+      },
+      "nodes": []
+    },
+    {
+      "case_id": "graph-10",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [
+            -1
+          ],
+          "energy": 0.9188532360464796
+        },
+        {
+          "assignment": [
+            1
+          ],
+          "energy": 0.9188532360464796
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.9188532360464796
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.9188532360464796,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.9188532360464796
+      },
+      "nodes": [
+        [
+          {
+            "kind": "bytes",
+            "value": "cmF3"
+          },
+          {}
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-11",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1
+          ],
+          "energy": -1.7662028206476894
+        },
+        {
+          "assignment": [
+            -1,
+            1
+          ],
+          "energy": 1.9897718939278188
+        },
+        {
+          "assignment": [
+            1,
+            -1
+          ],
+          "energy": -1.7662028206476894
+        },
+        {
+          "assignment": [
+            1,
+            1
+          ],
+          "energy": 1.9897718939278188
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": 0.0,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 1.8779873572877541,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.11178453664006471
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.11178453664006471,
+        "schema_version": 1,
+        "variables": [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "m"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {
+            "kind": "int",
+            "value": "0"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.11178453664006471
+      },
+      "nodes": [
+        [
+          {
+            "items": [
+              {
+                "kind": "str",
+                "value": "m"
+              }
+            ],
+            "kind": "frozenset"
+          },
+          {}
+        ],
+        [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "bias": 1.8779873572877541
+          }
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-12",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": -0.9642333878652198
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": -0.9642333878652198
+          },
+          "source_format": "networkx"
+        },
+        "offset": -0.9642333878652198,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": -0.9642333878652198
+      },
+      "nodes": []
+    },
+    {
+      "case_id": "graph-13",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 1.3107943531028499
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1
+          ],
+          "energy": 1.3107943531028499
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1
+          ],
+          "energy": 1.3107943531028499
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1
+          ],
+          "energy": 1.3107943531028499
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1
+          ],
+          "energy": -0.05560982080625876
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1
+          ],
+          "energy": -0.05560982080625876
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1
+          ],
+          "energy": -0.05560982080625876
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1
+          ],
+          "energy": -0.05560982080625876
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -0.6832020869545543,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.6275922661482956
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.6275922661482956,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "kind": "none"
+          },
+          {
+            "kind": "str",
+            "value": "a"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.6275922661482956
+      },
+      "nodes": [
+        [
+          {
+            "kind": "str",
+            "value": "a"
+          },
+          {}
+        ],
+        [
+          {
+            "kind": "bool",
+            "value": true
+          },
+          {
+            "bias": -0.6832020869545543
+          }
+        ],
+        [
+          {
+            "kind": "none"
+          },
+          {}
+        ]
+      ]
+    },
+    {
+      "case_id": "graph-14",
+      "edges": [],
+      "energy_table": [
+        {
+          "assignment": [],
+          "energy": -0.5379653134858107
+        }
+      ],
+      "exported": {
+        "factors": [],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": -0.5379653134858107
+          },
+          "source_format": "networkx"
+        },
+        "offset": -0.5379653134858107,
+        "schema_version": 1,
+        "variables": [],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": -0.5379653134858107
+      },
+      "nodes": []
+    },
+    {
+      "case_id": "graph-15",
+      "edges": [
+        [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "weight": 1.362357055383713
+          }
+        ],
+        [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "weight": -1.089444535882798
+          }
+        ],
+        [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "weight": 0.06135094987623191
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "weight": 1.5624121541525868
+          }
+        ],
+        [
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "weight": 0.11212524179636407
+          }
+        ]
+      ],
+      "energy_table": [
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": 0.8971825264504969
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -2.558834158882098
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": 2.8518211146233647
+        },
+        {
+          "assignment": [
+            -1,
+            -1,
+            1,
+            1
+          ],
+          "energy": -0.6041955707092304
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": 3.0644034223395225
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 5.05781495854178
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            -1
+          ],
+          "energy": 0.6612638669811983
+        },
+        {
+          "assignment": [
+            -1,
+            1,
+            1,
+            1
+          ],
+          "energy": 2.654675403183455
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            -1
+          ],
+          "energy": -4.850632255423276
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            -1,
+            1
+          ],
+          "energy": -2.0570003241455246
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          "energy": -2.4474927000649527
+        },
+        {
+          "assignment": [
+            1,
+            -1,
+            1,
+            1
+          ],
+          "energy": 0.34613923121279955
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            -1
+          ],
+          "energy": -2.4380075600293236
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            -1,
+            1
+          ],
+          "energy": 5.80505259278328
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            -1
+          ],
+          "energy": -4.392646148202191
+        },
+        {
+          "assignment": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "energy": 3.8504140046104127
+        }
+      ],
+      "exported": {
+        "factors": [
+          {
+            "coefficient": -1.138019045111704,
+            "scope": [
+              0
+            ],
+            "source_id": "linear:0"
+          },
+          {
+            "coefficient": 1.4178739173216597,
+            "scope": [
+              1
+            ],
+            "source_id": "linear:1"
+          },
+          {
+            "coefficient": 0.0,
+            "scope": [
+              2
+            ],
+            "source_id": "linear:2"
+          },
+          {
+            "coefficient": 1.1967608668700023,
+            "scope": [
+              3
+            ],
+            "source_id": "linear:3"
+          },
+          {
+            "coefficient": 0.06135094987623191,
+            "scope": [
+              0,
+              1
+            ],
+            "source_id": "quadratic:0:1"
+          },
+          {
+            "coefficient": 0.11212524179636407,
+            "scope": [
+              0,
+              2
+            ],
+            "source_id": "quadratic:0:2"
+          },
+          {
+            "coefficient": 1.5624121541525868,
+            "scope": [
+              0,
+              3
+            ],
+            "source_id": "quadratic:0:3"
+          },
+          {
+            "coefficient": -1.089444535882798,
+            "scope": [
+              1,
+              2
+            ],
+            "source_id": "quadratic:1:2"
+          },
+          {
+            "coefficient": 1.362357055383713,
+            "scope": [
+              1,
+              3
+            ],
+            "source_id": "quadratic:1:3"
+          }
+        ],
+        "format": "gibbsiq-factor-graph",
+        "metadata": {
+          "graph_attributes": {
+            "offset": 0.364997400204357
+          },
+          "source_format": "networkx"
+        },
+        "offset": 0.364997400204357,
+        "schema_version": 1,
+        "variables": [
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          }
+        ],
+        "vartype": "SPIN"
+      },
+      "graph_attributes": {
+        "offset": 0.364997400204357
+      },
+      "nodes": [
+        [
+          {
+            "kind": "float",
+            "value": "0x1.4000000000000p+1"
+          },
+          {
+            "bias": 1.4178739173216597
+          }
+        ],
+        [
+          {
+            "kind": "str",
+            "value": "\u00e9"
+          },
+          {
+            "bias": 1.1967608668700023
+          }
+        ],
+        [
+          {
+            "kind": "int",
+            "value": "0"
+          },
+          {}
+        ],
+        [
+          {
+            "kind": "float",
+            "value": "-0x1.0000000000000p-1"
+          },
+          {
+            "bias": -1.138019045111704
+          }
+        ]
+      ]
+    }
+  ],
+  "run_id": "2026-07-21-factor-json-and-networkx"
+}

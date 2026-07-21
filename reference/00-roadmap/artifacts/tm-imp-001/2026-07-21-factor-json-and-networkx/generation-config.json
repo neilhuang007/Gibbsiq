@@ -1,0 +1,20 @@
+{
+  "absolute_tolerance": 1e-09,
+  "classification": {
+    "energies": "computed",
+    "seed": "declared deterministic fixture input",
+    "tolerance": "assumed project-wide floating comparison tolerance from CLAUDE.md"
+  },
+  "document_case_count": 36,
+  "factor_graph_schema_version": 1,
+  "generator_seed": 20260721,
+  "graph_case_count": 16,
+  "label_pool_size": 24,
+  "reproduction_command": "python tools/generate_tm_imp_001_artifacts.py --overwrite",
+  "rng": "Python random.Random (MT19937)",
+  "run_id": "2026-07-21-factor-json-and-networkx",
+  "variable_count_range": [
+    0,
+    5
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "gibbsiq_version": "0.1.0",
+  "git_head": "403bbb39e69106aa6446eebe0feda57948cfdd9d",
+  "implementation": "CPython",
+  "networkx_version": "3.6.1",
+  "os_name": "nt",
+  "platform": "Windows-11-10.0.26220-SP0",
+  "python": "3.13.5 (main, Jun 12 2025, 12:42:35) [MSC v.1943 64 bit (AMD64)]",
+  "run_id": "2026-07-21-factor-json-and-networkx",
+  "task_id": "TM-IMP-001",
+  "timing_seconds": {
+    "generation": 0.025461699999141274
+  }
+}
