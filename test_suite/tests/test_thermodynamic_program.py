@@ -601,6 +601,39 @@ class ReconstructionAndSerializationTests(unittest.TestCase):
         self.assertEqual(restored.metadata[(True, "boolean-key")], "boolean")
         self.assertEqual(restored.to_dict(), payload)
 
+    def test_non_ascii_frozenset_metadata_round_trip(self) -> None:
+        # "é" sorts after "f" by raw code point but before it once JSON
+        # ASCII-escapes it to "é", so these members detect any
+        # escaped-order emission the decoder's canonical check rejects.
+        program = ThermodynamicProgram(
+            IsingModel(variables=("x",), linear={"x": 0.0}, quadratic={}),
+            metadata={
+                "tags": frozenset({"é", "f"}),
+                "nested": {"π": [frozenset({"ß", "s"})]},
+                frozenset({"é", "f"}): "label-key-control",
+            },
+        )
+
+        payload = program.to_dict()
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        restored = ThermodynamicProgram.from_dict(json.loads(encoded))
+
+        self.assertEqual(restored.metadata["tags"], frozenset({"é", "f"}))
+        self.assertEqual(restored.metadata["nested"]["π"], [frozenset({"ß", "s"})])
+        self.assertEqual(restored.metadata[frozenset({"é", "f"})], "label-key-control")
+        self.assertEqual(restored.to_dict(), payload)
+
+        # Oracle: emitted member order equals the raw (unescaped) canonical
+        # order recomputed here without touching program internals.
+        tags_row = next(
+            row for row in payload["metadata"]["items"] if row["key"] == {"kind": "str", "value": "tags"}
+        )
+        raw_order = sorted(
+            tags_row["value"]["items"],
+            key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+        )
+        self.assertEqual(tags_row["value"]["items"], raw_order)
+
     def test_serialization_rejects_bool_and_float_schema_version_aliases(self) -> None:
         for invalid_version in (True, 1.0):
             with self.subTest(invalid_version=invalid_version):
