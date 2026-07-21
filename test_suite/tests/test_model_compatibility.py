@@ -29,6 +29,25 @@ class _DuplicateExactKeyMapping(Mapping[str, int]):
         return 2
 
 
+class _PairMapping(Mapping[object, float]):
+    """List-backed mapping able to expose ==-equal typed-distinct keys."""
+
+    def __init__(self, pairs: list[tuple[object, float]]) -> None:
+        self._pairs = pairs
+
+    def __getitem__(self, key: object) -> float:
+        for candidate, value in self._pairs:
+            if candidate == key:
+                return value
+        raise KeyError(key)
+
+    def __iter__(self) -> Iterator[object]:
+        return iter(key for key, _ in self._pairs)
+
+    def __len__(self) -> int:
+        return len(self._pairs)
+
+
 def load_exact_fixture(fixture_id: str) -> dict:
     path = REPO_ROOT / "reference" / "08-evaluation" / "fixtures" / "exact-small-instances.json"
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
@@ -220,6 +239,37 @@ class ModelCompatibilityTest(unittest.TestCase):
             compile_qubo({(True, 1): 2.0}, variables=(True,))
         with self.assertRaisesRegex(ValueError, "terms reference variables"):
             compile_ising({}, {(True, 1): 2.0}, variables=(True,))
+
+    def test_structured_qubo_diagonal_alias_rejected(self) -> None:
+        for diagonal in ((1.0, 1.0), (True, True)):
+            with self.subTest(diagonal=diagonal), self.assertRaisesRegex(ValueError, "equality alias"):
+                compile_qubo({"linear": {1: 3.0}, "quadratic": {diagonal: 5.0}})
+
+    def test_structured_qubo_diagonal_exact_fold(self) -> None:
+        model = compile_qubo({"linear": {1: 3.0}, "quadratic": {(1, 1): 5.0}})
+        self.assertEqual(model.variables, (1,))
+        self.assertIs(type(model.variables[0]), int)
+        # Oracle: E_qubo(x) = 3x + 5x^2 evaluated directly from the input.
+        for bit in (0, 1):
+            self.assertAlmostEqual(
+                model.energy({1: bit}, vartype="BINARY"), 3 * bit + 5 * bit * bit, places=12
+            )
+
+    def test_structured_qubo_diagonal_preserves_label_type(self) -> None:
+        model = compile_qubo({"quadratic": {(2.0, 2.0): 5.0}})
+        self.assertEqual(model.variables, (2.0,))
+        self.assertIs(type(model.variables[0]), float)
+        for bit in (0, 1):
+            self.assertAlmostEqual(model.energy({2.0: bit}, vartype="BINARY"), 5 * bit, places=12)
+
+    def test_qubo_alias_labels_from_pair_mappings_rejected(self) -> None:
+        # ==-equal typed-distinct keys can only coexist in a non-dict Mapping.
+        aliased_linear = _PairMapping([(1, 3.0), (1.0, 5.0)])
+        with self.assertRaisesRegex(ValueError, "equality alias"):
+            compile_qubo({"linear": aliased_linear, "quadratic": {}})
+        aliased_diagonals = _PairMapping([((1, 1), 2.0), ((1.0, 1.0), 3.0)])
+        with self.assertRaisesRegex(ValueError, "equality alias"):
+            compile_qubo({"linear": {}, "quadratic": aliased_diagonals})
 
     def test_bulk_sample_alignment_is_linear_and_rejects_duplicate_exact_keys(self) -> None:
         variables = tuple(range(20_000))

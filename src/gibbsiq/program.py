@@ -20,6 +20,7 @@ from gibbsiq.categorical import CategoricalModel
 from gibbsiq.model import (
     IsingModel,
     Variable,
+    canonical_variable_sort_key,
     decode_variable_label,
     encode_variable_label,
     exact_label_equal,
@@ -259,9 +260,11 @@ def _encode_value(value: Any, *, label: bool = False) -> dict[str, Any]:
             "value": base64.b64encode(value).decode("ascii"),
         }
     if value_type is frozenset:
-        items = [_encode_value(item, label=True) for item in value]
-        items.sort(key=_canonical_json)
-        return {"kind": "frozenset", "items": items}
+        # _decode_label re-encodes through encode_variable_label, so members
+        # must already be in its canonical order; _canonical_json escapes
+        # non-ASCII and can order the same members differently.
+        members = sorted(value, key=canonical_variable_sort_key)
+        return {"kind": "frozenset", "items": [_encode_value(member, label=True) for member in members]}
     if isinstance(value, Mapping):
         items = [
             {

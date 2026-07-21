@@ -12,6 +12,7 @@ from gibbsiq.model import (
     canonical_variable_sort_key,
     decode_variable_label,
     exact_label_equal,
+    exact_label_key,
     exact_mapping_index,
     exact_variable_position,
     finite_float,
@@ -246,6 +247,7 @@ def _parse_qubo(
     variables: list[Variable] | tuple[Variable, ...] | None,
 ) -> dict[str, Any]:
     term_items: Iterable[tuple[Any, Any]]
+    linear_items: Iterable[tuple[Any, Any]]
     if _is_structured_model(qubo):
         raw_variables = variables if variables is not None else qubo.get("variables")
         raw_offset = qubo.get("offset", 0.0) if offset is None else offset
@@ -253,13 +255,21 @@ def _parse_qubo(
         raw_quadratic = qubo.get("quadratic", {})
         exact_mapping_index(raw_linear)
         exact_mapping_index(raw_quadratic)
-        linear_terms = {key: [float(value)] for key, value in raw_linear.items()}
+        linear_items = raw_linear.items()
         term_items = raw_quadratic.items()
     else:
         raw_variables = variables
         raw_offset = 0.0 if offset is None else offset
-        linear_terms = {}
+        linear_items = ()
         term_items = qubo.items()
+
+    # Linear buckets merge exact typed labels only; a Python-equal but
+    # type-distinct label (1 vs 1.0 vs True) can never be a distinct dict
+    # key or model variable, so it fails closed here.
+    linear_terms: dict[Variable, list[float]] = {}
+    linear_key_index: dict[tuple[Any, Any], Variable] = {}
+    for key, value in linear_items:
+        _fold_linear_term(linear_terms, linear_key_index, key, float(value))
 
     # Diagonal (u==u) -> linear term; off-diagonal entries remain separate
     # until canonicalization so math.fsum sees every symmetric/aliased input.
@@ -268,7 +278,7 @@ def _parse_qubo(
         left, right = _parse_pair_key(key)
         coefficient = float(value)
         if exact_label_equal(left, right):
-            linear_terms.setdefault(left, []).append(coefficient)
+            _fold_linear_term(linear_terms, linear_key_index, left, coefficient)
         else:
             quadratic_items.append(((left, right), coefficient))
 
@@ -277,6 +287,28 @@ def _parse_qubo(
         for variable, terms in linear_terms.items()
     }
     return _finish_items(raw_variables, linear, quadratic_items, float(raw_offset))
+
+
+def _fold_linear_term(
+    linear_terms: dict[Variable, list[float]],
+    key_index: dict[tuple[Any, Any], Variable],
+    label: Variable,
+    coefficient: float,
+) -> None:
+    """Add a linear/diagonal coefficient to its exact typed-label bucket."""
+    try:
+        bucket_label = key_index[exact_label_key(label)]
+    except KeyError:
+        if label in linear_terms:
+            alias = next(existing for existing in linear_terms if existing == label)
+            raise ValueError(
+                f"QUBO label {label!r} is an equality alias of linear label {alias!r}; "
+                "typed labels must match exactly"
+            ) from None
+        linear_terms[label] = []
+        key_index[exact_label_key(label)] = label
+        bucket_label = label
+    linear_terms[bucket_label].append(coefficient)
 
 
 def _parse_ising(
