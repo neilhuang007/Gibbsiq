@@ -99,7 +99,7 @@ QUBO/BQM/Ising
 -> Inspector / benchmark report
 ```
 
-Gibbsiq does not currently claim that THRML is faster than classical or GPU baselines, and it does not treat R-hat, ESS, or diversity as proof of optimality. The implemented scope comprises conversion, fixed-beta and parallel-tempering runtime lowering, graph-colored blocks, schedule and seed controls, raw multi-chain traces, diagnostics, witness-verified benchmark scoring, an independent small-state verifier, a complete provenanced target-fact schema, an artifact-only Inspector core, and the partial ThermoMap analysis surface described above. General constraint encoding, automatic physical mapping, calibrated cost models, classical-baseline runners, and full Inspector/HTML integration remain to be built.
+Gibbsiq does not currently claim that THRML is faster than classical or GPU baselines, and it does not treat R-hat, ESS, or diversity as proof of optimality. The implemented scope comprises conversion, fixed-beta and parallel-tempering runtime lowering, graph-colored blocks, schedule and seed controls, raw multi-chain traces, diagnostics, witness-verified benchmark scoring, an independent small-state verifier, a complete provenanced target-fact schema, an artifact-only Inspector core, bounded cubic/knapsack/TSP lowerings, and the partial ThermoMap analysis surface described above. General constraint encoding, automatic physical mapping, calibrated cost models, classical-baseline runners, and full Inspector/HTML integration remain to be built.
 
 The implemented Stage 4 core is artifact-only. Browser display and unified HTML/CLI integration
 remain future work.

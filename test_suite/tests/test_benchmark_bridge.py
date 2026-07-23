@@ -79,7 +79,7 @@ def expected_optimum_energy(fixture: dict) -> float:
     if family == "number_partition":
         difference = expected["min_subset_sum_difference"]
         return float(difference * difference)
-    raise AssertionError(f"unsupported family {family!r}")
+    raise AssertionError(f"no direct Ising optimum contract for family {family!r}")
 
 
 class CompileFixtureFidelityTests(unittest.TestCase):
@@ -98,8 +98,8 @@ class CompileFixtureFidelityTests(unittest.TestCase):
         # Ties the lowering to the corpus: every stored witness must land
         # exactly on the proven optimum once evaluated through the lowered model.
         for fixture in supported_fixtures():
-            if fixture["family"] == "number_partition":
-                continue  # partition witnesses are set pairs, not spin states
+            if fixture["family"] not in {"maxcut", "sk_spin_glass"}:
+                continue  # constrained/partition witnesses use native decoders
             model = compile_fixture(fixture)
             optimum = expected_optimum_energy(fixture)
             for witness in fixture["expected"]["witness_spin_samples"]:
@@ -117,6 +117,8 @@ class CompileFixtureFidelityTests(unittest.TestCase):
         checked = 0
         for fixture in supported_fixtures():
             model = compile_fixture(fixture)
+            if fixture["family"] not in {"maxcut", "number_partition", "sk_spin_glass"}:
+                continue  # constrained lowerings have a distinct native-objective contract
             if len(model.variables) > ENUMERATION_LIMIT:
                 continue
             self.assertAlmostEqual(
@@ -128,11 +130,11 @@ class CompileFixtureFidelityTests(unittest.TestCase):
             checked += 1
         self.assertGreaterEqual(checked, 10, "expected at least ten brute-forceable fixtures")
 
-    def test_unsupported_families_raise(self) -> None:
+    def test_constrained_families_compile_without_expected_answers(self) -> None:
         for family in ("knapsack", "tsp"):
             fixture = next(f for f in CORPUS["fixtures"] if f["family"] == family)
-            with self.assertRaises(NotImplementedError):
-                compile_fixture(fixture)
+            model = compile_fixture(strip_expected(fixture))
+            self.assertGreater(len(model.variables), 0)
 
 
 class VerifyOptimumClaimAntiCheatTests(unittest.TestCase):
@@ -260,6 +262,156 @@ class CandidateFromResultTests(unittest.TestCase):
         result = SampleResult.from_model(model, samples)
         witnesses = optimal_spin_witnesses(result)
         self.assertEqual(len(witnesses), MAX_WITNESSES)
+
+    def test_knapsack_uses_native_feasible_ranking_not_reported_penalized_energy(self) -> None:
+        fixture = next(f for f in CORPUS["fixtures"] if f["family"] == "knapsack")
+        fixture_without_expected = strip_expected(fixture)
+        model = compile_fixture(fixture_without_expected)
+        item_count = len(fixture["input"]["weights"])
+        capacity = fixture["input"]["capacity"]
+        slack_weights = []
+        for bits in range(1, len(model.variables) - item_count + 1):
+            if bits == 1:
+                slack_weights.append(1)
+            elif bits == len(model.variables) - item_count:
+                slack_weights.append(capacity - ((1 << (bits - 1)) - 1))
+            else:
+                slack_weights.append(1 << (bits - 1))
+        slack_assignment = next(
+            values
+            for values in itertools.product((0, 1), repeat=len(slack_weights))
+            if sum(weight * value for weight, value in zip(slack_weights, values)) == capacity
+        )
+        feasible = dict(zip(model.variables, (0,) * item_count + slack_assignment))
+        infeasible = dict(zip(model.variables, (1,) * item_count + (0,) * len(slack_weights)))
+        result = SampleResult(
+            samples=(infeasible, feasible),
+            variables=model.variables,
+            energies=(-999.0, 0.0),
+            vartype="BINARY",
+        )
+        candidate = candidate_from_result(fixture_without_expected, result)
+        self.assertEqual(candidate["max_value"], 0)
+        self.assertEqual(candidate["weight_at_optimum"], 0)
+        self.assertEqual(candidate["witness_selections"], [[]])
+        self.assertEqual(candidate["lowering_evidence"]["decoded_invalid_sample_count"], 1)
+        penalty_policy = candidate["lowering_evidence"]["penalty_policy"]
+        self.assertEqual(penalty_policy["certificate_arithmetic"], "exact")
+        self.assertEqual(
+            penalty_policy["finite_precision_guarantee"],
+            "not_universally_certified",
+        )
+
+    def test_tsp_uses_native_feasible_ranking_not_reported_penalized_energy(self) -> None:
+        fixture = next(f for f in CORPUS["fixtures"] if f["family"] == "tsp")
+        fixture_without_expected = strip_expected(fixture)
+        model = compile_fixture(fixture_without_expected)
+        city_count = fixture["input"]["num_cities"]
+        canonical = {
+            variable: int(city == position)
+            for variable, city, position in (
+                (model.variables[city * city_count + position], city, position)
+                for city in range(city_count)
+                for position in range(city_count)
+            )
+        }
+        invalid = {variable: 0 for variable in model.variables}
+        result = SampleResult(
+            samples=(invalid, canonical),
+            variables=model.variables,
+            energies=(-999.0, 0.0),
+            vartype="BINARY",
+        )
+        candidate = candidate_from_result(fixture_without_expected, result)
+        matrix = fixture["input"]["distance_matrix"]
+        expected_length = sum(matrix[city][(city + 1) % city_count] for city in range(city_count))
+        self.assertEqual(candidate["optimal_tour_length"], expected_length)
+        self.assertEqual(candidate["witness_tours"], [list(range(city_count))])
+        self.assertEqual(candidate["lowering_evidence"]["decoded_invalid_sample_count"], 1)
+
+    def test_knapsack_optimal_witness_decodes_to_a_passing_oracle_candidate(self) -> None:
+        fixture = next(f for f in CORPUS["fixtures"] if f["family"] == "knapsack")
+        model = compile_fixture(strip_expected(fixture))
+        selection = tuple(fixture["expected"]["witness_selections"][0])
+        weights = fixture["input"]["weights"]
+        capacity = fixture["input"]["capacity"]
+        item_count = len(weights)
+        slack_count = len(model.variables) - item_count
+        slack_weights = [
+            1 if index == 0 else capacity - ((1 << index) - 1) if index == slack_count - 1 else 1 << index
+            for index in range(slack_count)
+        ]
+        slack_target = capacity - sum(weights[index] for index in selection)
+        slack = next(
+            row
+            for row in itertools.product((0, 1), repeat=slack_count)
+            if sum(weight * bit for weight, bit in zip(slack_weights, row)) == slack_target
+        )
+        bits = tuple(int(index in selection) for index in range(item_count)) + slack
+        result = SampleResult.from_model(model, [dict(zip(model.variables, bits))], vartype="BINARY")
+        candidate = candidate_from_result(strip_expected(fixture), result)
+        self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
+        self.assertEqual(candidate["weight_at_optimum"], fixture["expected"]["weight_at_optimum"])
+        self.assertEqual(result.metadata["penalty_policy"]["status"], "proved_adequate")
+
+    def test_tsp_optimal_witness_decodes_to_a_passing_oracle_candidate(self) -> None:
+        fixture = next(f for f in CORPUS["fixtures"] if f["family"] == "tsp")
+        model = compile_fixture(strip_expected(fixture))
+        tour = tuple(fixture["expected"]["witness_tours"][0])
+        city_count = len(tour)
+        bits = [0] * len(model.variables)
+        for position, city in enumerate(tour):
+            bits[city * city_count + position] = 1
+        result = SampleResult.from_model(model, [dict(zip(model.variables, bits))], vartype="BINARY")
+        candidate = candidate_from_result(strip_expected(fixture), result)
+        self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
+        self.assertEqual(result.metadata["penalty_policy"]["status"], "proved_adequate")
+
+    def test_tsp_candidate_retains_alternative_native_optimal_witnesses(self) -> None:
+        fixture = {
+            "id": "metamorphic_tsp_equal_tours",
+            "family": "tsp",
+            "input": {
+                "num_cities": 3,
+                "distance_matrix": (
+                    (0, 1, 1),
+                    (1, 0, 1),
+                    (1, 1, 0),
+                ),
+            },
+        }
+        model = compile_fixture(fixture)
+        tours = ((0, 1, 2), (0, 2, 1))
+        samples = []
+        for tour in tours:
+            bits = [0] * len(model.variables)
+            for position, city in enumerate(tour):
+                bits[city * len(tour) + position] = 1
+            samples.append(dict(zip(model.variables, bits)))
+        result = SampleResult.from_model(model, samples, vartype="BINARY")
+
+        candidate = candidate_from_result(fixture, result)
+
+        self.assertEqual(candidate["optimal_tour_length"], 3.0)
+        self.assertEqual(candidate["witness_tours"], [list(tour) for tour in tours])
+
+    def test_constrained_result_without_feasible_word_or_matching_order_fails_explicitly(self) -> None:
+        fixture = next(f for f in CORPUS["fixtures"] if f["family"] == "tsp")
+        model = compile_fixture(strip_expected(fixture))
+        invalid = {variable: 0 for variable in model.variables}
+        no_feasible = SampleResult.from_model(model, [invalid], vartype="BINARY")
+        with self.assertRaisesRegex(ValueError, "no feasible decoded TSP witness"):
+            candidate_from_result(strip_expected(fixture), no_feasible)
+
+        reversed_variables = tuple(reversed(model.variables))
+        reordered = SampleResult(
+            samples=(invalid,),
+            variables=reversed_variables,
+            energies=(0.0,),
+            vartype="BINARY",
+        )
+        with self.assertRaisesRegex(ValueError, "variable order"):
+            candidate_from_result(strip_expected(fixture), reordered)
 
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
