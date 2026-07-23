@@ -1,0 +1,55 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "bytes": 61468,
+      "path": "reference/08-evaluation/equation-audit.md",
+      "sha256": "54880a036969d81cc7147c286ac4eb8c6de857b9e94f973c14169f0389299afe"
+    },
+    {
+      "bytes": 9296,
+      "path": "src/gibbsiq/factor_lowering.py",
+      "sha256": "54b7438cb47f4fee9df7b2590a38e26c4ebb4307d9e2c9c46bd40f40eb10a019"
+    },
+    {
+      "bytes": 25681,
+      "path": "src/gibbsiq/constraints.py",
+      "sha256": "58ad66226ebec3654172a959b02e1fe62ccbe4892f9802bf2dd680e36f031263"
+    },
+    {
+      "bytes": 13517,
+      "path": "src/gibbsiq/benchmark_bridge.py",
+      "sha256": "1d5b1c74eb0092918f2cdfd7fa2bb8f83a9cad784abb51fca05b1d34548f38d3"
+    },
+    {
+      "bytes": 5427,
+      "path": "src/gibbsiq/__init__.py",
+      "sha256": "4208004b30ecde710ed06d36ae0f84fd23ee6ac1e7cd3e5d1f6802a53b42b0ef"
+    },
+    {
+      "bytes": 7634,
+      "path": "test_suite/tests/test_factor_lowering.py",
+      "sha256": "37d6a4b012cde48835d5f64e10e29aa20a3a5b6899156b77e4f75cecee983ad2"
+    },
+    {
+      "bytes": 13353,
+      "path": "test_suite/tests/test_constraints.py",
+      "sha256": "fe6701c02c747b39ea99b85a93d312c09ceaa571aecfce8d30abc7d4f20de030"
+    },
+    {
+      "bytes": 23169,
+      "path": "test_suite/tests/test_benchmark_bridge.py",
+      "sha256": "aad26a7cf3c845a954f608a6a4af08640b718f46d542088c7196194a4be06e8b"
+    },
+    {
+      "bytes": 11933,
+      "path": "test_suite/tests/test_public_api_thermomap.py",
+      "sha256": "854aa9bc5af6eef529c2238573edfff7e47983e79dbcb435c0d84ab78c4dab58"
+    },
+    {
+      "bytes": 26760,
+      "path": "tools/generate_tm_lwr_001_artifacts.py",
+      "sha256": "24f2c02062b344541e6a5c84cba308908d8109e4198f448edededa6ff7f3f34e"
+    }
+  ]
+}

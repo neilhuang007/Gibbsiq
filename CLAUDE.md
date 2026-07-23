@@ -239,7 +239,9 @@ the `input` block, never `expected`, so a candidate cannot echo proven values. S
 candidates are scored with `verify_optimum_claim`, which matches the strict criterion except
 that enumeration-only keys (degeneracy, optimal-selection counts) may be omitted — sampling
 cannot prove them — though a volunteered value is still checked. Knapsack and TSP fixtures
-raise `NotImplementedError` in the bridge until a penalty/one-hot encoding layer exists.
+compile through the bounded EVAL-EQ-025 penalty/one-hot encodings. Their candidate path ranks
+only feasible decodes by the native objective and never treats penalized energy as the native
+answer.
 
 Candidate input accepts three shapes (see `normalize_candidate`): a `results`/`fixtures` list
 of `{id, actual}` rows, or a flat `{fixture_id: {...}}` map. Comparison is deep and recursive;

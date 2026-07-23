@@ -1,0 +1,1087 @@
+{
+  "binary64_one_ulp_probe": {
+    "ancilla_energies": {
+      "0": 0.25000000000000044,
+      "1": 0.25000000000000044
+    },
+    "coefficient": 2.0,
+    "energy_difference": 0.0,
+    "interpretation": "negative numerical result: a one-ULP strict exact-arithmetic margin did not produce an observed binary64 ancilla-energy separation",
+    "observed_binary64_tie": true,
+    "penalty_policy": {
+      "certificate_arithmetic": "exact",
+      "finite_precision_guarantee": "not_universally_certified",
+      "penalty": 2.0000000000000004,
+      "proof_scope": "EVAL-EQ-025 exact arithmetic: penalty >= abs(coefficient) preserves the minimum source energy; strict inequality makes the product ancilla unique",
+      "selection": "caller_supplied",
+      "status": "proved_ancilla_unique",
+      "strict_boundary": 2.0
+    },
+    "source_bits": [
+      1,
+      1,
+      1
+    ]
+  },
+  "finite_sensitivity_margin": 1e-06,
+  "oracle": "direct source monomial and direct exposed QUBO coefficient summation",
+  "passed": true,
+  "rows": [
+    {
+      "coefficient": -2.0,
+      "maximum_energy_error": 4.440892098500626e-16,
+      "penalty_case": "below",
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 1.9999999999999998,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: penalty >= abs(coefficient) preserves the minimum source energy; strict inequality makes the product ancilla unique",
+        "selection": "caller_supplied",
+        "status": "inadequate",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 4.249999999999999
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.249999999999999
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.24999999999999956
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.7500000000000004
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.7500000000000004,
+          "source_bits": [
+            0,
+            1,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.24999999999999956
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.7500000000000004
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.7500000000000004,
+          "source_bits": [
+            1,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.24999999999999978
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.7500000000000002
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.7500000000000002,
+          "source_bits": [
+            1,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.24999999999999978
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -3.75
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -3.75,
+          "source_bits": [
+            1,
+            1,
+            1
+          ],
+          "source_energy": -3.75
+        }
+      ]
+    },
+    {
+      "coefficient": -2.0,
+      "maximum_energy_error": 0.0,
+      "penalty_case": "equal",
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 2.0,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: penalty >= abs(coefficient) preserves the minimum source energy; strict inequality makes the product ancilla unique",
+        "selection": "caller_supplied",
+        "status": "adequate_at_energy_boundary",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 4.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.75
+            }
+          ],
+          "minimizing_ancilla_count": 2,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.75
+            }
+          ],
+          "minimizing_ancilla_count": 2,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.75
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -3.75
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -3.75,
+          "source_bits": [
+            1,
+            1,
+            1
+          ],
+          "source_energy": -3.75
+        }
+      ]
+    },
+    {
+      "coefficient": -2.0,
+      "maximum_energy_error": 0.0,
+      "penalty_case": "above",
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 2.000001,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: penalty >= abs(coefficient) preserves the minimum source energy; strict inequality makes the product ancilla unique",
+        "selection": "caller_supplied",
+        "status": "proved_ancilla_unique",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 4.250003
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.2500030000000004
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25000100000000014
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.7499989999999999
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25000100000000014
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.7499989999999999
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25000100000000014
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.75
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25000100000000014
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -3.75
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -3.75,
+          "source_bits": [
+            1,
+            1,
+            1
+          ],
+          "source_energy": -3.75
+        }
+      ]
+    },
+    {
+      "coefficient": 2.0,
+      "maximum_energy_error": 2.220446049250313e-16,
+      "penalty_case": "below",
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 1.9999999999999998,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: penalty >= abs(coefficient) preserves the minimum source energy; strict inequality makes the product ancilla unique",
+        "selection": "caller_supplied",
+        "status": "inadequate",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 4.249999999999999
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 6.249999999999999
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.24999999999999956
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.2499999999999996
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.24999999999999956
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.2499999999999996
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.24999999999999978
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.7500000000000002
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.7500000000000002,
+          "source_bits": [
+            1,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.24999999999999978
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.24999999999999978
+            }
+          ],
+          "minimizing_ancilla_count": 2,
+          "minimum_lowered_energy": 0.24999999999999978,
+          "source_bits": [
+            1,
+            1,
+            1
+          ],
+          "source_energy": 0.25
+        }
+      ]
+    },
+    {
+      "coefficient": 2.0,
+      "maximum_energy_error": 0.0,
+      "penalty_case": "equal",
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 2.0,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: penalty >= abs(coefficient) preserves the minimum source energy; strict inequality makes the product ancilla unique",
+        "selection": "caller_supplied",
+        "status": "adequate_at_energy_boundary",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 4.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 6.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.75
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25
+            }
+          ],
+          "minimizing_ancilla_count": 2,
+          "minimum_lowered_energy": 0.25,
+          "source_bits": [
+            1,
+            1,
+            1
+          ],
+          "source_energy": 0.25
+        }
+      ]
+    },
+    {
+      "coefficient": 2.0,
+      "maximum_energy_error": 0.0,
+      "penalty_case": "above",
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 2.000001,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: penalty >= abs(coefficient) preserves the minimum source energy; strict inequality makes the product ancilla unique",
+        "selection": "caller_supplied",
+        "status": "proved_ancilla_unique",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 4.250003
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 6.250003
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25000100000000014
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.250001
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            0,
+            1,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25000100000000014
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": -1.75
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 2.250001
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            0,
+            1
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25000100000000014
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": -1.75
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": -1.75,
+          "source_bits": [
+            1,
+            1,
+            0
+          ],
+          "source_energy": -1.75
+        },
+        {
+          "ancilla_rows": [
+            {
+              "ancilla": 0,
+              "qubo_energy": 0.25000100000000014
+            },
+            {
+              "ancilla": 1,
+              "qubo_energy": 0.25
+            }
+          ],
+          "minimizing_ancilla_count": 1,
+          "minimum_lowered_energy": 0.25,
+          "source_bits": [
+            1,
+            1,
+            1
+          ],
+          "source_energy": 0.25
+        }
+      ]
+    }
+  ]
+}

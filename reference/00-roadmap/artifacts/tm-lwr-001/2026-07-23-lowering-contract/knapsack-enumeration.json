@@ -1,0 +1,2567 @@
+{
+  "boundary_cases": {
+    "above": {
+      "infeasible_above_native_minimum": true,
+      "input": {
+        "capacity": 1,
+        "offset": 0.0,
+        "values": [
+          2
+        ],
+        "weights": [
+          2
+        ]
+      },
+      "lowered_minimum": 0.0,
+      "native_feasible_minimum": 0.0,
+      "passed": true,
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 2.0000000000000004,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: P > max(0, max_i((C + 1) * value_i - weight_i)) separates every infeasible word from a feasible selection",
+        "selection": "caller_supplied",
+        "status": "proved_adequate",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "item_bits": [
+            0
+          ],
+          "minimum_lowered_energy": 0.0,
+          "native_value": 0,
+          "native_weight": 0,
+          "slack_rows": [
+            {
+              "qubo_energy": 2.0000000000000004,
+              "residual": -1,
+              "slack": 0,
+              "slack_bits": [
+                0
+              ]
+            },
+            {
+              "qubo_energy": 0.0,
+              "residual": 0,
+              "slack": 1,
+              "slack_bits": [
+                1
+              ]
+            }
+          ],
+          "source_energy_if_feasible": 0.0
+        },
+        {
+          "item_bits": [
+            1
+          ],
+          "minimum_lowered_energy": 4.440892098500626e-16,
+          "native_value": 2,
+          "native_weight": 2,
+          "slack_rows": [
+            {
+              "qubo_energy": 4.440892098500626e-16,
+              "residual": 1,
+              "slack": 0,
+              "slack_bits": [
+                0
+              ]
+            },
+            {
+              "qubo_energy": 6.000000000000002,
+              "residual": 2,
+              "slack": 1,
+              "slack_bits": [
+                1
+              ]
+            }
+          ],
+          "source_energy_if_feasible": null
+        }
+      ]
+    },
+    "below": {
+      "infeasible_above_native_minimum": false,
+      "input": {
+        "capacity": 1,
+        "offset": 0.0,
+        "values": [
+          2
+        ],
+        "weights": [
+          2
+        ]
+      },
+      "lowered_minimum": -2.220446049250313e-16,
+      "native_feasible_minimum": 0.0,
+      "passed": false,
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 1.9999999999999998,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: P > max(0, max_i((C + 1) * value_i - weight_i)) separates every infeasible word from a feasible selection",
+        "selection": "caller_supplied",
+        "status": "not_proved_adequate",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "item_bits": [
+            0
+          ],
+          "minimum_lowered_energy": 0.0,
+          "native_value": 0,
+          "native_weight": 0,
+          "slack_rows": [
+            {
+              "qubo_energy": 1.9999999999999998,
+              "residual": -1,
+              "slack": 0,
+              "slack_bits": [
+                0
+              ]
+            },
+            {
+              "qubo_energy": 0.0,
+              "residual": 0,
+              "slack": 1,
+              "slack_bits": [
+                1
+              ]
+            }
+          ],
+          "source_energy_if_feasible": 0.0
+        },
+        {
+          "item_bits": [
+            1
+          ],
+          "minimum_lowered_energy": -2.220446049250313e-16,
+          "native_value": 2,
+          "native_weight": 2,
+          "slack_rows": [
+            {
+              "qubo_energy": -2.220446049250313e-16,
+              "residual": 1,
+              "slack": 0,
+              "slack_bits": [
+                0
+              ]
+            },
+            {
+              "qubo_energy": 5.999999999999999,
+              "residual": 2,
+              "slack": 1,
+              "slack_bits": [
+                1
+              ]
+            }
+          ],
+          "source_energy_if_feasible": null
+        }
+      ]
+    },
+    "equal": {
+      "infeasible_above_native_minimum": false,
+      "input": {
+        "capacity": 1,
+        "offset": 0.0,
+        "values": [
+          2
+        ],
+        "weights": [
+          2
+        ]
+      },
+      "lowered_minimum": 0.0,
+      "native_feasible_minimum": 0.0,
+      "passed": false,
+      "penalty_policy": {
+        "certificate_arithmetic": "exact",
+        "finite_precision_guarantee": "not_universally_certified",
+        "penalty": 2.0,
+        "proof_scope": "EVAL-EQ-025 exact arithmetic: P > max(0, max_i((C + 1) * value_i - weight_i)) separates every infeasible word from a feasible selection",
+        "selection": "caller_supplied",
+        "status": "not_proved_adequate",
+        "strict_boundary": 2.0
+      },
+      "rows": [
+        {
+          "item_bits": [
+            0
+          ],
+          "minimum_lowered_energy": 0.0,
+          "native_value": 0,
+          "native_weight": 0,
+          "slack_rows": [
+            {
+              "qubo_energy": 2.0,
+              "residual": -1,
+              "slack": 0,
+              "slack_bits": [
+                0
+              ]
+            },
+            {
+              "qubo_energy": 0.0,
+              "residual": 0,
+              "slack": 1,
+              "slack_bits": [
+                1
+              ]
+            }
+          ],
+          "source_energy_if_feasible": 0.0
+        },
+        {
+          "item_bits": [
+            1
+          ],
+          "minimum_lowered_energy": 0.0,
+          "native_value": 2,
+          "native_weight": 2,
+          "slack_rows": [
+            {
+              "qubo_energy": 0.0,
+              "residual": 1,
+              "slack": 0,
+              "slack_bits": [
+                0
+              ]
+            },
+            {
+              "qubo_energy": 6.0,
+              "residual": 2,
+              "slack": 1,
+              "slack_bits": [
+                1
+              ]
+            }
+          ],
+          "source_energy_if_feasible": null
+        }
+      ]
+    }
+  },
+  "main": {
+    "infeasible_above_native_minimum": true,
+    "input": {
+      "capacity": 5,
+      "offset": -2.5,
+      "values": [
+        4,
+        5,
+        7
+      ],
+      "weights": [
+        2,
+        3,
+        4
+      ]
+    },
+    "lowered_minimum": -51.5,
+    "native_feasible_minimum": -51.5,
+    "passed": true,
+    "penalty_policy": {
+      "certificate_arithmetic": "exact",
+      "finite_precision_guarantee": "not_universally_certified",
+      "penalty": 39.0,
+      "proof_scope": "EVAL-EQ-025 exact arithmetic: P > max(0, max_i((C + 1) * value_i - weight_i)) separates every infeasible word from a feasible selection",
+      "selection": "caller_supplied",
+      "status": "proved_adequate",
+      "strict_boundary": 38.0
+    },
+    "rows": [
+      {
+        "item_bits": [
+          0,
+          0,
+          0
+        ],
+        "minimum_lowered_energy": -2.5,
+        "native_value": 0,
+        "native_weight": 0,
+        "slack_rows": [
+          {
+            "qubo_energy": 972.5,
+            "residual": -5,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 348.5,
+            "residual": -3,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 348.5,
+            "residual": -3,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 36.5,
+            "residual": -1,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 621.5,
+            "residual": -4,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 153.5,
+            "residual": -2,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 153.5,
+            "residual": -2,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": -2.5,
+            "residual": 0,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -2.5
+      },
+      {
+        "item_bits": [
+          0,
+          0,
+          1
+        ],
+        "minimum_lowered_energy": -40.5,
+        "native_value": 7,
+        "native_weight": 4,
+        "slack_rows": [
+          {
+            "qubo_energy": -1.5,
+            "residual": -1,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": -1.5,
+            "residual": 1,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -1.5,
+            "residual": 1,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 310.5,
+            "residual": 3,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -40.5,
+            "residual": 0,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 115.5,
+            "residual": 2,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 115.5,
+            "residual": 2,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 583.5,
+            "residual": 4,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -40.5
+      },
+      {
+        "item_bits": [
+          0,
+          1,
+          0
+        ],
+        "minimum_lowered_energy": -29.5,
+        "native_value": 5,
+        "native_weight": 3,
+        "slack_rows": [
+          {
+            "qubo_energy": 126.5,
+            "residual": -2,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": -29.5,
+            "residual": 0,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -29.5,
+            "residual": 0,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 126.5,
+            "residual": 2,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 9.5,
+            "residual": -1,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 9.5,
+            "residual": 1,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 9.5,
+            "residual": 1,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 321.5,
+            "residual": 3,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -29.5
+      },
+      {
+        "item_bits": [
+          0,
+          1,
+          1
+        ],
+        "minimum_lowered_energy": 88.5,
+        "native_value": 12,
+        "native_weight": 7,
+        "slack_rows": [
+          {
+            "qubo_energy": 88.5,
+            "residual": 2,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 556.5,
+            "residual": 4,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 556.5,
+            "residual": 4,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1336.5,
+            "residual": 6,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 283.5,
+            "residual": 3,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 907.5,
+            "residual": 5,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 907.5,
+            "residual": 5,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1843.5,
+            "residual": 7,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": null
+      },
+      {
+        "item_bits": [
+          1,
+          0,
+          0
+        ],
+        "minimum_lowered_energy": -24.5,
+        "native_value": 4,
+        "native_weight": 2,
+        "slack_rows": [
+          {
+            "qubo_energy": 326.5,
+            "residual": -3,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 14.5,
+            "residual": -1,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 14.5,
+            "residual": -1,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 14.5,
+            "residual": 1,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 131.5,
+            "residual": -2,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": -24.5,
+            "residual": 0,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -24.5,
+            "residual": 0,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 131.5,
+            "residual": 2,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -24.5
+      },
+      {
+        "item_bits": [
+          1,
+          0,
+          1
+        ],
+        "minimum_lowered_energy": -23.5,
+        "native_value": 11,
+        "native_weight": 6,
+        "slack_rows": [
+          {
+            "qubo_energy": -23.5,
+            "residual": 1,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 288.5,
+            "residual": 3,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 288.5,
+            "residual": 3,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 912.5,
+            "residual": 5,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 93.5,
+            "residual": 2,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 561.5,
+            "residual": 4,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 561.5,
+            "residual": 4,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1341.5,
+            "residual": 6,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": null
+      },
+      {
+        "item_bits": [
+          1,
+          1,
+          0
+        ],
+        "minimum_lowered_energy": -51.5,
+        "native_value": 9,
+        "native_weight": 5,
+        "slack_rows": [
+          {
+            "qubo_energy": -51.5,
+            "residual": 0,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 104.5,
+            "residual": 2,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 104.5,
+            "residual": 2,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 572.5,
+            "residual": 4,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -12.5,
+            "residual": 1,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 299.5,
+            "residual": 3,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 299.5,
+            "residual": 3,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 923.5,
+            "residual": 5,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -51.5
+      },
+      {
+        "item_bits": [
+          1,
+          1,
+          1
+        ],
+        "minimum_lowered_energy": 534.5,
+        "native_value": 16,
+        "native_weight": 9,
+        "slack_rows": [
+          {
+            "qubo_energy": 534.5,
+            "residual": 4,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1314.5,
+            "residual": 6,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1314.5,
+            "residual": 6,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 2406.5,
+            "residual": 8,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 885.5,
+            "residual": 5,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1821.5,
+            "residual": 7,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1821.5,
+            "residual": 7,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 3069.5,
+            "residual": 9,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": null
+      }
+    ]
+  },
+  "metamorphic_scale_offset_case": {
+    "infeasible_above_native_minimum": true,
+    "input": {
+      "capacity": 10,
+      "offset": 9.5,
+      "values": [
+        8,
+        10,
+        14
+      ],
+      "weights": [
+        4,
+        6,
+        8
+      ]
+    },
+    "lowered_minimum": -178.5,
+    "native_feasible_minimum": -178.5,
+    "passed": true,
+    "penalty_policy": {
+      "certificate_arithmetic": "exact",
+      "finite_precision_guarantee": "not_universally_certified",
+      "penalty": 147.0,
+      "proof_scope": "EVAL-EQ-025 exact arithmetic: P > max(0, max_i((C + 1) * value_i - weight_i)) separates every infeasible word from a feasible selection",
+      "selection": "caller_supplied",
+      "status": "proved_adequate",
+      "strict_boundary": 146.0
+    },
+    "rows": [
+      {
+        "item_bits": [
+          0,
+          0,
+          0
+        ],
+        "minimum_lowered_energy": 9.5,
+        "native_value": 0,
+        "native_weight": 0,
+        "slack_rows": [
+          {
+            "qubo_energy": 14709.5,
+            "residual": -10,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 7212.5,
+            "residual": -7,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 5301.5,
+            "residual": -6,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1332.5,
+            "residual": -3,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 9417.5,
+            "residual": -8,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 3684.5,
+            "residual": -5,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 2361.5,
+            "residual": -4,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 156.5,
+            "residual": -1,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 11916.5,
+            "residual": -9,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 5301.5,
+            "residual": -6,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 3684.5,
+            "residual": -5,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 597.5,
+            "residual": -2,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 7212.5,
+            "residual": -7,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 2361.5,
+            "residual": -4,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1332.5,
+            "residual": -3,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 9.5,
+            "residual": 0,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": 9.5
+      },
+      {
+        "item_bits": [
+          0,
+          0,
+          1
+        ],
+        "minimum_lowered_energy": -136.5,
+        "native_value": 14,
+        "native_weight": 8,
+        "slack_rows": [
+          {
+            "qubo_energy": 451.5,
+            "residual": -2,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 10.5,
+            "residual": 1,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 451.5,
+            "residual": 2,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 3538.5,
+            "residual": 5,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -136.5,
+            "residual": 0,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1186.5,
+            "residual": 3,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 2215.5,
+            "residual": 4,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 7066.5,
+            "residual": 7,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 10.5,
+            "residual": -1,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 451.5,
+            "residual": 2,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1186.5,
+            "residual": 3,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 5155.5,
+            "residual": 6,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 10.5,
+            "residual": 1,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 2215.5,
+            "residual": 4,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 3538.5,
+            "residual": 5,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 9271.5,
+            "residual": 8,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -136.5
+      },
+      {
+        "item_bits": [
+          0,
+          1,
+          0
+        ],
+        "minimum_lowered_energy": -94.5,
+        "native_value": 10,
+        "native_weight": 6,
+        "slack_rows": [
+          {
+            "qubo_energy": 2257.5,
+            "residual": -4,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 52.5,
+            "residual": -1,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -94.5,
+            "residual": 0,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1228.5,
+            "residual": 3,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 493.5,
+            "residual": -2,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 52.5,
+            "residual": 1,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 493.5,
+            "residual": 2,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 3580.5,
+            "residual": 5,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1228.5,
+            "residual": -3,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": -94.5,
+            "residual": 0,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 52.5,
+            "residual": 1,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 2257.5,
+            "residual": 4,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 52.5,
+            "residual": -1,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 493.5,
+            "residual": 2,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1228.5,
+            "residual": 3,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 5197.5,
+            "residual": 6,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -94.5
+      },
+      {
+        "item_bits": [
+          0,
+          1,
+          1
+        ],
+        "minimum_lowered_energy": 2111.5,
+        "native_value": 24,
+        "native_weight": 14,
+        "slack_rows": [
+          {
+            "qubo_energy": 2111.5,
+            "residual": 4,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 6962.5,
+            "residual": 7,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 9167.5,
+            "residual": 8,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 17546.5,
+            "residual": 11,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 5051.5,
+            "residual": 6,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 11666.5,
+            "residual": 9,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 14459.5,
+            "residual": 10,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 24602.5,
+            "residual": 13,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 3434.5,
+            "residual": 5,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 9167.5,
+            "residual": 8,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 11666.5,
+            "residual": 9,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 20927.5,
+            "residual": 12,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 6962.5,
+            "residual": 7,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 14459.5,
+            "residual": 10,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 17546.5,
+            "residual": 11,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 28571.5,
+            "residual": 14,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": null
+      },
+      {
+        "item_bits": [
+          1,
+          0,
+          0
+        ],
+        "minimum_lowered_energy": -74.5,
+        "native_value": 8,
+        "native_weight": 4,
+        "slack_rows": [
+          {
+            "qubo_energy": 5217.5,
+            "residual": -6,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1248.5,
+            "residual": -3,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 513.5,
+            "residual": -2,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 72.5,
+            "residual": 1,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 2277.5,
+            "residual": -4,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 72.5,
+            "residual": -1,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -74.5,
+            "residual": 0,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1248.5,
+            "residual": 3,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 3600.5,
+            "residual": -5,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 513.5,
+            "residual": -2,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 72.5,
+            "residual": -1,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 513.5,
+            "residual": 2,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1248.5,
+            "residual": -3,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": -74.5,
+            "residual": 0,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 72.5,
+            "residual": 1,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 2277.5,
+            "residual": 4,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -74.5
+      },
+      {
+        "item_bits": [
+          1,
+          0,
+          1
+        ],
+        "minimum_lowered_energy": 367.5,
+        "native_value": 22,
+        "native_weight": 12,
+        "slack_rows": [
+          {
+            "qubo_energy": 367.5,
+            "residual": 2,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 3454.5,
+            "residual": 5,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 5071.5,
+            "residual": 6,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 11686.5,
+            "residual": 9,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 2131.5,
+            "residual": 4,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 6982.5,
+            "residual": 7,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 9187.5,
+            "residual": 8,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 17566.5,
+            "residual": 11,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1102.5,
+            "residual": 3,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 5071.5,
+            "residual": 6,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 6982.5,
+            "residual": 7,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 14479.5,
+            "residual": 10,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 3454.5,
+            "residual": 5,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 9187.5,
+            "residual": 8,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 11686.5,
+            "residual": 9,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 20947.5,
+            "residual": 12,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": null
+      },
+      {
+        "item_bits": [
+          1,
+          1,
+          0
+        ],
+        "minimum_lowered_energy": -178.5,
+        "native_value": 18,
+        "native_weight": 10,
+        "slack_rows": [
+          {
+            "qubo_energy": -178.5,
+            "residual": 0,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 1144.5,
+            "residual": 3,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 2173.5,
+            "residual": 4,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 7024.5,
+            "residual": 7,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 409.5,
+            "residual": 2,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 3496.5,
+            "residual": 5,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 5113.5,
+            "residual": 6,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 11728.5,
+            "residual": 9,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": -31.5,
+            "residual": 1,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 2173.5,
+            "residual": 4,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 3496.5,
+            "residual": 5,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 9229.5,
+            "residual": 8,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 1144.5,
+            "residual": 3,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 5113.5,
+            "residual": 6,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 7024.5,
+            "residual": 7,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 14521.5,
+            "residual": 10,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": -178.5
+      },
+      {
+        "item_bits": [
+          1,
+          1,
+          1
+        ],
+        "minimum_lowered_energy": 9083.5,
+        "native_value": 32,
+        "native_weight": 18,
+        "slack_rows": [
+          {
+            "qubo_energy": 9083.5,
+            "residual": 8,
+            "slack": 0,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 17462.5,
+            "residual": 11,
+            "slack": 3,
+            "slack_bits": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 20843.5,
+            "residual": 12,
+            "slack": 4,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 32750.5,
+            "residual": 15,
+            "slack": 7,
+            "slack_bits": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 14375.5,
+            "residual": 10,
+            "slack": 2,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 24518.5,
+            "residual": 13,
+            "slack": 5,
+            "slack_bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 28487.5,
+            "residual": 14,
+            "slack": 6,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 42158.5,
+            "residual": 17,
+            "slack": 9,
+            "slack_bits": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 11582.5,
+            "residual": 9,
+            "slack": 1,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 20843.5,
+            "residual": 12,
+            "slack": 4,
+            "slack_bits": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 24518.5,
+            "residual": 13,
+            "slack": 5,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 37307.5,
+            "residual": 16,
+            "slack": 8,
+            "slack_bits": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 17462.5,
+            "residual": 11,
+            "slack": 3,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 28487.5,
+            "residual": 14,
+            "slack": 6,
+            "slack_bits": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "qubo_energy": 32750.5,
+            "residual": 15,
+            "slack": 7,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "qubo_energy": 47303.5,
+            "residual": 18,
+            "slack": 10,
+            "slack_bits": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "source_energy_if_feasible": null
+      }
+    ]
+  },
+  "oracle": "direct native value/weight enumeration and direct exposed QUBO coefficient summation",
+  "passed": true
+}

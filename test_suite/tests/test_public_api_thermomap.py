@@ -15,6 +15,7 @@ from gibbsiq import (  # noqa: E402
     ChainCommunicationProfile,
     ChainOrderSearchResult,
     CommunicationSpec,
+    CubicMonomialLowering,
     DistributionComparison,
     DomainWallEncoding,
     EmpiricalInterval,
@@ -29,6 +30,7 @@ from gibbsiq import (  # noqa: E402
     HostTransferSpec,
     Inspector,
     IsoenergeticClusterMove,
+    KnapsackEncoding,
     ParameterProvenance,
     PhysicalQuantity,
     PottsObjectiveEvaluation,
@@ -43,16 +45,20 @@ from gibbsiq import (  # noqa: E402
     TSUSpec,
     ThermodynamicProgram,
     TransitionVerificationReport,
+    TspEncoding,
     analyze_quantization,
     assess_target_admissibility,
     build_exact_transition_kernel,
     compare_boltzmann_distributions,
     compile_domain_wall,
     compile_ising,
+    compile_knapsack,
+    compile_tsp,
     evaluate_potts_assignment,
     exact_boltzmann_distribution,
     isoenergetic_cluster_move,
     profile_chain_communication,
+    reduce_cubic_monomial,
     search_optimal_chain_order,
     verify_empirical_distribution,
     verify_transition_kernel,
@@ -65,6 +71,7 @@ THERMOMAP_PUBLIC_NAMES = (
     "ChainCommunicationProfile",
     "ChainOrderSearchResult",
     "CommunicationSpec",
+    "CubicMonomialLowering",
     "DistributionComparison",
     "DomainWallEncoding",
     "EmpiricalInterval",
@@ -79,6 +86,7 @@ THERMOMAP_PUBLIC_NAMES = (
     "HostTransferSpec",
     "Inspector",
     "IsoenergeticClusterMove",
+    "KnapsackEncoding",
     "ParameterProvenance",
     "PhysicalQuantity",
     "PottsObjectiveEvaluation",
@@ -92,16 +100,20 @@ THERMOMAP_PUBLIC_NAMES = (
     "TSUSpec",
     "ThermodynamicProgram",
     "TransitionVerificationReport",
+    "TspEncoding",
     "analyze_quantization",
     "assess_target_admissibility",
     "build_exact_transition_kernel",
     "compare_boltzmann_distributions",
     "compile_domain_wall",
     "compile_ising",
+    "compile_knapsack",
+    "compile_tsp",
     "evaluate_potts_assignment",
     "exact_boltzmann_distribution",
     "isoenergetic_cluster_move",
     "profile_chain_communication",
+    "reduce_cubic_monomial",
     "search_optimal_chain_order",
     "verify_empirical_distribution",
     "verify_transition_kernel",
@@ -237,6 +249,29 @@ class ThermoMapPublicApiTests(unittest.TestCase):
         self.assertEqual(metadata["semantics"], "optimization_only_replica_coupling")
 
     def test_new_frontier_types_compose_through_public_imports(self) -> None:
+        cubic = reduce_cubic_monomial(
+            ("left", "middle", "right"),
+            coefficient=-1.0,
+            penalty=2.0,
+            offset=0.5,
+        )
+        self.assertIsInstance(cubic, CubicMonomialLowering)
+        self.assertEqual(
+            cubic.decode({"left": 1, "middle": 1, "right": 0, cubic.ancilla: 1}),
+            {
+                "left": 1,
+                "middle": 1,
+                "right": 0,
+            },
+        )
+
+        knapsack = compile_knapsack((2, 3), (4, 5), 3)
+        self.assertIsInstance(knapsack, KnapsackEncoding)
+        self.assertEqual(knapsack.penalty_policy.selection, "derived_strict")
+        tsp = compile_tsp(((0, 1, 2), (1, 0, 3), (2, 3, 0)))
+        self.assertIsInstance(tsp, TspEncoding)
+        self.assertEqual(tsp.penalty_policy.selection, "derived_strict")
+
         model = compile_ising({"spin": 0.25}, variables=("spin",), offset=1.5)
         sampler = ReferenceGibbsSampler(
             ReferenceSamplerConfig(

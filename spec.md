@@ -11,10 +11,11 @@ evidence. The model interface, fixed-beta THRML runtime, diagnostics, evaluator,
 benchmark oracle, independent small-state verifier, complete target-fact contract, and
 artifact-only Inspector core are implemented. The parallel-tempering correctness path and
 diagnostic threshold/flag correction have targeted and full-suite verification recorded on
-2026-07-14. General constraint encoding, full Inspector/HTML integration, and
-classical-baseline runners remain target behavior.
-Pairwise categorical/domain-wall lowering exists and does not constitute a general
-higher-order or knapsack/TSP constraint encoder.
+2026-07-14. Full Inspector/HTML integration and classical-baseline runners remain target
+behavior. Pairwise categorical/domain-wall lowering and the bounded EVAL-EQ-025 catalog now
+cover one binary cubic monomial plus the current positive-integer knapsack and symmetric-TSP
+fixtures. They do not constitute arbitrary higher-degree quadratization, a general constraint
+language, or automatic penalty calibration.
 
 ThermoMap is the compiler, auto-mapping, verification, and thermodynamic-roofline capability
 track inside Gibbsiq. It does not define a separate package. The normative work order is

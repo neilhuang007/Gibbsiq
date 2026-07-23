@@ -1156,3 +1156,146 @@ weight, because then the scalar and witness list need not describe the same opti
 Use: exhaustive small knapsack fixtures and strict witness scoring. This lexicographic
 characterization is an evaluation convention; it is not a QUBO penalty construction or a
 claim that minimum weight is part of every external knapsack definition.
+
+## EVAL-EQ-025: Bounded Binary Factor And Constraint Lowering
+
+Sources: direct Boolean truth-table expansion for the Rosenberg product relation; Mandal et
+al., [arXiv:2001.00658](https://arxiv.org/abs/2001.00658), Rosenberg Boolean reduction; Lucas, *Ising formulations of many NP
+problems*, Frontiers in Physics 2:5 (2014), DOI
+[10.3389/fphy.2014.00005](https://doi.org/10.3389/fphy.2014.00005), sections 5.2 and 7.2;
+Ayodele, [arXiv:2206.11040](https://arxiv.org/abs/2206.11040), penalty-weight study for
+permutation/one-hot QUBO constraints.
+Accessed 2026-07-23. Audited 2026-07-23 for `TM-LWR-001`.
+
+Penalty-evidence boundary: D-Wave Ocean's `dimod.make_quadratic` documentation warns that
+insufficient reduction strength can change minimizers (official documentation, accessed
+2026-07-23, <https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod/generated/dimod.make_quadratic.html>).
+Alessandroni et al. 2025, DOI [10.1038/s41534-025-01067-0](https://doi.org/10.1038/s41534-025-01067-0),
+establishes the difficulty of optimal Big-M selection. Alessandroni et al. 2026,
+[arXiv:2604.02416](https://arxiv.org/abs/2604.02416), studies Gibbs-solver probability
+guarantees, while Doucet et al. 2026,
+DOI [10.1088/1367-2630/ae6e98](https://doi.org/10.1088/1367-2630/ae6e98), studies weak and
+excessive penalty regimes. These sources motivate explicit policies and do not replace the
+finite ground-state proofs below, establish a penalty optimum here, or prove mixing.
+
+This entry defines a deliberately bounded catalog. The factor transform accepts one binary
+cubic monomial only; it does not assert a universal quadratization theorem. The constrained
+transforms accept finite positive-integer benchmark data and return a binary QUBO, which is
+then converted through EVAL-EQ-003. Thus the canonical Ising offset includes every constant
+created by a squared penalty.
+
+For binary `x`, `y`, and product ancilla `a`, the Rosenberg relation is
+
+```text
+R(x, y, a) = x*y - 2*x*a - 2*y*a + 3*a.
+```
+
+Its four truth-table rows have `R = 0` exactly when `a = x*y`; every other row has
+`R >= 1`. A cubic source term `c*x*y*z` therefore lowers to
+
+```text
+L(x, y, z, a) = O + c*a*z + P*R(x, y, a).
+```
+
+In exact arithmetic, for every fixed source assignment, `min_a L = O + c*x*y*z` when `P >=
+abs(c)`. At equality an incorrect ancilla can tie a correct ancilla, so `P > abs(c)` is
+required when decoded ancilla uniqueness is part of the caller's contract. This is not a
+universal binary64 uniqueness theorem: a one-ULP value above the boundary can cancel to an
+observed tie in expanded floating-point QUBO evaluation. The recorded exhaustive artifact
+therefore uses a declared finite sensitivity margin for its positive uniqueness case and
+retains the one-ULP tie as negative numerical evidence. The lowered source-objective map is
+the identity; the decoder discards `a` after validating `a = x*y`. The transform adds one
+binary ancilla, one nonzero linear term, and at most four nonzero quadratic terms after
+coefficient cancellation.
+
+For the exact finite knapsack contract in EVAL-EQ-024, let
+
+```text
+R = C + 1
+F(x) = -R * V(x) + W(x).
+```
+
+On feasible assignments, minimizing `F` is exactly the stated lexicographic rule because a
+one-unit improvement in `V` changes the first term by `C + 1`, while any feasible weight
+difference has magnitude at most `C`. Represent slack `t` in `0, ..., C` with `m =
+ceil(log2(C + 1))` bits and ordered coefficients
+
+```text
+d = (1, 2, ..., 2^(m-2), C - (2^(m-1) - 1)),
+t(y) = sum_r d_r y_r.
+```
+
+The one-bit case is `d = (1,)`. This redundant final coefficient represents every integer in
+`[0, C]`; it is intentionally an inequality slack encoding rather than a unique binary
+representation. The QUBO is
+
+```text
+L_K(x, y) = O + F(x) + P * (W(x) + t(y) - C)^2.
+```
+
+For a feasible `x`, minimization over `y` yields `O + F(x)`. For an infeasible `x`, the best
+slack is zero. Let `d = W(x) - C >= 1` and define the instance-derived quantity
+
+```text
+M = max(0, max_i (R*v_i - w_i)).
+```
+
+Remove selected items until the selection is feasible. Positive integer weights ensure that
+at most `d` removals suffice; write the number of removals as `k <= d`. If the resulting
+feasible selection is `x'`, then
+
+```text
+F(x') - F(x) = sum_(removed i) (R*v_i - w_i) <= k*M <= d*M <= d^2*M.
+```
+
+The penalty increase of the infeasible word is at least `P*d^2`; therefore the strict sufficient
+boundary is
+
+```text
+P > M.
+```
+
+In exact arithmetic, this places every infeasible state above a feasible state. It is a
+sufficient feasibility-ground-state proof, not the exact minimum adequate penalty for every
+instance or a finite-precision universal theorem. A caller-supplied penalty equal to or below
+that strict boundary is labelled `not_proved_adequate`; at equality an infeasible state can tie
+a feasible state, as for `C = 1`, one item with `(w, v) = (2, 2)`, and `P = 2`. Default derived
+penalties use an integer margin where representable, rather than relying on a one-ULP gap.
+Bounded exhaustive
+checks may identify a concrete violating state but do not convert the general condition into
+a universal theorem. The decoder requires zero residual, returns selected item indices, and
+reports the native `V` and `W`. The transform adds `ceil(log2(C + 1))` slack bits.
+
+For a symmetric nonnegative `n`-city TSP distance matrix `D`, use binary `x_(city,position)`
+and the one-hot penalty
+
+```text
+H_one_hot(x) = sum_p (1 - sum_c x_(c,p))^2
+             + sum_c (1 - sum_p x_(c,p))^2,
+H_route(x) = sum_p sum_(c,d) D_cd * x_(c,p) * x_(d,(p+1) mod n),
+L_T(x) = O + P * H_one_hot(x) + B * H_route(x).
+```
+
+`H_one_hot = 0` exactly for permutation matrices, whose decoder reads the city at every
+position and evaluates the native cyclic tour length. Every invalid binary assignment has
+`H_one_hot >= 2`: a nonzero row discrepancy implies a compensating row or column discrepancy
+because both one-hot families count `n` selected positions. Let `U` be the native length of
+the declared canonical feasible tour `(0, 1, ..., n-1)`. Therefore
+
+```text
+P > B * U / 2
+```
+
+is an exact-arithmetic strict sufficient feasibility-ground-state boundary for `B > 0`: every
+invalid state has energy at least `O + 2P`, while the declared feasible word has energy `O +
+B*U`. Equality can tie an invalid state with the declared feasible word. Default derived
+penalties use an integer margin where representable, rather than claiming a finite-precision
+universal theorem from a one-ULP gap. It is a conservative certificate relative to the unknown
+optimal tour length, not a calibrated penalty-selection rule or a sampling guarantee. The
+transform adds `n^2` binary variables, has `2*n` one-hot equations, and preserves the native
+tour length through the documented map `L_T = O + B * length` on valid words.
+
+Use: bounded higher-order factor lowering, knapsack/TSP fixture lowering, decoder checks,
+and independent exhaustive public oracles. These constructions do not supply higher-degree
+quadratization, arbitrary nonlinear constraints, an automatic penalty tuner, uniqueness at
+an equality boundary, or an inference about sampler mixing.

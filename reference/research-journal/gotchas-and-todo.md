@@ -134,10 +134,11 @@ Open implementation work is selected by stable task ID from
 `reference/00-roadmap/NEXT_TASK.md`. This list names residual mechanisms. The live ledger
 remains the only task queue.
 
-- **General constraints and feasibility — `TM-LWR-001`.** Knapsack and TSP fixtures raise
-  `NotImplementedError` in `benchmark_bridge.py`; diagnostics report
-  `{"status": "not_available"}` until a checked encoding and unpenalized-objective contract
-  exist.
+- **General constraints and feasibility beyond `TM-LWR-001`.** The bounded cubic,
+  positive-integer knapsack, and symmetric-TSP fixture encodings now have checked decoders and
+  native-objective bridge contracts. Arbitrary higher-degree/nonlinear constraints and
+  feasibility diagnostics remain absent; diagnostics continue to report
+  `{"status": "not_available"}` until that broader contract is implemented.
 - **Bulk/tail ESS and observable-specific efficiency — `TM-PROF-001`.** The current estimator
   is raw-energy Geyer ESS. Rank-normalized bulk/tail ESS requires separately named outputs,
   independent reference cases, and thresholds matched to that estimator. Joint-mode coverage

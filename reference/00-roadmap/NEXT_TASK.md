@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Observed date | 2026-07-21 |
+| Observed date | 2026-07-23 |
 | Verified implementation base | `c62169e` (`feat: add audited ThermoMap analysis foundation`) |
 | Verified control-plane documentation | `21c2a71` (`docs: add autonomous ThermoMap execution roadmap`) |
 | Verified first-frontier implementation | `42c2409` (`feat: implement first ThermoMap frontier`) |
@@ -13,7 +13,7 @@
 | Public backend | THRML JAX simulator; no production TSU artifact is present |
 | Control-plane state | `TM-GOV-001` is `complete`; `21c2a71` verifies the control documents and this ledger transition closes the task |
 | Active governance owner | none |
-| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, `GQ-INSPECT-01`, `TM-IR-001`, and `TM-IMP-001` are `complete`; `TM-LWR-001`, `TM-CAT-001`, `TM-IMP-002`, and `TM-VAL-001` are dependency-ready and unclaimed, with `TM-LWR-001` earliest in roadmap edge order |
+| Current coding state | `TM-VERIFY-01`, `TM-TARGET-01`, `GQ-INSPECT-01`, `TM-IR-001`, `TM-IMP-001`, and `TM-LWR-001` are `complete`; no coding task is claimed; `TM-CAT-001`, `TM-IMP-002`, `TM-VAL-001`, and newly unblocked `TM-LWR-002` are dependency-ready and unclaimed |
 | Scratch state observed before this pass | Untracked `Project_GOAL.md` and three 2026-07-15 audit journals remain preserved and excluded from task commits; the audit-defect remediation commit `403bbb3` precedes this closure and repaired both confirmed defects on this task's critical paths |
 
 The implementation base has a recorded full-suite result of 457 tests in 120.615 seconds at
@@ -51,10 +51,11 @@ prose. Reconcile a conflict before selecting a feature task.
 | `GQ-INSPECT-01` | `complete` | `TM-FND-001`, `TM-GOV-001` | Artifact-only Inspector evidence is committed in `42c2409`. |
 | `TM-IR-001` | `complete` | `TM-VERIFY-01` | The implementation at `35a2ba3` plus the adversarial hardening, raw evidence, and ledger transition in the containing commit pass every closure gate. |
 | `TM-IMP-001` | `complete` | `TM-IR-001` | Factor-graph JSON schema v1, the NetworkX frontend, tests, artifacts, and journal pass every closure gate in the commit containing this transition. |
-| `TM-LWR-001` | `ready` | `TM-IR-001`, `TM-VERIFY-01` | Both dependencies are complete; it is the earliest ready task in roadmap edge order and remains unclaimed. |
+| `TM-LWR-001` | `complete` | `TM-IR-001`, `TM-VERIFY-01` | Bounded cubic/knapsack/TSP lowerings, native constrained bridge semantics, exhaustive evidence, independent reviews, and final gates pass in the commit containing this transition. |
 | `TM-CAT-001` | `ready` | `TM-IR-001`, `TM-VERIFY-01`, `TM-TARGET-01` | All dependencies are complete; unclaimed. |
 | `TM-IMP-002` | `ready` | `TM-IR-001`, `TM-TARGET-01` | Both dependencies are complete; unclaimed. |
 | `TM-VAL-001` | `ready` | `TM-IR-001`, `TM-TARGET-01` | Both dependencies are complete; unclaimed. |
+| `TM-LWR-002` | `ready` | `TM-LWR-001`, `TM-TARGET-01`, `TM-VERIFY-01` | All dependencies are complete after `TM-LWR-001`; unclaimed. |
 
 ## Historical Governance Closure — `TM-GOV-001`
 
@@ -344,18 +345,82 @@ later lane. Each worker owns one bounded task, and each lane remains serial.
   contract, artifacts, journal, and this transition. Git history is authoritative because a
   state-transition commit cannot contain its own final SHA.
 
+## Completed Bounded Lowering
+
+### `TM-LWR-001` — Higher-Order And Constraint Lowering
+
+- Gate/state: M1 compiler kernel; `complete` in the commit containing this ledger transition.
+- Dependencies: `TM-IR-001` and `TM-VERIFY-01`, both complete.
+- Owner: none. Worker `/root/tm_lwr_001` implemented the equation-first task; coordinator
+  `/root`, a second gadget reviewer, an independent math auditor, and separate Standards/Spec
+  reviewers challenged the result.
+- Objective: implement a bounded catalog of exact binary higher-order reductions plus the
+  one-hot and penalty encodings required by the current knapsack and TSP fixtures. Every
+  transform returns ancillas, penalty policy, decoder, source-to-lowered objective map, and an
+  overhead report.
+- Worker-owned files: `reference/08-evaluation/equation-audit.md`;
+  new `src/gibbsiq/factor_lowering.py` and `src/gibbsiq/constraints.py`;
+  `src/gibbsiq/benchmark_bridge.py`; new focused tests
+  `test_suite/tests/test_factor_lowering.py` and `test_suite/tests/test_constraints.py`;
+  narrow additions to `test_suite/tests/test_benchmark_bridge.py`;
+  `tools/generate_tm_lwr_001_artifacts.py`; deterministic raw evidence under
+  `reference/00-roadmap/artifacts/tm-lwr-001/`; and the append-only journal
+  `reference/research-journal/2026-07-23-tm-lwr-001.md`.
+- Shared integration files reserved for coordinator: `src/gibbsiq/__init__.py`, this ledger,
+  `reference/claims-evidence-map.md`, root guidance/status files, and final integration
+  evidence.
+- Public gate: exhaustive minimization over ancillas recovers every source-state energy or its
+  documented affine relation; decoded witnesses preserve native feasibility and objective;
+  inadequate penalties are detected; offsets and typed variable labels survive every path.
+- Blind contract: coefficient scaling, redundant constraints, variable relabeling, offset
+  shifts, alternative feasible witnesses, Boolean/numeric label aliases, and penalties
+  immediately below and above each proved boundary. The fixed encoders have no caller-supplied
+  redundant-constraint list; coverage instead includes the TSP families' dependent total-count
+  relation, redundant knapsack slack words, typed relabeling, item/city permutations, and
+  alternative feasible/native-optimal witnesses.
+- Independent oracle: direct native knapsack/TSP evaluation plus exhaustive source/ancilla
+  enumeration implemented outside production lowering helpers.
+- Review outcome: corrected the negative-cubic equality witness and QUBO term count, proved the
+  sharper knapsack boundary, proved the TSP invalid one-hot gap is two, retained the one-ULP
+  binary64 tie, added structured exact-arithmetic/finite-precision scope, and made artifact
+  publication manifest-last. Four `$simplify` perspectives then removed duplicate validation,
+  native evaluation, proof computations, and policy metadata construction without broadening
+  the modules.
+- Artifact evidence: deterministic run `2026-07-23-lowering-contract` records all four gates as
+  passed. Its manifest SHA-256 is
+  `93baa759113b986ef7d846523faa487312592fa03f113c42f7b20bfd6baf858d`;
+  `source-files.json` pins ten files at SHA-256
+  `183de260a56365cfcdae528ebf477e9031dd5195d0cda9953671a3db960547f2`.
+  Re-generation produced byte-identical substantive payloads.
+- Last verified: 2026-07-23 on CPython 3.13.5 / Windows 11 against source base `8e4b4a0`.
+  Focused discovery passed 6 factor, 9 constraint, 27 bridge, and 3 public-API tests; 72 nearest
+  tests passed; the full suite passed 668 tests with zero skips in 93.507 seconds. Markdown
+  math, Ruff check/format, mypy over 27 source files, manifest/source rehashing, guarded
+  overwrite behavior, and `git diff --check` passed.
+- Journals: the worker handoff is `reference/research-journal/2026-07-23-tm-lwr-001.md`; the
+  authoritative hard-parts, review, `$simplify`, failure, provenance, and final-command record
+  is `reference/research-journal/2026-07-23-tm-lwr-001-coordinator-verification.md`.
+- Completion condition: satisfied by the commit containing the verified code, tests, equation
+  audit, artifacts, journals, public exports, status reconciliation, and this transition. Git
+  history is authoritative because a state-transition commit cannot contain its own final SHA.
+
+## Active Task
+
+No coding task is claimed. The next dependency-ready list below controls selection.
+
 ## Next Dependency-Ready Tasks
 
 Four tasks are dependency-ready and unclaimed; full cards live in
 `autonomous-implementation-roadmap.md`. Worker-capacity selection is a prefix rule in roadmap
 edge order:
 
-1. `TM-LWR-001` — Higher-Order And Constraint Lowering (`TM-IR-001` + `TM-VERIFY-01`).
-2. `TM-CAT-001` — Categorical Conditional And THRML Execution
+1. `TM-CAT-001` — Categorical Conditional And THRML Execution
    (`TM-IR-001` + `TM-VERIFY-01` + `TM-TARGET-01`).
-3. `TM-IMP-002` — Existing-THRML Program Importer (`TM-IR-001` + `TM-TARGET-01`).
-4. `TM-VAL-001` — Whole-Program Validation And Structured Compile Failure
+2. `TM-IMP-002` — Existing-THRML Program Importer (`TM-IR-001` + `TM-TARGET-01`).
+3. `TM-VAL-001` — Whole-Program Validation And Structured Compile Failure
    (`TM-IR-001` + `TM-TARGET-01`).
+4. `TM-LWR-002` — Degree Reduction And Equality Gadgets
+   (`TM-LWR-001` + `TM-TARGET-01` + `TM-VERIFY-01`).
 
 Each worker claims exactly one bounded task and records the claim here before editing owned
 files. Reconcile an earlier task that ceases to be `ready` before claiming a later lane.

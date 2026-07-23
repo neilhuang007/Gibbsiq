@@ -25,7 +25,7 @@ this order:
 If `NEXT_TASK.md` or the runbook is absent, the first ready task is `TM-GOV-001`. Chat history
 does not replace the ledger.
 
-## Status Snapshot — 2026-07-17
+## Status Snapshot — 2026-07-23
 
 The verified foundation is commit `c62169e` (`feat: add audited ThermoMap analysis foundation`).
 Commit `42c2409` (`feat: implement first ThermoMap frontier`) adds the independent CPU
@@ -39,6 +39,13 @@ tracked at `35a2ba3` plus the 2026-07-17 closure commit provides exact Ising and
 categorical clamping, logical coordinates, observation metadata, source-factor lineage,
 deterministic relabeling, and versioned typed serialization. Its retained 42-program corpus
 independently checks 248 projected assignments with maximum absolute energy error `0.0`.
+
+The pairwise factor-JSON and optional NetworkX frontends are complete. `TM-LWR-001` adds the
+bounded EVAL-EQ-025 catalog: an exact-arithmetic one-ancilla cubic Rosenberg transform,
+positive-integer knapsack slack lowering, and symmetric-TSP two-way-one-hot lowering. Their
+penalty certificates explicitly distinguish exact arithmetic from unproved universal
+finite-precision behavior, and constrained benchmark candidates rank only feasible native
+decodes.
 
 The detailed audit reports two separate scores:
 
@@ -67,6 +74,8 @@ count suggests.
 - immutable target-independent `ThermodynamicProgram` roles, clamps, logical coordinates,
   observations, factor/source identities, same-type projection, reconstruction, and relabeling;
 - pairwise categorical IR and exact domain-wall lowering;
+- versioned pairwise factor-JSON and optional NetworkX import plus bounded
+  cubic/knapsack/symmetric-TSP QUBO lowerings with strict decoders and penalty evidence;
 - supplied-partition chain-order search plus separately named communication algebraic proxies;
 - supplied-assignment Potts objective evaluation and an optimization-only ICM primitive;
 - deterministic artifact-only Inspector JSON/Markdown summaries with optional all-row canonical
@@ -74,11 +83,11 @@ count suggests.
 
 ### Open Product Boundary
 
-The repository lacks automatic graph partitioning, variable placement, general routing,
-degree-reduction/equality gadgets, hybrid TSU/GPU partitioning, stale-boundary dynamics,
-calibrated end-to-end latency or energy, observable-specific ESS/joule roofline classification,
-cross-domain baseline runners, unified Inspector/HTML/CLI reporting, and a physical TSU
-backend.
+The repository lacks arbitrary higher-degree/constraint-language lowering, automatic graph
+partitioning, variable placement, general routing, degree-reduction/equality gadgets, hybrid
+TSU/GPU partitioning, stale-boundary dynamics, calibrated end-to-end latency or energy,
+observable-specific ESS/joule roofline classification, cross-domain baseline runners, unified
+Inspector/HTML/CLI reporting, and a physical TSU backend.
 
 The public execution path is the THRML JAX simulator. A simulator run validates software
 lowering and sampling behavior on its recorded host. It does not establish production TSU
@@ -93,7 +102,7 @@ implementation status.
 | Legacy stage | Current evidence-based status |
 | --- | --- |
 | 0 — [Research and framing](stage-00-research-and-framing.md) | Complete for the original Gibbsiq scope: research pack, evaluator, strict oracle, and exact corpus exist. |
-| 1 — [Core model compatibility](stage-01-core-model-compatibility.md) | Complete for binary pairwise QUBO/Ising/BQM and the target-independent program envelope. Pairwise categorical/domain-wall modeling, strict clamping, logical coordinates, observations, and factor lineage are implemented extensions. General higher-order factors and constrained encodings remain open. |
+| 1 — [Core model compatibility](stage-01-core-model-compatibility.md) | Complete for binary pairwise QUBO/Ising/BQM and the target-independent program envelope. Pairwise categorical/domain-wall modeling, strict clamping, logical coordinates, observations, factor lineage, one cubic monomial, and the current knapsack/TSP fixture encodings are implemented extensions. Arbitrary higher-order and general constrained inputs remain open. |
 | 2 — [THRML optimization runtime](stage-02-thrml-optimization-runtime.md) | Core correctness complete. The 2026-07-14 correction verifies exchange sign, local transition/work accounting, first retained-sample work, and two-replica attempts. Device-side PT remains a performance refactor, not an open correctness gate. |
 | 3 — [Diagnostics pipeline](stage-03-diagnostics-pipeline.md) | Core semantic correction complete and integrated. Scalar energy ESS/tau, plain and rank/folded R-hat, diversity, magnetization, and frozen-state checks exist. Rank-normalized bulk/tail ESS, feasibility, and broader joint-mode checks remain future work. |
 | 4 — [Inspector and reporting](stage-04-inspector-and-reporting.md) | Partial. The artifact-only `Inspector` core emits deterministic JSON/Markdown and verifies every stored energy row against an optional caller-supplied model. Unified CLI, HTML, topology, profiler, baseline, and compiled-manifest integration remain under `TM-REP-001`. |
@@ -122,11 +131,10 @@ governance and verified foundation
 -> compatibility matrix and software release
 ```
 
-The first frontier and `TM-IR-001` are complete. The live ledger selects `TM-IMP-001` as the
-earliest dependency-ready unclaimed task: freeze a versioned pairwise factor-JSON contract and
-an optional NetworkX importer without losing typed labels, offsets, clamps, coordinates,
-isolated nodes, or source metadata. Other newly unblocked tasks remain governed by the roadmap
-dependency order and may be exposed only through explicit, disjoint ledger claims.
+The first frontier, `TM-IR-001`, `TM-IMP-001`, and `TM-LWR-001` are complete. The live ledger
+selects `TM-CAT-001` as the earliest dependency-ready unclaimed task; `TM-IMP-002`,
+`TM-VAL-001`, and `TM-LWR-002` are also ready in roadmap edge order. Each remains governed by
+an explicit, disjoint ledger claim.
 
 The mapping passes are sequential because each freezes the artifact consumed by the next:
 

@@ -1,0 +1,42 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "bytes": 2739,
+      "path": "bridge-evidence.json",
+      "sha256": "c3fb4da08ce85613a16301e549fac65671039693b5ad927a643f41d7f3175584"
+    },
+    {
+      "bytes": 26488,
+      "path": "cubic-enumeration.json",
+      "sha256": "976386e87f73645980fc3551e11f2ccdf15cbaa2e887b3b5b001a76eae6c33b9"
+    },
+    {
+      "bytes": 487,
+      "path": "environment.json",
+      "sha256": "286481d7d1337e0e45dbc2450387c8ea4e1fc78f129923850b52330ca171abbe"
+    },
+    {
+      "bytes": 981,
+      "path": "generation-config.json",
+      "sha256": "18e01562a3bd014f31ba02afee6cc31693734c42aaa37d7cb99b07c810b82c3c"
+    },
+    {
+      "bytes": 53320,
+      "path": "knapsack-enumeration.json",
+      "sha256": "615fc9be8d9445b33b2a2abe4bda993b9dddc51c38b83308d1a968c385e0befc"
+    },
+    {
+      "bytes": 1754,
+      "path": "source-files.json",
+      "sha256": "183de260a56365cfcdae528ebf477e9031dd5195d0cda9953671a3db960547f2"
+    },
+    {
+      "bytes": 630415,
+      "path": "tsp-enumeration.json",
+      "sha256": "5e3a1521703ea21fc5a4ef4944ccc4b4b5e499e489c688c6e17b641f6933bbac"
+    }
+  ],
+  "run_id": "2026-07-23-lowering-contract",
+  "task_id": "TM-LWR-001"
+}

@@ -1,0 +1,18 @@
+{
+  "absolute_tolerance": 1e-09,
+  "classification": {
+    "hardware_values": "not applicable",
+    "penalty_bounds": "derived exact finite-state sufficient certificates",
+    "sampling_claim": "none"
+  },
+  "generator_seed": 20260723,
+  "oracle": "direct native objectives plus direct QUBO coefficient summation outside lowering methods",
+  "reproduction_command": "python tools/generate_tm_lwr_001_artifacts.py --overwrite",
+  "rng": "not applicable; all cases are fixed deterministic enumerations",
+  "run_id": "2026-07-23-lowering-contract",
+  "task_id": "TM-LWR-001",
+  "timing_boundaries": {
+    "compile": "production lowering and fixture-compilation calls invoked directly by this generator; the bridge's intentional input-only recompilation is included in native_oracle_and_bridge_validation",
+    "wall_clock": "generator entry through staging every substantive evidence payload; final environment/manifest serialization and manifest-last publication are excluded"
+  }
+}

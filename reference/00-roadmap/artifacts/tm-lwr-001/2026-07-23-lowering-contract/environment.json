@@ -1,0 +1,16 @@
+{
+  "git_head": "8e4b4a0081b9dc4cc3063fee81eae0875da13425",
+  "implementation": "CPython",
+  "os_name": "nt",
+  "platform": "Windows-11-10.0.26220-SP0",
+  "python": "3.13.5 (main, Jun 12 2025, 12:42:35) [MSC v.1943 64 bit (AMD64)]",
+  "pythonhashseed": null,
+  "timing_seconds": {
+    "compile": 0.036833199999819044,
+    "diagnostics": 0.0,
+    "native_oracle_and_bridge_validation": 0.1112105000001975,
+    "sample": 0.0,
+    "tuning": 0.0,
+    "wall_clock": 0.26575270000012097
+  }
+}

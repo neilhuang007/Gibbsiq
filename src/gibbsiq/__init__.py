@@ -17,6 +17,7 @@ from gibbsiq.communication_profile import (
     profile_chain_communication,
     search_optimal_chain_order,
 )
+from gibbsiq.constraints import KnapsackEncoding, TspEncoding, compile_knapsack, compile_tsp
 from gibbsiq.conversions import compile_bqm, compile_ising, compile_qubo
 from gibbsiq.diagnostics import (
     chain_flags,
@@ -44,6 +45,7 @@ from gibbsiq.exact_distribution import (
     compare_boltzmann_distributions,
     exact_boltzmann_distribution,
 )
+from gibbsiq.factor_lowering import CubicMonomialLowering, reduce_cubic_monomial
 from gibbsiq.hardware import (
     CommunicationSpec,
     FixedPointSpec,
@@ -94,6 +96,7 @@ __all__ = [
     "ChainCommunicationProfile",
     "ChainOrderSearchResult",
     "CommunicationSpec",
+    "CubicMonomialLowering",
     "DistributionComparison",
     "DomainWallEncoding",
     "EmpiricalInterval",
@@ -111,6 +114,7 @@ __all__ = [
     "Inspector",
     "IsingModel",
     "IsoenergeticClusterMove",
+    "KnapsackEncoding",
     "ParameterProvenance",
     "PhysicalQuantity",
     "PottsObjectiveEvaluation",
@@ -128,6 +132,7 @@ __all__ = [
     "TSUSpec",
     "ThermodynamicProgram",
     "TransitionVerificationReport",
+    "TspEncoding",
     "__version__",
     "analyze_quantization",
     "assess_target_admissibility",
@@ -142,7 +147,9 @@ __all__ = [
     "compile_domain_wall",
     "compile_fixture",
     "compile_ising",
+    "compile_knapsack",
     "compile_qubo",
+    "compile_tsp",
     "compute_diagnostics",
     "diagnostic_candidate_from_input",
     "distance_to_best_trace",
@@ -163,6 +170,7 @@ __all__ = [
     "program_from_factor_json",
     "program_from_networkx",
     "rank_normalized_split_rhat",
+    "reduce_cubic_monomial",
     "search_optimal_chain_order",
     "spin_to_binary",
     "split_chains",
