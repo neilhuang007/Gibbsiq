@@ -1,11 +1,11 @@
-"""Stage 1 contract tests: core model compatibility.
+"""Core model-compatibility contract tests.
 
-Stage 1 is not implemented yet, so this file has two layers:
+Two layers:
 
 1. executable reference-contract tests that pin down the expected math and
-   schema without importing future implementation code;
-2. optional API conformance tests that are skipped until the public Stage 1
-   functions/classes exist.
+   schema without importing implementation code;
+2. API conformance tests guarded on import so the reference layer still runs if
+   the public functions are absent. All guarded symbols are present at HEAD.
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ def pair_key(left: str, right: str) -> str:
 
 
 def normalize_qubo_terms(terms: dict[Any, float], offset: float = 0.0) -> dict[str, Any]:
-    """Normalize common QUBO shapes into the Stage 1 upper-triangle convention."""
+    """Normalize common QUBO shapes into the canonical upper-triangle convention."""
     variables: set[str] = set()
     linear: dict[str, float] = {}
     quadratic: dict[str, float] = {}
@@ -139,7 +139,7 @@ def reference_compile_ising(
         left, right = raw_pair[0], raw_pair[1]
         variables.update((left, right))
         if left == right:
-            raise ValueError("self-couplings are not valid Stage 1 Ising quadratic terms")
+            raise ValueError("self-couplings are not valid Ising quadratic terms")
         first, second = ordered_pair(left, right)
         key = pair_key(first, second)
         quadratic[key] = quadratic.get(key, 0.0) + float(raw_value)
@@ -276,7 +276,7 @@ class Stage01ImplementationConformanceTest(unittest.TestCase):
     compile_ising: Callable | None = maybe_import("gibbsiq.compile_ising")
     sample_result_type: type | None = maybe_import("gibbsiq.SampleResult")
 
-    @unittest.skipIf(compile_qubo is None, "Stage 1 compile_qubo API is not implemented yet")
+    @unittest.skipIf(compile_qubo is None, "compile_qubo is not importable")
     def test_compile_qubo_matches_reference_contract(self) -> None:
         terms = {("z", "z"): 1.0, ("a", "z"): -3.0, ("a", "a"): 2.0}
         expected = reference_compile_qubo(terms, offset=-0.25)
@@ -286,7 +286,7 @@ class Stage01ImplementationConformanceTest(unittest.TestCase):
             self.assertEqual(actual[key], expected[key])
         self.assertTrue(REQUIRED_IR_FIELDS.issubset(actual))
 
-    @unittest.skipIf(compile_ising is None, "Stage 1 compile_ising API is not implemented yet")
+    @unittest.skipIf(compile_ising is None, "compile_ising is not importable")
     def test_compile_ising_matches_reference_contract(self) -> None:
         expected = reference_compile_ising({1: 2.0}, {(1, 0): -0.5}, offset=4.0)
         model = type(self).compile_ising({1: 2.0}, {(1, 0): -0.5}, offset=4.0)
@@ -305,7 +305,7 @@ class Stage01ImplementationConformanceTest(unittest.TestCase):
             self.assertEqual(actual[key], expected[key])
         self.assertTrue(REQUIRED_IR_FIELDS.issubset(as_mapping(model)))
 
-    @unittest.skipIf(sample_result_type is None, "Stage 1 SampleResult API is not implemented yet")
+    @unittest.skipIf(sample_result_type is None, "SampleResult is not importable")
     def test_sample_result_exposes_minimum_schema(self) -> None:
         annotations = getattr(self.sample_result_type, "__annotations__", {})
         available = set(annotations) | set(dir(self.sample_result_type))

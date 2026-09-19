@@ -12,8 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Check Markdown math
-        run: python tools/check_markdown_math.py
+      # Roadmap and research Markdown stay local; CI validates committed runtime code.
       - name: Run tests
         run: |
           export PYTHONPATH=src

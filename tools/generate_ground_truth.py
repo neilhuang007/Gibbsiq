@@ -710,7 +710,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--out",
         type=Path,
-        default=Path("reference/06-benchmarks/fixtures/ground-truth-small.json"),
+        default=Path("src/gibbsiq/data/evaluation/ground-truth-small.json"),
         help="Output path for the generated corpus.",
     )
     args = parser.parse_args(argv)

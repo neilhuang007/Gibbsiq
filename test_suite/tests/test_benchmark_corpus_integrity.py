@@ -13,13 +13,15 @@ import sys
 import unittest
 from pathlib import Path
 
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from gibbsiq.benchmark_oracle import FAMILY_SPECS  # noqa: E402
 
 
-CORPUS_PATH = REPO_ROOT / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
+CORPUS_PATH = FIXTURE_DIRECTORY / "ground-truth-small.json"
 FIXTURE_ID_RE = re.compile(r"^gt_[a-z0-9_]+$")
 
 

@@ -12,6 +12,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -24,7 +26,7 @@ from gibbsiq.benchmark_oracle import (  # noqa: E402
 
 
 def load_corpus() -> list[dict]:
-    path = REPO_ROOT / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
+    path = FIXTURE_DIRECTORY / "ground-truth-small.json"
     return json.loads(path.read_text(encoding="utf-8-sig"))["fixtures"]
 
 

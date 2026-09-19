@@ -1,4 +1,4 @@
-"""Independent ground-truth tests for ``src/gibbsiq/diagnostics.py`` (Stage 3).
+"""Independent ground-truth tests for ``src/gibbsiq/diagnostics.py``.
 
 Unlike ``test_diagnostics_arviz_crosscheck.py``, this file avoids arviz and numpy
 entirely: expectations come from closed-form statistical theory, hand-derived

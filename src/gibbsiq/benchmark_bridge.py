@@ -257,9 +257,7 @@ def _knapsack_candidate_from_result(
 def _tsp_candidate_from_result(encoding: TspEncoding, result: SampleResult) -> dict[str, Any]:
     """Decode all feasible words and rank them by native cyclic tour length."""
     vartype = _require_encoding_variable_order(result, encoding.variables)
-    best_length: float | None = None
-    witnesses: list[list[int]] = []
-    seen: set[tuple[int, ...]] = set()
+    decoded: dict[tuple[int, ...], float] = {}
     invalid_sample_count = 0
     for sample in result.samples:
         try:
@@ -267,17 +265,21 @@ def _tsp_candidate_from_result(encoding: TspEncoding, result: SampleResult) -> d
         except ValueError:
             invalid_sample_count += 1
             continue
-        length = encoding.native_length(tour)
-        if best_length is None or length < best_length - DEFAULT_TOLERANCE:
-            best_length = length
-            witnesses = []
-            seen = set()
-        if best_length is not None and abs(length - best_length) <= DEFAULT_TOLERANCE:
-            if tour not in seen and len(witnesses) < MAX_WITNESSES:
-                seen.add(tour)
-                witnesses.append(list(tour))
-    if best_length is None:
+        if tour not in decoded:
+            decoded[tour] = encoding.native_length(tour)
+    if not decoded:
         raise ValueError("result contains no feasible decoded TSP witness")
+
+    # Take the minimum before collecting witnesses; a single running pass would
+    # report the first length within tolerance rather than the smallest.
+    best_length = min(decoded.values())
+    witnesses: list[list[int]] = []
+    for tour, length in decoded.items():
+        if abs(length - best_length) > DEFAULT_TOLERANCE:
+            continue
+        witnesses.append(list(tour))
+        if len(witnesses) >= MAX_WITNESSES:
+            break
     return {
         "num_cities": encoding.num_cities,
         "optimal_tour_length": best_length,

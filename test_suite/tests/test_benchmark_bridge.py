@@ -16,6 +16,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -41,7 +43,7 @@ except ImportError:
 if THRML_AVAILABLE:
     from gibbsiq import SamplerConfig, THRMLSampler
 
-CORPUS_PATH = REPO_ROOT / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
+CORPUS_PATH = FIXTURE_DIRECTORY / "ground-truth-small.json"
 CORPUS = json.loads(CORPUS_PATH.read_text(encoding="utf-8"))
 FIXTURES = {fixture["id"]: fixture for fixture in CORPUS["fixtures"]}
 TOLERANCE = 1e-9

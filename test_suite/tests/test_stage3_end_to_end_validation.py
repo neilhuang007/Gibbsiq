@@ -1,4 +1,4 @@
-"""Stage 3 end-to-end validation: brute-forceable models through the real sampler.
+"""Diagnostics end-to-end validation: brute-forceable models through the real sampler.
 
 Assertions are anchored to exhaustive state enumeration (distributions, optima) and
 hand-analyzable sampler regimes (frozen, trapped, well-mixed) for the diagnostics flags.

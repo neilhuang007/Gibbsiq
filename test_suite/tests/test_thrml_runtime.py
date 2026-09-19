@@ -1,4 +1,4 @@
-"""Stage 2 THRML runtime contract tests; sampling classes skip without the optional thrml extra."""
+"""THRML runtime contract tests; sampling classes skip without the optional thrml extra."""
 
 from __future__ import annotations
 
@@ -461,7 +461,7 @@ class ResultSchemaTests(unittest.TestCase):
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class DiagnosticsWiringTests(unittest.TestCase):
-    """Stage 3: every sample() call embeds the full diagnostics payload."""
+    """Every sample() call embeds the full diagnostics payload."""
 
     def _sample(self, num_reads: int = 24, num_chains: int = 2):
         model = compile_ising({"a": 0.1, "b": -0.1, "c": 0.0}, {("a", "b"): 0.2, ("b", "c"): -0.3})

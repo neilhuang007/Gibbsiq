@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -25,7 +27,7 @@ def load_json(relative_path: str) -> dict:
 
 
 def complete_candidate_from_fixtures() -> dict:
-    fixture_sets = load_fixture_sets(REPO_ROOT / "reference" / "08-evaluation" / "fixtures")
+    fixture_sets = load_fixture_sets(FIXTURE_DIRECTORY)
     results = []
     for fixture_id, fixture in fixture_sets["fixtures"].items():
         if fixture_id in fixture_sets["groups"]["benchmark"]:
@@ -119,7 +121,7 @@ class EvaluationHarnessTest(unittest.TestCase):
                 encoding="utf-8",
             )
             fixture_sets = load_fixture_sets(
-                REPO_ROOT / "reference" / "08-evaluation" / "fixtures",
+                FIXTURE_DIRECTORY,
                 benchmark_path=empty_benchmark,
             )
 

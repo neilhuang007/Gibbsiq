@@ -10,9 +10,11 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GENERATOR_PATH = REPO_ROOT / "tools" / "generate_ground_truth.py"
-CORPUS_PATH = REPO_ROOT / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
+CORPUS_PATH = FIXTURE_DIRECTORY / "ground-truth-small.json"
 
 
 def load_generator():

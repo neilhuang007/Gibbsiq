@@ -1,4 +1,4 @@
-"""Sampler-health diagnostics for THRML runs (Stage 3).
+"""Sampler-health diagnostics for THRML runs.
 
 Ports arviz v0.21.0 ``_ess``/``_rhat``/``_split_chains``/``_rhat_rank`` (Vehtari 2021),
 cross-checked to 1e-9 (1e-8 rank-normalized); degenerate inputs return status strings, not NaN.
@@ -33,10 +33,10 @@ STATUS_NOT_AVAILABLE = "not_available"
 
 RHAT_THRESHOLD = 1.01
 HIGH_SAMPLE_CONCENTRATION_TOP1_MASS_THRESHOLD = 0.9
-# Compatibility alias for callers that imported the original Stage 3 name.
+# Compatibility alias for callers that imported the original name.
 MODE_COLLAPSE_TOP1_MASS_THRESHOLD = HIGH_SAMPLE_CONCENTRATION_TOP1_MASS_THRESHOLD
 LOW_DIVERSITY_OCCUPANCY_EFFICIENCY_THRESHOLD = 0.05
-# Compatibility alias for callers that imported the Stage 3 constant.
+# Compatibility alias for callers that imported the original constant.
 LOW_DIVERSITY_UNIQUE_FRACTION_THRESHOLD = LOW_DIVERSITY_OCCUPANCY_EFFICIENCY_THRESHOLD
 NO_RECENT_IMPROVEMENT_WINDOW_FRACTION = 0.5
 POOR_MIXING_MIN_TAU_MULTIPLES = 50.0

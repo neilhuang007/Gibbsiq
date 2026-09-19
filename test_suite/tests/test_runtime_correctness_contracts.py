@@ -195,6 +195,58 @@ class RuntimeMathContractTests(unittest.TestCase):
 
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
+class ProductionReplicaExchangeRatioTests(unittest.TestCase):
+    """EVAL-EQ-014 asserted against the swap ratio the sampler actually executes.
+
+    ``_replica_exchange_log_ratio`` has no production caller; the tempering loop
+    recomputes the ratio from lowered log-densities. These checks read the recorded
+    ``swap_trace`` so a sign or offset regression in that expression fails here.
+    """
+
+    def _swap_trace(self) -> list[dict[str, Any]]:
+        model = compile_ising(
+            {"a": 0.4, "b": -0.3, "c": 0.15},
+            {("a", "b"): 0.8, ("b", "c"): -0.6},
+            offset=11.0,
+        )
+        config = SamplerConfig(
+            beta=2.0,
+            n_warmup=6,
+            steps_per_sample=1,
+            seed=23,
+            num_chains=2,
+            init="random",
+            parallel_tempering_betas=(0.5, 1.0, 2.0),
+            parallel_tempering_swap_interval=1,
+        )
+        result = THRMLSampler(config).sample(model, num_reads=24)
+        trace = result.traces["parallel_tempering"]["swap_trace"]
+        self.assertGreater(len(trace), 0, "no swap attempts recorded")
+        return trace
+
+    def test_recorded_log_acceptance_matches_canonical_ratio(self) -> None:
+        # (beta_i - beta_j) * (E_i - E_j); float32 lowering sets the tolerance.
+        for event in self._swap_trace():
+            expected = (event["left_beta"] - event["right_beta"]) * (
+                event["left_energy_before"] - event["right_energy_before"]
+            )
+            self.assertAlmostEqual(
+                event["log_acceptance"],
+                expected,
+                delta=1e-5,
+                msg=f"pair {event['left_beta_index']}-{event['right_beta_index']}",
+            )
+
+    def test_recorded_log_acceptance_is_offset_invariant(self) -> None:
+        # The offset cancels in the difference, so the interaction energies agree.
+        for event in self._swap_trace():
+            expected = (event["left_beta"] - event["right_beta"]) * (
+                event["left_interaction_energy_before"] - event["right_interaction_energy_before"]
+            )
+            self.assertAlmostEqual(event["log_acceptance"], expected, delta=1e-5)
+
+
+@unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class RuntimeBackendContractTests(unittest.TestCase):
     def test_first_fixed_beta_read_advances_before_observation(self) -> None:
         model = compile_ising({"s": 1.0})

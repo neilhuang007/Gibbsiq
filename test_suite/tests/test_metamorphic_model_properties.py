@@ -2,7 +2,7 @@
 
 Fixture tests pin exact values for hand-picked instances; these property checks
 assert transformations that must hold for every assignment of every instance.
-They are the Stage 1 carry-over items tracked in the roadmap.
+They cover the model-IR invariants the roadmap tracks under WP-04.
 """
 
 from __future__ import annotations

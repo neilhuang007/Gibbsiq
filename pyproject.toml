@@ -2,7 +2,7 @@
 name = "gibbsiq"
 dynamic = ["version"]
 description = "THRML-native optimization infrastructure for QUBO and Ising models"
-readme = "README.md"
+readme = { text = "# Gibbsiq\n\nGibbsiq is a Python toolkit for QUBO and Ising model construction, exact small-instance references, sampling diagnostics, and optional THRML execution. Its dependency-free core includes model and result contracts, conversions, encodings, exact distribution checks, evaluation fixtures, and low-level qualification value, statistical, and reference foundations. Optional extras provide THRML, dimod, NetworkX, and ArviZ integrations.\n", content-type = "text/markdown" }
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -63,7 +63,7 @@ version = { attr = "gibbsiq.__version__" }
 
 # PEP 561: ship the py.typed marker so type checkers consume the annotations.
 [tool.setuptools.package-data]
-gibbsiq = ["py.typed"]
+gibbsiq = ["py.typed", "data/evaluation/*.json"]
 
 [project.scripts]
 gibbsiq-evaluate = "gibbsiq.evaluation:main"

@@ -116,6 +116,9 @@ class SampleResult:
     variables: tuple[Variable, ...]
     energies: tuple[float, ...]
     vartype: ResultVartype = "SPIN"
+    # Optional at construction only. ``__post_init__`` defaults it to ``energies`` and
+    # validates the length, so it is a non-empty tuple on every constructed instance;
+    # the ``assert ... is not None`` narrowings at the read sites rest on that.
     interaction_energies: tuple[float, ...] | None = None
     traces: Mapping[str, Any] = field(default_factory=dict)
     diagnostics: Mapping[str, Any] = field(default_factory=dict)

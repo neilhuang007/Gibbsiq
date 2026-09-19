@@ -8,6 +8,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -32,7 +34,7 @@ from gibbsiq.diagnostics import (  # noqa: E402
 )
 from gibbsiq.evaluation import compare_values  # noqa: E402
 
-FIXTURE_PATH = REPO_ROOT / "reference" / "08-evaluation" / "fixtures" / "diagnostic-fixtures.json"
+FIXTURE_PATH = FIXTURE_DIRECTORY / "diagnostic-fixtures.json"
 TOLERANCE = 1e-9
 
 

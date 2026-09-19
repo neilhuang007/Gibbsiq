@@ -1,16 +1,19 @@
-"""JSON evaluator for Gibbsiq golden fixtures.
-
-Compares a candidate JSON document against exact/diagnostic fixtures under
-``reference/08-evaluation/fixtures``; writes a JSON report.
-"""
+"""JSON evaluator for Gibbsiq's bundled golden fixtures."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 from typing import Any
+
+if sys.version_info < (3, 11):
+    from importlib.abc import Traversable
+else:
+    from importlib.resources.abc import Traversable
 
 from gibbsiq.benchmark_oracle import (
     DEFAULT_TOLERANCE,
@@ -56,30 +59,31 @@ class Difference:
         return data
 
 
-def repository_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+def default_fixture_dir() -> Traversable:
+    return resources.files("gibbsiq") / "data" / "evaluation"
 
 
-def default_fixture_dir() -> Path:
-    return repository_root() / "reference" / "08-evaluation" / "fixtures"
+def default_benchmark_fixture() -> Traversable:
+    return default_fixture_dir() / "ground-truth-small.json"
 
 
-def default_benchmark_fixture() -> Path:
-    return repository_root() / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
-
-
-def load_json(path: Path) -> Any:
+def load_json(path: Path | Traversable) -> Any:
     with path.open("r", encoding="utf-8-sig") as handle:
         return json.load(handle)
 
 
-def load_fixture_sets(fixture_dir: Path, benchmark_path: Path | None = None) -> dict[str, Any]:
+def load_fixture_sets(
+    fixture_dir: Path | Traversable | None = None,
+    benchmark_path: Path | Traversable | None = None,
+) -> dict[str, Any]:
+    if fixture_dir is None:
+        fixture_dir = default_fixture_dir()
     exact = load_json(fixture_dir / "exact-small-instances.json")
     diagnostics = load_json(fixture_dir / "diagnostic-fixtures.json")
 
     if benchmark_path is None:
         benchmark_path = default_benchmark_fixture()
-    benchmark = load_json(benchmark_path) if benchmark_path.exists() else {"fixtures": []}
+    benchmark = load_json(benchmark_path)
 
     fixtures: dict[str, dict[str, Any]] = {}
     groups: dict[str, list[str]] = {"exact": [], "diagnostic": [], "benchmark": []}
@@ -312,12 +316,13 @@ def compare_unordered_lists(
 
 def evaluate_candidate(
     candidate: dict[str, Any],
-    fixture_dir: Path | None = None,
+    fixture_dir: Path | Traversable | None = None,
     tolerance: float = DEFAULT_TOLERANCE,
+    *,
+    benchmark_path: Path | Traversable | None = None,
 ) -> dict[str, Any]:
     tolerance = validate_tolerance(tolerance)
-    fixture_dir = fixture_dir or default_fixture_dir()
-    fixture_sets = load_fixture_sets(fixture_dir)
+    fixture_sets = load_fixture_sets(fixture_dir, benchmark_path)
     fixtures: dict[str, dict[str, Any]] = fixture_sets["fixtures"]
     benchmark_ids = set(fixture_sets["groups"].get("benchmark", []))
     actual_by_id = normalize_candidate(candidate)
@@ -393,7 +398,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--fixtures",
         type=Path,
         default=default_fixture_dir(),
-        help="Fixture directory. Defaults to reference/08-evaluation/fixtures.",
+        help="Fixture directory. Defaults to bundled evaluation resources.",
+    )
+    parser.add_argument(
+        "--benchmark",
+        type=Path,
+        help="Benchmark fixture JSON. Defaults to the bundled small optimization corpus.",
     )
     parser.add_argument(
         "--tolerance",
@@ -412,7 +422,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     candidate = load_json(args.candidate)
-    report = evaluate_candidate(candidate, fixture_dir=args.fixtures, tolerance=args.tolerance)
+    report = evaluate_candidate(
+        candidate,
+        fixture_dir=args.fixtures,
+        tolerance=args.tolerance,
+        benchmark_path=args.benchmark,
+    )
     text = json.dumps(report, indent=2, sort_keys=True)
 
     if args.output:

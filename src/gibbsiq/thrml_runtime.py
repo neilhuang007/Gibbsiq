@@ -575,7 +575,14 @@ def _replica_exchange_log_ratio(
     energy_left: float,
     energy_right: float,
 ) -> float:
-    """Return ``log(target_after / target_before)`` for a replica swap."""
+    """Return ``log(target_after / target_before)`` for a replica swap.
+
+    Exact float64 reference form of EVAL-EQ-014. The tempering loop does not call
+    this; it recomputes the ratio from lowered float32 log-densities so the recorded
+    decision matches what the lowering evaluates. Tests that bind here check the
+    equation, not the sampler; ``ProductionReplicaExchangeRatioTests`` covers the
+    executed path.
+    """
     return finite_float(
         (beta_left - beta_right) * (energy_left - energy_right),
         name="replica-exchange log ratio",

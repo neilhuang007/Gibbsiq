@@ -529,6 +529,7 @@ class EmpiricalInterval:
     upper: float
     half_width: float
     covered: bool
+    informative: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -539,6 +540,7 @@ class EmpiricalInterval:
             "upper": self.upper,
             "half_width": self.half_width,
             "covered": self.covered,
+            "informative": self.informative,
         }
 
 
@@ -557,10 +559,16 @@ class EmpiricalVerificationReport:
     num_comparisons: int
     intervals: tuple[EmpiricalInterval, ...]
     passed: bool
+    power_status: str = "informative"
 
     @property
     def failed_intervals(self) -> tuple[EmpiricalInterval, ...]:
         return tuple(interval for interval in self.intervals if not interval.covered)
+
+    @property
+    def uninformative_intervals(self) -> tuple[EmpiricalInterval, ...]:
+        """Intervals whose half-width spans the observable range, so coverage is forced."""
+        return tuple(interval for interval in self.intervals if not interval.informative)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -575,7 +583,9 @@ class EmpiricalVerificationReport:
             "num_comparisons": self.num_comparisons,
             "intervals": [interval.to_dict() for interval in self.intervals],
             "failed_intervals": [interval.to_dict() for interval in self.failed_intervals],
+            "uninformative_intervals": [interval.to_dict() for interval in self.uninformative_intervals],
             "passed": self.passed,
+            "power_status": self.power_status,
         }
 
 
@@ -682,6 +692,8 @@ def verify_empirical_distribution(
         half_width = value_range * math.sqrt(math.log(2.0 * num_comparisons / alpha) / (2.0 * sample_count))
         lower = max(observable_minimum, estimate - half_width)
         upper = min(observable_maximum, estimate + half_width)
+        # A half-width spanning the whole observable range clips to [minimum, maximum],
+        # so coverage holds for every target and the interval carries no evidence.
         intervals.append(
             EmpiricalInterval(
                 observable=observable,
@@ -691,6 +703,7 @@ def verify_empirical_distribution(
                 upper=upper,
                 half_width=half_width,
                 covered=lower <= target_value <= upper,
+                informative=half_width < value_range,
             )
         )
 
@@ -705,5 +718,8 @@ def verify_empirical_distribution(
         interval_method="bonferroni_hoeffding",
         num_comparisons=num_comparisons,
         intervals=tuple(intervals),
-        passed=all(interval.covered for interval in intervals),
+        passed=all(interval.covered and interval.informative for interval in intervals),
+        power_status=(
+            "informative" if all(interval.informative for interval in intervals) else "underpowered"
+        ),
     )

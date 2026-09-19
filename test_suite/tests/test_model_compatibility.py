@@ -10,6 +10,8 @@ import unittest
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -49,7 +51,7 @@ class _PairMapping(Mapping[object, float]):
 
 
 def load_exact_fixture(fixture_id: str) -> dict:
-    path = REPO_ROOT / "reference" / "08-evaluation" / "fixtures" / "exact-small-instances.json"
+    path = FIXTURE_DIRECTORY / "exact-small-instances.json"
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     return next(fixture for fixture in payload["fixtures"] if fixture["id"] == fixture_id)
 

@@ -7,10 +7,10 @@ import itertools
 import json
 import math
 import unittest
-from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-CORPUS_PATH = REPO_ROOT / "reference" / "06-benchmarks" / "fixtures" / "ground-truth-small.json"
+from test_suite.tests._fixtures import FIXTURE_DIRECTORY
+
+CORPUS_PATH = FIXTURE_DIRECTORY / "ground-truth-small.json"
 
 
 def load_fixtures() -> list[dict]:
