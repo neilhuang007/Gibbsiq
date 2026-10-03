@@ -14,6 +14,7 @@ import textwrap
 import time
 import unittest
 
+import gibbsiq
 from gibbsiq.qualification.artifacts import AttemptRecord, BundleWriter, inspect_bundle
 from gibbsiq.qualification.contracts import (
     ArrayRef,
@@ -146,11 +147,12 @@ class WorkflowRecoveryTests(unittest.TestCase):
             import sys
             import time
             from pathlib import Path
+            sys.path.insert(0, sys.argv[1])
             from gibbsiq.qualification.artifacts import AttemptRecord, BundleWriter
             from gibbsiq.qualification.contracts import Observation
             from test_suite.tests.qualification.test_workflow_recovery import recovery_plan
 
-            destination, ready = map(Path, sys.argv[1:])
+            destination, ready = map(Path, sys.argv[2:])
             writer = BundleWriter.create(destination, recovery_plan())
             observation = Observation('mean', 'activation', 'case-1', 'run-1',
                                       'float64', (), (), (-0.5,))
@@ -164,7 +166,17 @@ class WorkflowRecoveryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory) / "evidence"
             ready = Path(directory) / "ready"
-            process = subprocess.Popen([sys.executable, "-S", "-c", program, str(destination), str(ready)])
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-S",
+                    "-c",
+                    program,
+                    str(Path(gibbsiq.__file__).resolve().parent.parent),
+                    str(destination),
+                    str(ready),
+                ]
+            )
             try:
                 deadline = time.monotonic() + 10
                 while not ready.exists() and process.poll() is None and time.monotonic() < deadline:
