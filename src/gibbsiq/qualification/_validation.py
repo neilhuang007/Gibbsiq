@@ -6,8 +6,10 @@ import math
 from typing import Any
 
 
-def _integer(value: Any, *, name: str, minimum: int) -> int:
-    if type(value) is not int or value < minimum:
+def _integer(value: Any, *, name: str, minimum: int, maximum: int | None = None) -> int:
+    if type(value) is not int or value < minimum or (maximum is not None and value > maximum):
+        if maximum is not None:
+            raise ValueError(f"{name} must be an integer from {minimum} through {maximum}")
         raise ValueError(f"{name} must be an integer >= {minimum}")
     return value
 

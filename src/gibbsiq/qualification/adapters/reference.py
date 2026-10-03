@@ -58,6 +58,41 @@ class ConditionalReference:
     variance: float
 
 
+@dataclass(frozen=True, slots=True)
+class TorxReference:
+    probabilities: tuple[float, float, float, float]
+    bit_means: tuple[float, float]
+
+
+def torx_two_gate_reference(
+    theta: Sequence[float] = (0.0, 0.0), initial: Sequence[int] = (0, 0)
+) -> TorxReference:
+    """Enumerate PNOT(0), PCNOT(0,1) as four independent Bernoulli branches."""
+    if isinstance(theta, (str, bytes, Mapping, set, frozenset)) or isinstance(
+        initial, (str, bytes, Mapping, set, frozenset)
+    ):
+        raise ValueError("theta and initial must be length-two sequences")
+    try:
+        angles, bits = tuple(theta), tuple(initial)
+    except TypeError as error:
+        raise ValueError("theta and initial must be length-two sequences") from error
+    if len(angles) != 2 or len(bits) != 2 or any(type(bit) is not int or bit not in (0, 1) for bit in bits):
+        raise ValueError("theta and initial must contain two angles and exact integer bits")
+    angles = tuple(_finite_float(value, name=f"theta[{index}]") for index, value in enumerate(angles))
+
+    flip0, flip1 = (_probability_up(value * 0.5) for value in angles)
+    masses = [0.0] * 4
+    for first_flip, first_mass in ((0, 1.0 - flip0), (1, flip0)):
+        first_bit = bits[0] ^ first_flip
+        for second_flip, second_mass in ((0, 1.0 - flip1), (1, flip1)):
+            second_bit = bits[1] ^ (first_bit & second_flip)
+            masses[2 * first_bit + second_bit] += first_mass * second_mass
+    probabilities = (masses[0], masses[1], masses[2], masses[3])
+    return TorxReference(
+        probabilities, (probabilities[2] + probabilities[3], probabilities[1] + probabilities[3])
+    )
+
+
 def spin_conditional(field: float, *, samples: int = 1) -> SpinMoments:
     """Evaluate the analytic two-state spin law at one finite field."""
     canonical_field = _finite_float(field, name="field")

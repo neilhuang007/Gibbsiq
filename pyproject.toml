@@ -1,11 +1,12 @@
 [project]
 name = "gibbsiq"
 dynamic = ["version"]
-description = "THRML-native optimization infrastructure for QUBO and Ising models"
-readme = { text = "# Gibbsiq\n\nGibbsiq is a Python toolkit for QUBO and Ising model construction, exact small-instance references, sampling diagnostics, and optional THRML execution. Its dependency-free core includes model and result contracts, conversions, encodings, exact distribution checks, evaluation fixtures, and low-level qualification value, statistical, and reference foundations. Optional extras provide THRML, dimod, NetworkX, and ArviZ integrations.\n", content-type = "text/markdown" }
+description = "Validate stochastic workloads with bounded execution, reproducible evidence and frozen policies"
+readme = "src/gibbsiq/data/qualification/QUICKSTART.md"
 requires-python = ">=3.10"
-license = "MIT"
-license-files = ["LICENSE"]
+# Gibbsiq remains MIT; the pinned Z1T traversal includes Apache-2.0 expressions.
+license = "MIT AND Apache-2.0"
+license-files = ["LICENSE", "src/gibbsiq/qualification/adapters/Z1T_LICENSE.txt"]
 authors = [{ name = "Neil Huang", email = "neilhuang007@gmail.com" }]
 keywords = [
     "qubo",
@@ -26,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Scientific/Engineering :: Physics",
 ]
@@ -41,6 +43,7 @@ dimod = ["dimod>=0.12"]
 thrml = ["thrml>=0.1.3"]
 arviz = ["arviz>=0.21"]
 networkx = ["networkx>=3.0"]
+qualification = ["numpy>=1.26"]
 dev = [
     "dimod>=0.12",
     "thrml>=0.1.3",
@@ -63,10 +66,11 @@ version = { attr = "gibbsiq.__version__" }
 
 # PEP 561: ship the py.typed marker so type checkers consume the annotations.
 [tool.setuptools.package-data]
-gibbsiq = ["py.typed", "data/evaluation/*.json"]
+gibbsiq = ["py.typed", "data/evaluation/*.json", "data/qualification/*.md", "qualification/adapters/Z1T_LICENSE.txt"]
 
 [project.scripts]
 gibbsiq-evaluate = "gibbsiq.evaluation:main"
+gibbsiq = "gibbsiq.qualification.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/neilhuang007/Gibbsiq"

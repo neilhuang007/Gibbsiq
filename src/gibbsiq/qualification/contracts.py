@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
-from gibbsiq._frozen import freeze, thaw
+from gibbsiq._frozen import FrozenSequence, freeze, thaw
 from gibbsiq.qualification._validation import _finite, _integer, _probability
 
 
@@ -108,7 +108,7 @@ def _normalize_json(
             raise ValueError(f"{name} contains a nonfinite number")
         return 0.0 if value == 0.0 else value
     is_mapping = isinstance(value, Mapping)
-    if is_mapping or value_type in {list, tuple}:
+    if is_mapping or value_type in {list, tuple, FrozenSequence}:
         marker = id(value)
         active = set() if active is None else active
         if marker in active:
@@ -922,10 +922,27 @@ class PlannedRun:
 
 
 @dataclass(frozen=True, slots=True)
+class MetricBinding:
+    """A predeclared scalar observation for each independent evaluation unit."""
+
+    metric_id: str
+    observation_name: str
+    run_ids: tuple[str, ...]
+    reference_value: float = 0.0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metric_id", _text(self.metric_id, name="metric_id"))
+        object.__setattr__(self, "observation_name", _text(self.observation_name, name="observation_name"))
+        object.__setattr__(self, "run_ids", _name_sequence(self.run_ids, name="run_ids", allow_empty=False))
+        object.__setattr__(self, "reference_value", _finite(self.reference_value, name="reference_value"))
+
+
+@dataclass(frozen=True, slots=True)
 class RunPlan:
     workload: WorkloadSpec
     runs: tuple[PlannedRun, ...]
     schema_version: int = 1
+    metric_bindings: tuple[MetricBinding, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.workload, WorkloadSpec):
@@ -945,8 +962,22 @@ class RunPlan:
                 raise ValueError(f"run references unknown case {run.case_id!r}")
             if run.operation_id not in operation_ids:
                 raise ValueError(f"run references unknown operation {run.operation_id!r}")
+        bindings = _typed_sequence(self.metric_bindings, MetricBinding, name="metric_bindings")
+        if bindings:
+            metrics = self.workload.contract.metrics
+            if tuple(binding.metric_id for binding in bindings) != tuple(
+                metric.metric_id for metric in metrics
+            ):
+                raise ValueError("metric bindings must match contract metric IDs and order")
+            planned_ids = set(identifiers)
+            for binding, metric in zip(bindings, metrics):
+                if not set(binding.run_ids).issubset(planned_ids):
+                    raise ValueError("metric binding references an unplanned run")
+                if len(binding.run_ids) != metric.planned_units:
+                    raise ValueError("metric binding run count must match planned_units")
         _schema_version(self.schema_version)
         object.__setattr__(self, "runs", runs)
+        object.__setattr__(self, "metric_bindings", bindings)
 
 
 def _validate_result_against_spec(
