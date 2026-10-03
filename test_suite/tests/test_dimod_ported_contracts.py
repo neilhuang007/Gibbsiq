@@ -1,6 +1,6 @@
-"""Contract tests ported from the vendored dimod suite.
+"""Contract tests ported from the upstream dimod suite.
 
-Ported from ``test_suite/vendor/dimod/tests/test_bqm.py`` and ``test_sampleset.py``
+Ported from ``dwavesystems/dimod`` tests ``test_bqm.py`` and ``test_sampleset.py``
 (dimod commit ``bad4cba``); each case copies the numeric literal asserted by the
 cited dimod test and re-expresses it against Gibbsiq's public API so a convention
 drift shows up as a failure instead of a silent divergence. Dependency-free, and

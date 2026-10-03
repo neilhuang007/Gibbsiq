@@ -6,6 +6,7 @@ import math
 from collections.abc import Iterable, Mapping
 
 from gibbsiq.qualification._validation import _finite as _finite_float
+from gibbsiq.qualification._validation import _mean
 from gibbsiq.qualification._validation import _probability
 from gibbsiq.qualification.contracts import (
     AcceptanceContract,
@@ -35,24 +36,6 @@ def _observations(values: Iterable[float], *, limit: int) -> tuple[float, ...]:
         if len(summaries) == limit:
             raise ValueError("observed units cannot exceed planned_units")
         summaries.append(_finite_float(value, name=f"values[{len(summaries)}]"))
-
-
-def _mean(values: tuple[float, ...]) -> float:
-    """Return a finite mean without losing constant extreme observations."""
-    if len(values) == 1 or all(value == values[0] for value in values[1:]):
-        return values[0]
-    try:
-        result = math.fsum(values) / len(values)
-    except OverflowError:
-        anchor = values[0]
-        try:
-            displacement = math.fsum((value - anchor) / len(values) for value in values)
-            result = anchor + displacement
-        except OverflowError as error:
-            raise ValueError("sample mean exceeds finite binary64 range") from error
-    if not math.isfinite(result):
-        raise ValueError("sample mean must remain finite")
-    return 0.0 if result == 0.0 else result
 
 
 def required_units(bounds: Bounds, *, alpha: float, half_width: float) -> int:
@@ -217,3 +200,27 @@ def evaluate_metrics(
             metric_alpha = contract.alpha_total
         results.append(evaluate_metric(metric, values_by_id[metric.metric_id], alpha=metric_alpha))
     return tuple(results)
+
+
+def _classify_qualification(
+    contract: AcceptanceContract,
+    metrics: tuple[MetricResult, ...],
+    execution: str,
+) -> str:
+    """Classify evaluated mandatory metrics without changing their evidence."""
+    if not isinstance(contract, AcceptanceContract):
+        raise ValueError("contract must be AcceptanceContract")
+    if type(metrics) is not tuple or any(not isinstance(result, MetricResult) for result in metrics):
+        raise ValueError("metrics must be a tuple of MetricResult")
+    if tuple(result.metric_id for result in metrics) != tuple(
+        metric.metric_id for metric in contract.metrics
+    ):
+        raise ValueError("result metric IDs and order must match the contract")
+    if execution not in {"complete", "partial", "error", "cancelled"}:
+        raise ValueError("unsupported execution state")
+    mandatory = tuple(result for result, spec in zip(metrics, contract.metrics) if spec.mandatory)
+    if any(result.outcome == "fail" for result in mandatory):
+        return "fail"
+    if execution == "complete" and all(result.outcome == "pass" for result in mandatory):
+        return "pass"
+    return "inconclusive"

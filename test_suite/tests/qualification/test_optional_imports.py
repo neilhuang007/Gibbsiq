@@ -47,9 +47,27 @@ class OptionalImportTests(unittest.TestCase):
 
             import gibbsiq
             from gibbsiq.qualification.adapters.reference import spin_conditional
+            from gibbsiq.qualification.adapters.z1t import TinyZ1TConfig
+            from gibbsiq.qualification.adapters.model_preflight import preflight_checkpoint
+            from gibbsiq.qualification.adapters.thrml import THRMLIsingBackend
+            from gibbsiq.qualification.adapters.torx import TorxCircuitBackend
+            from gibbsiq.qualification.adapters.z1t_emulation import IdealTanhModel
+            from gibbsiq.qualification.model_evaluation import language_loss, tiny_split_manifest
+            from gibbsiq.qualification.profiles import dy4p_reference, get_profile
+            from gibbsiq.qualification.timing import TimingSeries
             from gibbsiq.qualification.contracts import Acceptance, Bounds, MetricSpec
             from gibbsiq.qualification.statistics import evaluate_metric
 
+            assert TinyZ1TConfig().n_embed == 8
+            assert not preflight_checkpoint(memory_bytes=0, disk_bytes=0).ready
+            assert IdealTanhModel.profile_id == get_profile("ideal-tanh-iid-v1").profile_id
+            assert dy4p_reference(value=0, weight=4).representation_mean > 0
+            assert language_loss([[0, 0]], [0]).perplexity == 2.0
+            assert tiny_split_manifest().evaluation.documents[0].targets == (2, 4, 6, 0)
+            assert TimingSeries.from_durations((3, 1, 2)).median == 2
+            assert TorxCircuitBackend().plan(runs=2).workload.randomization.independent_runs == 2
+            model = gibbsiq.IsingModel(("spin",), {"spin": 0.0}, {})
+            assert len(THRMLIsingBackend(model).plan(runs=2).runs) == 2
             spin = spin_conditional(field=math.log(3.0) / 2.0, samples=100)
             spec = MetricSpec(
                 metric_id="mean-error",

@@ -31,9 +31,22 @@ ENV/
 htmlcov/
 .tox/
 .nox/
+.wheel-smoke/
+test-results/
+coverage.xml
 
 # Local research extraction/render scratch space
 tmp/
+*.log
+*.tmp
+*.bak
+
+# Local credentials and generated experiment output
+.env
+.env.*
+!.env.example
+/runs/
+/artifacts/
 
 # --- Editors / IDEs ---
 .idea/

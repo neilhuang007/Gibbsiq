@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib.abc
+import importlib.metadata
+import importlib.resources
 import json
 import math
 import os
@@ -146,10 +148,53 @@ def _check_core() -> dict[str, Any]:
 
     import gibbsiq
     from gibbsiq.qualification.adapters.reference import spin_conditional
+    from gibbsiq.qualification.adapters.z1t import TinyZ1TConfig
+    from gibbsiq.qualification.adapters.model_preflight import (
+        Z1TShape,
+        estimate_z1t_array_bytes,
+        preflight_checkpoint,
+    )
     from gibbsiq.qualification.contracts import Acceptance, Bounds, MetricSpec
     from gibbsiq.qualification.statistics import evaluate_metric, required_units
 
     package_file = Path(gibbsiq.__file__).resolve(strict=True)
+    distribution = importlib.metadata.distribution("gibbsiq")
+    metadata = distribution.metadata
+    _require(
+        importlib.metadata.version("gibbsiq") == gibbsiq.__version__,
+        "installed distribution and runtime versions disagree",
+    )
+    requirements = metadata.get_all("Requires-Dist") or []
+    _require(
+        all("extra ==" in requirement for requirement in requirements),
+        f"core wheel unexpectedly declares an unconditional dependency: {requirements!r}",
+    )
+    _require(
+        metadata.get("License-Expression") == "MIT AND Apache-2.0",
+        "installed distribution lost its SPDX license expression",
+    )
+    license_entries = metadata.get_all("License-File") or []
+    _require(
+        {Path(entry).name for entry in license_entries} >= {"LICENSE", "Z1T_LICENSE.txt"},
+        f"installed metadata has incomplete license files: {license_entries!r}",
+    )
+    installed_files = tuple(distribution.files or ())
+    license_files = {
+        Path(str(item)).name: Path(distribution.locate_file(item)).resolve(strict=True)
+        for item in installed_files
+        if Path(str(item)).name in {"LICENSE", "Z1T_LICENSE.txt"}
+    }
+    _require(set(license_files) == {"LICENSE", "Z1T_LICENSE.txt"}, "wheel license files are missing")
+    _require(
+        "MIT License" in license_files["LICENSE"].read_text(encoding="utf-8"), "MIT license is unreadable"
+    )
+    _require(
+        "Apache License" in license_files["Z1T_LICENSE.txt"].read_text(encoding="utf-8"),
+        "wheel Apache notice is unreadable",
+    )
+    quickstart = importlib.resources.files("gibbsiq").joinpath("data/qualification/QUICKSTART.md")
+    quickstart_text = quickstart.read_text(encoding="utf-8")
+    _require(bool(quickstart_text.strip()), "installed QUICKSTART is empty")
     purelib = Path(sysconfig.get_path("purelib")).resolve(strict=True)
     try:
         package_file.relative_to(purelib)
@@ -197,13 +242,24 @@ def _check_core() -> dict[str, Any]:
     _require(complete_one.outcome == "fail", "complete all-one bounded metric did not fail")
     _require(single_zero.outcome == "inconclusive", "single-unit bounded metric was not inconclusive")
     _require(empty.availability == "unavailable", "empty bounded metric was not unavailable")
+    _require(TinyZ1TConfig().n_embed == 8, "tiny model config is unavailable in a core install")
+    _require(estimate_z1t_array_bytes(Z1TShape()) == 3388, "installed model resource estimate changed")
+    preflight = preflight_checkpoint(memory_bytes=0, disk_bytes=0)
+    _require(not preflight.ready, "undeclared checkpoint prerequisites were accepted")
+    license_path = package_file.parent / "qualification/adapters/Z1T_LICENSE.txt"
+    _require("Apache License" in license_path.read_text(encoding="utf-8"), "in-package notice is missing")
 
     return {
         "package_path": str(package_file),
+        "version": gibbsiq.__version__,
+        "license_expression": metadata.get("License-Expression"),
+        "license_files": sorted(license_files),
+        "quickstart_bytes": len(quickstart_text.encode("utf-8")),
         "purelib": str(purelib),
         "optional_imports": imported_optional,
         "analytic_probability_up": moments.probability_up,
         "required_units": planned_units,
+        "checkpoint_preflight_ready": preflight.ready,
         "bounded_outcomes": [
             complete_zero.outcome,
             complete_one.outcome,
@@ -303,11 +359,134 @@ def _check_legacy_console() -> dict[str, Any]:
     }
 
 
+def _check_qualification_console() -> dict[str, Any]:
+    scripts = Path(sysconfig.get_path("scripts"))
+    executable = scripts / ("gibbsiq.exe" if os.name == "nt" else "gibbsiq")
+    _require(executable.is_file(), f"installed qualification entry point is missing: {executable}")
+    environment = {
+        key: value for key, value in os.environ.items() if key.upper() not in {"PYTHONHOME", "PYTHONPATH"}
+    }
+    cases = (("iid", 1024, "pass", 0), ("sign-reversed", 256, "fail", 1), ("iid", 16, "inconclusive", 3))
+    outcomes = []
+    with tempfile.TemporaryDirectory(prefix="gibbsiq-installed-qualification-") as temporary:
+        workdir = Path(temporary)
+        for candidate, runs, expected, code in cases:
+            destination = workdir / expected
+            result = _run_cli(
+                [
+                    str(executable),
+                    "qualify",
+                    "--example",
+                    "spin-conditional",
+                    "--candidate",
+                    candidate,
+                    "--runs",
+                    str(runs),
+                    "--output",
+                    str(destination),
+                    "--json",
+                ],
+                cwd=workdir,
+                environment=environment,
+            )
+            _require(result.returncode == code, f"{expected} qualification: {_command_context(result)}")
+            report = json.loads(result.stdout)["report"]
+            _require(report["qualification"] == expected, f"unexpected {expected} report decision")
+            metric = report["metrics"][0]
+            _require(metric["observed_units"] == runs, "qualification omitted planned observations")
+            observations = [
+                json.loads(line)["record"]["observations"][0]["values"][0]
+                for line in (destination / "runs.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            _require(len(observations) == runs, "journal does not contain each independent run")
+            _require_close(
+                metric["estimate"], math.fsum(observations) / runs - 0.5, name="persisted mean difference"
+            )
+            interval = metric["interval"]
+            if expected == "pass":
+                _require(
+                    -0.125 < interval["lower"] < interval["upper"] < 0.125,
+                    "passing interval is outside margin",
+                )
+            elif expected == "fail":
+                _require(interval["upper"] < -0.125, "sign reversal was not detected numerically")
+            else:
+                _require(interval["lower"] < -0.125 < interval["upper"], "short run lost its uncertainty")
+            inspected = _run_cli(
+                [str(executable), "inspect", str(destination), "--verify", "--json"],
+                cwd=workdir,
+                environment=environment,
+            )
+            _require(inspected.returncode == 0, f"installed inspection failed: {_command_context(inspected)}")
+            _require(json.loads(inspected.stdout)["report"] == report, "inspection changed a stored decision")
+            outcomes.append(
+                {"qualification": expected, "observed_units": runs, "estimate": metric["estimate"]}
+            )
+
+        comparison = _run_cli(
+            [
+                str(executable),
+                "compare",
+                str(workdir / "pass"),
+                str(workdir / "fail"),
+                "--candidate-change",
+                "spin-conditional-sign-reversed-v1",
+                "--json",
+            ],
+            cwd=workdir,
+            environment=environment,
+        )
+        _require(comparison.returncode == 1, f"regression gate: {_command_context(comparison)}")
+        compared = json.loads(comparison.stdout)
+        _require(compared["compatible"] and compared["outcome"] == "regression", "lost declared regression")
+        _require(compared["metrics"][0]["delta"] < -0.5, "sign error did not change observed mean")
+        _require(
+            compared["metrics"][0]["difference_interval"]["upper"] < -0.5,
+            "regression uncertainty does not resolve the planted defect",
+        )
+        search = _run_cli(
+            [
+                str(executable),
+                "tune",
+                "--example",
+                "no-feasible-policy",
+                "--output",
+                str(workdir / "search"),
+                "--json",
+            ],
+            cwd=workdir,
+            environment=environment,
+        )
+        _require(search.returncode == 3, f"negative policy search: {_command_context(search)}")
+        searched = json.loads(search.stdout)
+        _require(
+            searched["lifecycle"] == "no_feasible_policy" and searched["policy"] is None,
+            "negative search exported a successful policy",
+        )
+        _require(len(searched["attempts"]) == 3, "negative search did not preserve all candidates")
+        for attempt in searched["attempts"]:
+            _require_close(attempt["quality_mean"], 2 * math.tanh(0.25), name="analytic sign error")
+        doctor = _run_cli([str(executable), "doctor", "--json"], cwd=workdir, environment=environment)
+        _require(doctor.returncode == 0, f"offline doctor: {_command_context(doctor)}")
+        _require(json.loads(doctor.stdout)["package"]["name"] == "gibbsiq", "wrong installed doctor target")
+
+        journal = workdir / "pass" / "runs.jsonl"
+        journal.write_bytes(journal.read_bytes()[:-7])
+        corrupt = _run_cli(
+            [str(executable), "inspect", str(workdir / "pass"), "--verify"],
+            cwd=workdir,
+            environment=environment,
+        )
+        _require(corrupt.returncode == 2, "installed inspection accepted a truncated observation journal")
+    return {"executable": str(executable), "outcomes": outcomes, "truncated_journal_rejected": True}
+
+
 def main() -> int:
     result = {
         "status": "passed",
         "core": _check_core(),
         "legacy_console": _check_legacy_console(),
+        "qualification_console": _check_qualification_console(),
     }
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 0

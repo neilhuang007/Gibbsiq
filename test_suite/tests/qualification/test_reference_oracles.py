@@ -15,7 +15,23 @@ from gibbsiq.qualification.adapters.reference import (  # noqa: E402
     enumerate_ising,
     four_parent_conditional,
     spin_conditional,
+    torx_two_gate_reference,
 )
+
+
+class TorxReferenceTests(unittest.TestCase):
+    def test_four_explicit_branches(self) -> None:
+        reference = torx_two_gate_reference()
+        self.assertEqual(reference.probabilities, (0.5, 0.0, 0.25, 0.25))
+        self.assertEqual(reference.bit_means, (0.5, 0.25))
+        changed = torx_two_gate_reference((0.0, 0.0), (1, 1))
+        self.assertEqual(changed.probabilities, (0.0, 0.5, 0.25, 0.25))
+        self.assertNotEqual(torx_two_gate_reference((2.0, -1.0)).probabilities, reference.probabilities)
+
+    def test_rejects_boolean_bits_and_nonfinite_angles(self) -> None:
+        for angles, bits in (((0.0, float("inf")), (0, 0)), ((0.0, 0.0), (True, 0))):
+            with self.assertRaises(ValueError):
+                torx_two_gate_reference(angles, bits)
 
 
 class SpinConditionalReferenceTests(unittest.TestCase):

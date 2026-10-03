@@ -1,11 +1,12 @@
 [project]
 name = "gibbsiq"
 dynamic = ["version"]
-description = "THRML-native optimization infrastructure for QUBO and Ising models"
-readme = { text = "# Gibbsiq\n\nGibbsiq is a Python toolkit for QUBO and Ising model construction, exact small-instance references, sampling diagnostics, and optional THRML execution. Its dependency-free core includes model and result contracts, conversions, encodings, exact distribution checks, evaluation fixtures, and low-level qualification value, statistical, and reference foundations. Optional extras provide THRML, dimod, NetworkX, and ArviZ integrations.\n", content-type = "text/markdown" }
+description = "Validate stochastic workloads with bounded execution, reproducible evidence and frozen policies"
+readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
-license-files = ["LICENSE"]
+# Gibbsiq remains MIT; the pinned Z1T traversal includes Apache-2.0 expressions.
+license = "MIT AND Apache-2.0"
+license-files = ["LICENSE", "src/gibbsiq/qualification/adapters/Z1T_LICENSE.txt"]
 authors = [{ name = "Neil Huang", email = "neilhuang007@gmail.com" }]
 keywords = [
     "qubo",
@@ -26,28 +27,25 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 # Core has zero required runtime dependencies — everything ships in the stdlib.
 dependencies = []
 
-# Optional features. `dimod` is only needed for IsingModel.to_dimod() /
-# SampleResult.to_dimod() and the dimod conformance tests (skipped when absent).
-# `thrml` enables the THRMLSampler runtime; its tests skip when it is absent.
-# `arviz` enables the diagnostics crosscheck tests; they skip when it is absent.
+# Optional integrations are installed only when requested.
 [project.optional-dependencies]
 dimod = ["dimod>=0.12"]
 thrml = ["thrml>=0.1.3"]
 arviz = ["arviz>=0.21"]
 networkx = ["networkx>=3.0"]
+qualification = ["numpy>=1.26"]
 dev = [
-    "dimod>=0.12",
-    "thrml>=0.1.3",
-    "arviz>=0.21",
-    "networkx>=3.0",
+    "build>=1.2",
     "mypy>=1.16",
     "ruff>=0.12",
+    "twine>=6.1",
 ]
 
 [build-system]
@@ -63,10 +61,11 @@ version = { attr = "gibbsiq.__version__" }
 
 # PEP 561: ship the py.typed marker so type checkers consume the annotations.
 [tool.setuptools.package-data]
-gibbsiq = ["py.typed", "data/evaluation/*.json"]
+gibbsiq = ["py.typed", "data/evaluation/*.json", "data/qualification/*.md", "qualification/adapters/Z1T_LICENSE.txt"]
 
 [project.scripts]
 gibbsiq-evaluate = "gibbsiq.evaluation:main"
+gibbsiq = "gibbsiq.qualification.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/neilhuang007/Gibbsiq"
@@ -93,23 +92,12 @@ check_untyped_defs = true
 files = ["src/gibbsiq"]
 ignore_missing_imports = true
 mypy_path = "src"
-# Target 3.12 for the type-check specifically because a fresh CI
-# ``pip install -e ".[dev]"`` resolves numpy to 2.5.x, whose stubs ship PEP 695
-# ``type`` statements that mypy rejects as a syntax error under any target below
-# 3.12. numpy is reached transitively through the optional thrml/jax/dimod
-# backends; per-module ``follow_imports = skip`` on those importers stops mypy in
-# a local repro but did not prevent CI from loading numpy's stub, so the target is
-# raised to the minimum the stub requires. requires-python stays >= 3.10 and the
-# runtime code remains 3.10-compatible; only mypy's syntax target moves.
+# Numerical dependency stubs use Python 3.12 syntax; runtime supports 3.10+.
 python_version = "3.12"
 strict_equality = true
 warn_unused_configs = true
 
-# Keep mypy out of the optional numeric backends regardless: src/gibbsiq imports
-# thrml, jax (thrml_runtime.py) and dimod (model.py, result.py) only inside
-# guarded functions and treats them as optional Any-typed backends, so following
-# them into the jax/numpy scientific stack only invites unrelated third-party stub
-# errors.
+# Optional backend imports are validated by integration tests.
 [[tool.mypy.overrides]]
 module = ["thrml", "thrml.*", "dimod", "dimod.*", "jax", "jax.*"]
 follow_imports = "skip"
