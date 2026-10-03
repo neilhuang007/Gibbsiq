@@ -17,7 +17,9 @@ mypy
 
 For numerical integration tests, use Python 3.13.5 and install
 `requirements/qualification-integration.txt`. Set `JAX_PLATFORMS=cpu` and
-`JAX_ENABLE_X64=false`. CI runs the core across supported Python versions and
+`JAX_ENABLE_X64=false`, then run `python -m tools.run_integration_tests`.
+The integration runner requires every test to execute and pass.
+CI runs the core across supported Python versions and
 runs the pinned numerical suite plus isolated checks of the installed wheel.
 
 ## Code and tests

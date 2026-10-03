@@ -110,31 +110,7 @@ jobs:
           python -I "$check" --profile S03 --output installed-samplers
           python -I "$check" --profile S04 --output installed-model
       - name: Run full suite without skips
-        run: |
-          python - <<'PY'
-          import io
-          from pathlib import Path
-          import sys
-          import unittest
-
-          suite = unittest.defaultTestLoader.discover("test_suite/tests")
-          if suite.countTestCases() == 0:
-              raise RuntimeError("no tests discovered for extras profile")
-          log = io.StringIO()
-          result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
-          output = log.getvalue()
-          print(output, end="")
-          Path("test-results").mkdir(exist_ok=True)
-          Path("test-results/unittest.log").write_text(output[-2_000_000:], encoding="utf-8")
-
-          if result.skipped:
-              print("\nSkipped tests are forbidden in the extras profile:", file=sys.stderr)
-              for test, reason in result.skipped:
-                  print(f"- {test.id()}: {reason}", file=sys.stderr)
-
-          if not result.wasSuccessful() or result.skipped:
-              raise SystemExit(1)
-          PY
+        run: python -m tools.run_integration_tests
 
       - name: Retain bounded test logs on failure
         if: failure()
