@@ -9,6 +9,21 @@ from gibbsiq.qualification.model_evaluation import LossSummary, combine_losses, 
 
 
 class LanguageLossTests(unittest.TestCase):
+    def test_full_checkpoint_vocabulary_keeps_last_class_and_all_softmax_terms(self) -> None:
+        vocab = 50_257
+        # The final class has probability 1/2; every other class has 1/(2*(V-1)).
+        row = [0.0] * (vocab - 1) + [math.log(vocab - 1)]
+        result = language_loss([row, row], [vocab - 1, 0], cap=16.0)
+        self.assertAlmostEqual(result.loss_sum, math.log(2) + math.log(2 * (vocab - 1)))
+        self.assertEqual(result.valid_tokens, 2)
+        self.assertEqual(result.cap_hits, 0)
+
+    def test_expanded_vocabulary_preserves_total_evaluation_work_bound(self) -> None:
+        # A wide vocabulary must not multiply the old 4096*256-element work cap.
+        row = [0.0] * 50_257
+        with self.assertRaises(ValueError):
+            language_loss([row] * 21, [0] * 21)
+
     def test_summary_cannot_claim_impossible_capped_losses(self) -> None:
         for fields in (
             (1.0, 1, 2.0, 0, 8.0),

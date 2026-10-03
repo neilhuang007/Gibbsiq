@@ -303,8 +303,8 @@ def language_loss(
         entries = _sequence(row, name="logit row")
         if width is None:
             width = len(entries)
-            if not 2 <= width <= 256:
-                raise ValueError("vocabulary must contain 2–256 logits")
+            if width < 2 or width * len(rows) > 1_048_576:
+                raise ValueError("vocabulary must contain at least two logits within 1048576 total values")
         if len(entries) != width:
             raise ValueError("logit rows must be rectangular")
         if type(target) is not int or not 0 <= target < width:
