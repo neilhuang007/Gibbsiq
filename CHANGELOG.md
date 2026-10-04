@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.2.0a1 — Unreleased
+## Unreleased
+
+## 0.2.0a1 — 2026-10-04
 
 - Add stochastic qualification with frozen run plans, independent references,
   confidence intervals, and reproducible evidence bundles.
