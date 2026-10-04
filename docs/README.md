@@ -11,9 +11,11 @@ choose the guide for your workflow.
 | Compare results in CI | [Regression checks](qualification/regression-workflow-contract.md) |
 | Select sampling settings | [Policy search](qualification/policy-search-contract.md) |
 | Evaluate a Z1T model | [Z1T walkthrough](qualification/z1t.md) |
+| Compare policies on trained weights | [Checkpoint study](qualification/trained-checkpoint-verification.md) |
 | Integrate THRML or Torx | [Backend adapters](qualification/interoperability-contract.md) |
 | Measure cost and timing | [Profiling](qualification/profiling-contract.md) |
 | Retain or recover experiments | [Maintenance](qualification/maintenance.md) |
+| Run an independent pilot | [Pilot handoff](qualification/independent-pilot.md) |
 
 For model integrations, see the [adapter interface](qualification/model-adapter-contract.md),
 [evaluation semantics](qualification/model-evaluation-contract.md), and

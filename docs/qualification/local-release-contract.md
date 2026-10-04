@@ -36,9 +36,30 @@ comparison, and policy search. CI performs this check on Linux and Windows.
 
 ## Publish
 
-Review the exact distribution files, tag the tested commit, and upload those
-files to the package index. Publish release notes from the changelog. Verify an
-installation from the index, then start the next unreleased changelog entry.
+Configure a [PyPI Trusted Publisher](https://docs.pypi.org/trusted-publishers/adding-a-publisher/)
+on the existing `gibbsiq` project with owner `neilhuang007`, repository
+`Gibbsiq`, workflow filename `publish.yml`, and environment `pypi`.
+The matching GitHub environment belongs in the repository's Settings →
+Environments. Restrict deployments to `master`; add a required reviewer if the
+release process needs manual approval. No PyPI password or long-lived token is
+needed by the workflow.
+
+Run **Publish to PyPI** from GitHub Actions on `master`, supplying the successful
+master **CI run ID** and exact version. Leave `publish` unchecked for a rehearsal.
+The workflow rejects failed, pull-request, foreign-repository, and non-master
+runs. It retrieves the `release-distributions` artifact, verifies the wheel and
+sdist metadata, and retains the source commit and SHA-256 hashes. It never
+rebuilds the distributions. CI artifacts expire after seven days; if needed,
+rerun CI for the reviewed commit before selecting its new artifacts.
+
+Once the rehearsal passes and the publisher is configured, run the same inputs
+with `publish` checked. The separate publishing job uses short-lived GitHub
+identity credentials. A final job checks both published artifact hashes,
+installs the exact version from PyPI with hash verification in a fresh external
+environment, and runs the installed-package smoke test.
+
+Tag the tested source commit and publish release notes from the changelog.
+After successful index verification, start the next unreleased changelog entry.
 
 Keep the tested distributions and CI logs with the release. See
 [release recovery](release-recovery.md) for handling a defective version.

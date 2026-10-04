@@ -7,13 +7,53 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 from gibbsiq.qualification.model_evaluation import CorpusSplit, TokenDocument, language_loss
-from tools.qualification.verify_trained_checkpoint import assess_study, run_study
+from tools.qualification.verify_trained_checkpoint import (
+    POLICY_OPERATIONS,
+    _policy_plan,
+    assess_policy_study,
+    assess_study,
+    run_policy_study,
+    run_study,
+)
 
 
 class TrainedCheckpointStudyTests(unittest.TestCase):
+    def test_equal_work_policy_decisions_keep_whole_runs_as_units(self) -> None:
+        reference = language_loss([[0.0, 0.0]], [0], cap=16.0)
+        report = assess_policy_study(reference, [reference] * 32, [reference] * 32)
+        self.assertEqual(report["heterogeneous_vs_numerical"]["observed_units"], 32)
+        self.assertEqual(report["heterogeneous_vs_numerical"]["outcome"], "inconclusive")
+        self.assertEqual(report["heterogeneous_vs_uniform"]["outcome"], "inconclusive")
+        self.assertGreater(report["required_runs"]["paired_half_width_0_25"], 10000)
+
+    def test_policy_preflight_matches_work_and_rejects_excess(self) -> None:
+        def model(width: int) -> SimpleNamespace:
+            return SimpleNamespace(
+                operations=tuple(
+                    SimpleNamespace(
+                        operation_id=name,
+                        kind="tanh_sparse_linear",
+                        output_features=width,
+                    )
+                    for name in POLICY_OPERATIONS
+                )
+            )
+
+        corpus = CorpusSplit("evaluation", (TokenDocument("one", "one", (0, 1, 2, 3, 4)),))
+        plan = _policy_plan(model(768), corpus)
+        self.assertEqual(plan["modeled_spin_work_per_forward"], 4 * 768 * 136)
+        self.assertEqual(plan["modeled_spin_work_per_corpus"], 4 * 768 * 136)
+        self.assertEqual(plan["max_field_elements_per_operation"], 4 * 768)
+        with self.assertRaisesRegex(ValueError, "spin-work cap"):
+            _policy_plan(model(16000), corpus)
+        with self.assertRaisesRegex(ValueError, "field-element cap"):
+            _policy_plan(model(17000), corpus)
+
     def test_same_model_passes_and_reversed_predictions_fail(self) -> None:
         reference = language_loss([[4.0, 0.0], [0.0, 4.0]], [0, 1], cap=16.0)
         reversed_model = language_loss([[-4.0, 0.0], [0.0, -4.0]], [0, 1], cap=16.0)
@@ -39,6 +79,26 @@ class TrainedCheckpointStudyTests(unittest.TestCase):
         self.assertEqual(report["candidates"]["8"]["observed_units"], 1)
         self.assertEqual(report["candidates"]["8"]["outcome"], "inconclusive")
         self.assertEqual(report["candidates"]["32"]["availability"], "unavailable")
+
+    @unittest.skipUnless(importlib.util.find_spec("z1t"), "optional pinned Z1T environment required")
+    def test_real_model_policy_study_records_cost_boundaries(self) -> None:
+        from gibbsiq.qualification.adapters.z1t import NumericalZ1T, TinyZ1TConfig
+
+        numerical = NumericalZ1T(TinyZ1TConfig(n_layers=4))
+        corpus = CorpusSplit("evaluation", (TokenDocument("one", "one", (0, 1, 2)),))
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            mock.patch("tools.qualification.verify_trained_checkpoint.POLICY_RUNS", 2),
+        ):
+            report = run_policy_study(numerical, corpus, Path(directory))
+        self.assertEqual(report["status"], "complete")
+        self.assertEqual(len(report["runs"]), 4)
+        self.assertEqual(
+            {row["execution_order"] for row in report["runs"] if row["policy"] == "heterogeneous"},
+            {0, 1},
+        )
+        self.assertIn("observer_overhead", report)
+        self.assertTrue(all("forward_and_transfer_seconds" in row for row in report["runs"]))
 
     @unittest.skipUnless(importlib.util.find_spec("z1t"), "optional pinned Z1T environment required")
     def test_real_model_study_retains_all_runs_and_refuses_overwrite(self) -> None:
