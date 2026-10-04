@@ -15,7 +15,6 @@ choose the guide for your workflow.
 | Integrate THRML or Torx | [Backend adapters](qualification/interoperability-contract.md) |
 | Measure cost and timing | [Profiling](qualification/profiling-contract.md) |
 | Retain or recover experiments | [Maintenance](qualification/maintenance.md) |
-| Run an independent pilot | [Pilot handoff](qualification/independent-pilot.md) |
 
 For model integrations, see the [adapter interface](qualification/model-adapter-contract.md),
 [evaluation semantics](qualification/model-evaluation-contract.md), and

@@ -67,3 +67,7 @@ This is bounded CPU software evidence. The modeled work objective does not
 measure energy, temperature, physical-device latency, or an unpublished
 compiler. An inconclusive interval is an inconclusive result even when the
 point estimate looks favorable.
+
+The [4 October trained-checkpoint result](checkpoint-policy-result-2026-10-04.md)
+records the completed comparison, its inconclusive verdicts, measured costs,
+exact source revision, and reproduction recipe.
