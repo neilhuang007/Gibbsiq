@@ -4,6 +4,8 @@ Trusted adapters are supplied explicitly; inspection only reads evidence. The
 legacy integer ``SampleResult`` remains a separate contract.
 """
 
+from gibbsiq.qualification.artifacts import inspect_bundle
+
 from gibbsiq.qualification.contracts import (
     Acceptance,
     AcceptanceContract,
@@ -37,6 +39,7 @@ __all__ = [
     "WorkloadSpec",
     "evaluate_metric",
     "evaluate_metrics",
+    "inspect_bundle",
     "paired_difference_bounds",
     "required_units",
 ]
