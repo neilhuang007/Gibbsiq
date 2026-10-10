@@ -6,7 +6,7 @@ rather than "best known". The output matches the golden-fixture schema used by
 ``src/gibbsiq/evaluation.py`` so a future Gibbsiq solver can be scored against
 these instances with the existing JSON evaluator.
 
-Conventions (do not violate; see reference/08-evaluation/equation-audit.md):
+Conventions (see docs/model-conventions.md):
     Ising energy  E(s) = offset + sum_i h_i s_i + sum_{i<j} J_ij s_i s_j,
                   with s_i in {-1, +1} and upper-triangle quadratic terms only.
     Max-Cut       Ising energy = sum_edges s_u s_v; cut = (|E| - energy) / 2.
@@ -217,7 +217,7 @@ def number_partition_fixture(
             "method": "exhaustive_enumeration",
             "seed": seed,
             "value_range": [1, max_value],
-            "source_basis": ["reference/05-theory/papers/lucas-2014-ising-formulations.md"],
+            "source_basis": ["https://doi.org/10.3389/fphy.2014.00005"],
             "formulation_source": CITATIONS["lucas2014"],
         },
         "input": {
@@ -285,7 +285,7 @@ def knapsack_fixture(fixture_id: str, n: int, max_weight: int, max_value: int, s
             "seed": seed,
             "capacity_rule": "floor(sum(weights)/2)",
             "optimum_rule": "maximize value, then minimize selected weight",
-            "source_basis": ["reference/05-theory/papers/lucas-2014-ising-formulations.md"],
+            "source_basis": ["https://doi.org/10.3389/fphy.2014.00005"],
             "formulation_source": CITATIONS["lucas2014"],
         },
         "input": {
@@ -356,7 +356,7 @@ def tsp_fixture(fixture_id: str, n: int, grid: int, seed: int) -> dict[str, Any]
             "seed": seed,
             "distance_metric": "rounded_euclidean_2d",
             "grid": grid,
-            "source_basis": ["reference/05-theory/papers/lucas-2014-ising-formulations.md"],
+            "source_basis": ["https://doi.org/10.3389/fphy.2014.00005"],
             "formulation_source": CITATIONS["lucas2014"],
         },
         "input": {

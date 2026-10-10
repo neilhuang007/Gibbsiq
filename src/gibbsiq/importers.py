@@ -1,8 +1,7 @@
 """Factor-graph JSON (schema v1) and NetworkX frontends for ThermodynamicProgram.
 
-Wire contract: reference/02-interfaces/factor-graph-json-v1.md. The graph frontend
-consumes a duck-typed NetworkX surface and never imports networkx, keeping the core
-package dependency-free.
+The graph frontend consumes a duck-typed NetworkX surface and never imports
+networkx, keeping the core package dependency-free.
 """
 
 from __future__ import annotations

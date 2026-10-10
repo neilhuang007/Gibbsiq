@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep benchmark output and local planning records out of the source tree's
+  tracked files, and repair the bundled fixtures' documentation links.
+
 ## 0.2.0a1 — 2026-10-04
 
 - Add stochastic qualification with frozen run plans, independent references,

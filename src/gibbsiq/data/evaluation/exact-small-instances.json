@@ -7,8 +7,8 @@
       "id": "qubo_two_var_offset_conversion",
       "purpose": "Verify QUBO-to-Ising conversion, offset preservation, deterministic energy table, and best sample.",
       "source_basis": [
-        "reference/08-evaluation/equation-audit.md#eval-eq-002-binary-to-spin-mapping",
-        "reference/08-evaluation/equation-audit.md#eval-eq-003-upper-triangle-qubo-to-ising-conversion"
+        "docs/model-conventions.md#binary-to-spin-mapping",
+        "docs/model-conventions.md#qubo-conversion"
       ],
       "input": {
         "format": "qubo",
@@ -39,8 +39,8 @@
       "id": "two_spin_ferromagnetic_boltzmann_beta1",
       "purpose": "Verify exact energy signs and Boltzmann probabilities for a two-spin model.",
       "source_basis": [
-        "reference/08-evaluation/equation-audit.md#eval-eq-001-gibbsiq-ising-energy-convention",
-        "reference/08-evaluation/equation-audit.md#eval-eq-005-boltzmann-probability"
+        "docs/model-conventions.md#ising-energy",
+        "docs/model-conventions.md#boltzmann-probability"
       ],
       "input": {
         "format": "ising",
@@ -66,7 +66,7 @@
       "id": "single_site_conditional_sign",
       "purpose": "Verify Gibbs conditional sign under the Gibbsiq energy convention.",
       "source_basis": [
-        "reference/08-evaluation/equation-audit.md#eval-eq-004-gibbs-conditional-under-gibbsiq-convention"
+        "docs/model-conventions.md#gibbs-conditional"
       ],
       "input": {
         "target_variable": "s0",
@@ -89,7 +89,7 @@
       "id": "maxcut_triangle_unweighted",
       "purpose": "Verify Max-Cut objective relation and exact optimum on K3.",
       "source_basis": [
-        "reference/08-evaluation/equation-audit.md#eval-eq-006-cut-indicator-and-max-cut-energy"
+        "docs/model-conventions.md#max-cut"
       ],
       "input": {
         "format": "maxcut",
@@ -116,7 +116,7 @@
       "id": "maxcut_cycle4_unweighted",
       "purpose": "Verify Max-Cut objective relation and exact optimum on C4.",
       "source_basis": [
-        "reference/08-evaluation/equation-audit.md#eval-eq-006-cut-indicator-and-max-cut-energy"
+        "docs/model-conventions.md#max-cut"
       ],
       "input": {
         "format": "maxcut",

@@ -864,7 +864,7 @@
           20
         ],
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -1034,7 +1034,7 @@
           50
         ],
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -1222,7 +1222,7 @@
           99
         ],
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -1428,7 +1428,7 @@
           30
         ],
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -1607,7 +1607,7 @@
           7
         ],
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -1802,7 +1802,7 @@
         "capacity_rule": "floor(sum(weights)/2)",
         "optimum_rule": "maximize value, then minimize selected weight",
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -1863,7 +1863,7 @@
         "capacity_rule": "floor(sum(weights)/2)",
         "optimum_rule": "maximize value, then minimize selected weight",
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -1934,7 +1934,7 @@
         "distance_metric": "rounded_euclidean_2d",
         "grid": 100,
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -2045,7 +2045,7 @@
         "distance_metric": "rounded_euclidean_2d",
         "grid": 100,
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -2198,7 +2198,7 @@
         "distance_metric": "rounded_euclidean_2d",
         "grid": 100,
         "source_basis": [
-          "reference/05-theory/papers/lucas-2014-ising-formulations.md"
+          "https://doi.org/10.3389/fphy.2014.00005"
         ],
         "formulation_source": "Lucas, A. (2014). Ising formulations of many NP problems. Frontiers in Physics 2:5. DOI 10.3389/fphy.2014.00005; arXiv:1302.5843."
       },
@@ -3998,5 +3998,5 @@
       }
     }
   ],
-  "content_sha256": "aca9461839aa199dd154e577a4617e2f56c2d177b1d9a01c5e168fca2bf865c4"
+  "content_sha256": "a85e6ba37bbe174e8c976909e62de8e36f1c5a3b7d1be651cfc5547a073cb1e8"
 }

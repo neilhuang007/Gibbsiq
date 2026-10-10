@@ -545,9 +545,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-cluster-fraction", type=float, default=0.7)
     parser.add_argument("--target-margin-fraction", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=20260704)
-    parser.add_argument(
-        "--out", type=Path, default=Path("reference/06-benchmarks/artifacts/cluster-move-benchmark.json")
-    )
+    parser.add_argument("--out", type=Path, default=Path("artifacts/cluster-move-benchmark.json"))
     return parser
 
 

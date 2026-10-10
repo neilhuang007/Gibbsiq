@@ -10,7 +10,6 @@ include tools/generate_ground_truth.py
 include tools/benchmark_cluster_moves.py
 include tools/benchmark_performance_baseline.py
 recursive-include tools/qualification *.py
-exclude tools/qualification/check_stage.py
 prune docs/internal
 prune implementation
 prune reference

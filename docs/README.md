@@ -6,6 +6,7 @@ choose the guide for your workflow.
 | Task | Guide |
 | --- | --- |
 | Install the core or numerical integrations | [Installation](installation.md) |
+| Check energy signs, conversions, and sampling probabilities | [Model conventions](model-conventions.md) |
 | Run an experiment from Python | [Qualification workflow](qualification/workflow-contract.md) |
 | Understand metrics and confidence intervals | [Contracts and statistics](qualification/foundations-contract.md) |
 | Compare results in CI | [Regression checks](qualification/regression-workflow-contract.md) |

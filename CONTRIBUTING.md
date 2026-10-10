@@ -33,6 +33,18 @@ runs the pinned numerical suite plus isolated checks of the installed wheel.
 - Prefer behavior assertions to source-text checks or incidental formatting.
 - Keep experiments reproducible with explicit seeds and resource budgets.
 
+Extract a helper when callers share the same behavior and error contract. Keep
+independent numerical oracles separate from the implementation they verify.
+Remove a test only when it checks no product behavior or another test covers the
+same inputs, assertions, and failure mode. Numerical assertions should use an
+independent expected value and a tolerance justified by the algorithm or dtype.
+
+Keep local agent instructions, planning notes, research downloads, and generated
+run records out of Git. Commit user documentation, small reproducible fixtures,
+and required license notices alongside the code they support.
+Put personal editor settings, agent notes, and ad hoc scratch paths in
+`.git/info/exclude`; reserve `.gitignore` for shared build and runtime output.
+
 Add a regression test when fixing a bug. Update the relevant guide when behavior
 changes, and add a concise changelog entry for user-facing changes.
 
@@ -46,5 +58,11 @@ Explain what changed and how it was tested. Keep each change focused enough to
 review independently. The [release guide](docs/qualification/local-release-contract.md)
 covers package verification.
 
-These conventions draw on [Click's contributor guidance](https://click.palletsprojects.com/en/stable/contributing/)
-and [scikit-learn's development guide](https://scikit-learn.org/stable/developers/index.html).
+Use a short imperative commit subject that describes the change. Explain why in
+the body when the reason is not clear from the diff. A type prefix such as `fix:`
+is optional; avoid vague subjects such as "cleanup" or claims about code quality.
+
+These conventions draw on [Google's review checklist](https://google.github.io/eng-practices/review/reviewer/looking-for.html),
+[Google's change descriptions](https://google.github.io/eng-practices/review/developer/cl-descriptions.html),
+[AWS commit guidance](https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/dl.cr.7-create-consistent-and-descriptive-commit-messages-using-a-specification.html),
+and [NumPy's testing guidelines](https://numpy.org/doc/stable/reference/testing.html).
