@@ -36,6 +36,8 @@ from gibbsiq.diagnostics import (
     state_counts,
 )
 
+from gibbsiq.domain_wall import DomainWallEncoding, compile_domain_wall
+
 from gibbsiq.exact_distribution import (
     DistributionComparison,
     ExactDistribution,
@@ -96,6 +98,7 @@ __all__ = [
     "CommunicationSpec",
     "CubicMonomialLowering",
     "DistributionComparison",
+    "DomainWallEncoding",
     "EmpiricalInterval",
     "EmpiricalVerificationReport",
     "ExactDistribution",
@@ -137,6 +140,7 @@ __all__ = [
     "color_blocks",
     "compare_boltzmann_distributions",
     "compile_bqm",
+    "compile_domain_wall",
     "compile_fixture",
     "compile_ising",
     "compile_knapsack",
