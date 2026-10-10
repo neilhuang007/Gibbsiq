@@ -50,9 +50,27 @@ from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
 
 from gibbsiq.program import PROGRAM_SCHEMA_VERSION, ThermodynamicProgram
 
+from gibbsiq.reference_sampler import (
+    ReferenceGibbsSampler,
+    ReferenceSampleResult,
+    ReferenceSamplerConfig,
+    ReferenceTransitionEvent,
+)
+
 from gibbsiq.result import ResultVartype, SampleResult
 
 from gibbsiq.thrml_runtime import SamplerConfig, THRMLSampler
+
+from gibbsiq.verification import (
+    EmpiricalInterval,
+    EmpiricalVerificationReport,
+    ExactTransitionKernel,
+    TransitionVerificationReport,
+    build_exact_transition_kernel,
+    verify_empirical_distribution,
+    verify_transition_kernel,
+    verify_transition_matrix,
+)
 
 __version__ = "0.2.0a1"
 
@@ -61,20 +79,29 @@ __all__ = [
     "CategoricalModel",
     "CubicMonomialLowering",
     "DistributionComparison",
+    "EmpiricalInterval",
+    "EmpiricalVerificationReport",
     "ExactDistribution",
     "ExactDistributionNumericalError",
+    "ExactTransitionKernel",
     "IsingModel",
     "IsoenergeticClusterMove",
     "KnapsackEncoding",
     "PROGRAM_SCHEMA_VERSION",
+    "ReferenceGibbsSampler",
+    "ReferenceSampleResult",
+    "ReferenceSamplerConfig",
+    "ReferenceTransitionEvent",
     "ResultVartype",
     "SampleResult",
     "SamplerConfig",
     "THRMLSampler",
     "ThermodynamicProgram",
+    "TransitionVerificationReport",
     "TspEncoding",
     "__version__",
     "binary_to_spin",
+    "build_exact_transition_kernel",
     "candidate_from_result",
     "chain_flags",
     "chain_section",
@@ -107,5 +134,8 @@ __all__ = [
     "split_rhat",
     "state_counts",
     "validate_partition",
+    "verify_empirical_distribution",
     "verify_optimum_claim",
+    "verify_transition_kernel",
+    "verify_transition_matrix",
 ]
