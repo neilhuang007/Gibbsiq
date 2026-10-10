@@ -1,0 +1,623 @@
+{
+  "schema_version": "2026-05-31",
+  "generated_by": "examples/build from ground-truth-small.json proven witnesses",
+  "results": [
+    {
+      "id": "gt_maxcut_er_n8_p50_s1",
+      "actual": {
+        "num_nodes": 8,
+        "num_edges": 17,
+        "best_cut_value": 12,
+        "best_ising_energy": -7.0,
+        "ground_state_degeneracy": 14,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_er_n10_p40_s2",
+      "actual": {
+        "num_nodes": 10,
+        "num_edges": 16,
+        "best_cut_value": 12,
+        "best_ising_energy": -8.0,
+        "ground_state_degeneracy": 24,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": -1,
+            "8": 1,
+            "9": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_er_n12_p30_s3",
+      "actual": {
+        "num_nodes": 12,
+        "num_edges": 15,
+        "best_cut_value": 14,
+        "best_ising_energy": -13.0,
+        "ground_state_degeneracy": 4,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": 1,
+            "10": 1,
+            "11": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_er_n14_p50_s4",
+      "actual": {
+        "num_nodes": 14,
+        "num_edges": 47,
+        "best_cut_value": 33,
+        "best_ising_energy": -19.0,
+        "ground_state_degeneracy": 4,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": -1,
+            "6": 1,
+            "7": 1,
+            "8": -1,
+            "9": -1,
+            "10": 1,
+            "11": -1,
+            "12": -1,
+            "13": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_n10_v20_s5",
+      "actual": {
+        "min_subset_sum_difference": 0,
+        "best_ising_energy": 0.0,
+        "ground_state_degeneracy": 24,
+        "is_perfect_partition": true,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              17,
+              1,
+              15,
+              8,
+              6
+            ],
+            "set_minus": [
+              20,
+              9,
+              12,
+              2,
+              4
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_n12_v50_s6",
+      "actual": {
+        "min_subset_sum_difference": 0,
+        "best_ising_energy": 0.0,
+        "ground_state_degeneracy": 20,
+        "is_perfect_partition": true,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              17,
+              1,
+              10,
+              43,
+              38,
+              49
+            ],
+            "set_minus": [
+              37,
+              6,
+              32,
+              49,
+              3,
+              31
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_n14_v99_s7",
+      "actual": {
+        "min_subset_sum_difference": 0,
+        "best_ising_energy": 0.0,
+        "ground_state_degeneracy": 70,
+        "is_perfect_partition": true,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              7,
+              69,
+              13,
+              75,
+              65,
+              28,
+              5
+            ],
+            "set_minus": [
+              42,
+              20,
+              51,
+              84,
+              10,
+              47,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_frustrated_n11_v30_s16",
+      "actual": {
+        "min_subset_sum_difference": 1,
+        "best_ising_energy": 1.0,
+        "ground_state_degeneracy": 50,
+        "is_perfect_partition": false,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              15,
+              14,
+              28,
+              22
+            ],
+            "set_minus": [
+              13,
+              16,
+              16,
+              10,
+              14,
+              8,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_partition_frustrated_n13_v7_s17",
+      "actual": {
+        "min_subset_sum_difference": 1,
+        "best_ising_energy": 1.0,
+        "ground_state_degeneracy": 724,
+        "is_perfect_partition": false,
+        "witness_partitions": [
+          {
+            "set_plus": [
+              7,
+              6,
+              6,
+              5,
+              6
+            ],
+            "set_minus": [
+              6,
+              4,
+              7,
+              3,
+              3,
+              3,
+              2,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_knapsack_n10_s8",
+      "actual": {
+        "max_value": 96,
+        "weight_at_optimum": 21,
+        "capacity": 23,
+        "num_optimal_selections": 1,
+        "witness_selections": [
+          [
+            0,
+            3,
+            4,
+            6,
+            7,
+            8,
+            9
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_knapsack_n14_s9",
+      "actual": {
+        "max_value": 205,
+        "weight_at_optimum": 81,
+        "capacity": 83,
+        "num_optimal_selections": 1,
+        "witness_selections": [
+          [
+            0,
+            1,
+            3,
+            4,
+            5,
+            7,
+            8,
+            12,
+            13
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_tsp_n6_s10",
+      "actual": {
+        "num_cities": 6,
+        "optimal_tour_length": 177,
+        "num_optimal_tours": 1,
+        "witness_tours": [
+          [
+            0,
+            2,
+            5,
+            4,
+            1,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_tsp_n8_s11",
+      "actual": {
+        "num_cities": 8,
+        "optimal_tour_length": 223,
+        "num_optimal_tours": 1,
+        "witness_tours": [
+          [
+            0,
+            2,
+            4,
+            7,
+            3,
+            6,
+            1,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_tsp_n9_s12",
+      "actual": {
+        "num_cities": 9,
+        "optimal_tour_length": 217,
+        "num_optimal_tours": 1,
+        "witness_tours": [
+          [
+            0,
+            3,
+            4,
+            8,
+            7,
+            1,
+            6,
+            2,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gt_sk_n8_s13",
+      "actual": {
+        "num_spins": 8,
+        "ground_state_energy": -12.0,
+        "ground_state_degeneracy": 4,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": -1,
+            "5": 1,
+            "6": -1,
+            "7": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_sk_n10_s14",
+      "actual": {
+        "num_spins": 10,
+        "ground_state_energy": -21.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": -1,
+            "7": 1,
+            "8": 1,
+            "9": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_sk_n12_s15",
+      "actual": {
+        "num_spins": 12,
+        "ground_state_energy": -26.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": -1,
+            "6": -1,
+            "7": -1,
+            "8": -1,
+            "9": 1,
+            "10": -1,
+            "11": -1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k4",
+      "actual": {
+        "num_nodes": 4,
+        "num_edges": 6,
+        "best_cut_value": 4,
+        "best_ising_energy": -2.0,
+        "ground_state_degeneracy": 6,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k5",
+      "actual": {
+        "num_nodes": 5,
+        "num_edges": 10,
+        "best_cut_value": 6,
+        "best_ising_energy": -2.0,
+        "ground_state_degeneracy": 20,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k6",
+      "actual": {
+        "num_nodes": 6,
+        "num_edges": 15,
+        "best_cut_value": 9,
+        "best_ising_energy": -3.0,
+        "ground_state_degeneracy": 20,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_complete_k7",
+      "actual": {
+        "num_nodes": 7,
+        "num_edges": 21,
+        "best_cut_value": 12,
+        "best_ising_energy": -3.0,
+        "ground_state_degeneracy": 70,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_cycle_c6",
+      "actual": {
+        "num_nodes": 6,
+        "num_edges": 6,
+        "best_cut_value": 6,
+        "best_ising_energy": -6.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": -1,
+            "3": 1,
+            "4": -1,
+            "5": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_cycle_c7",
+      "actual": {
+        "num_nodes": 7,
+        "num_edges": 7,
+        "best_cut_value": 6,
+        "best_ising_energy": -5.0,
+        "ground_state_degeneracy": 14,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_bipartite_k33",
+      "actual": {
+        "num_nodes": 6,
+        "num_edges": 9,
+        "best_cut_value": 9,
+        "best_ising_energy": -9.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": -1,
+            "3": 1,
+            "4": 1,
+            "5": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_bipartite_k24",
+      "actual": {
+        "num_nodes": 6,
+        "num_edges": 8,
+        "best_cut_value": 8,
+        "best_ising_energy": -8.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_hypercube_q3",
+      "actual": {
+        "num_nodes": 8,
+        "num_edges": 12,
+        "best_cut_value": 12,
+        "best_ising_energy": -12.0,
+        "ground_state_degeneracy": 2,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": 1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": -1,
+            "6": -1,
+            "7": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "gt_maxcut_petersen",
+      "actual": {
+        "num_nodes": 10,
+        "num_edges": 15,
+        "best_cut_value": 12,
+        "best_ising_energy": -9.0,
+        "ground_state_degeneracy": 10,
+        "witness_spin_samples": [
+          {
+            "0": -1,
+            "1": -1,
+            "2": 1,
+            "3": -1,
+            "4": 1,
+            "5": 1,
+            "6": 1,
+            "7": -1,
+            "8": -1,
+            "9": -1
+          }
+        ]
+      }
+    }
+  ]
+}

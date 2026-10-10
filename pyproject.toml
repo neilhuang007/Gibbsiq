@@ -63,6 +63,7 @@ version = { attr = "gibbsiq.__version__" }
 gibbsiq = ["py.typed", "data/evaluation/*.json", "data/qualification/*.md", "qualification/adapters/Z1T_LICENSE.txt"]
 
 [project.scripts]
+gibbsiq-evaluate = "gibbsiq.evaluation:main"
 
 [project.urls]
 Homepage = "https://github.com/neilhuang007/Gibbsiq"
