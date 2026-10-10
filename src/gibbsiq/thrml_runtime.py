@@ -21,6 +21,7 @@ import sys
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 from typing import Any
 
 from gibbsiq.blocks import BlockPartition, color_blocks, graph_density, validate_partition
@@ -136,7 +137,7 @@ class SamplerConfig:
                 raise ValueError("parallel_tempering_betas must contain at least two beta values")
             if any(value <= 0.0 for value in ladder):
                 raise ValueError(f"parallel_tempering_betas entries must be positive, got {ladder!r}")
-            if any(left >= right for left, right in zip(ladder, ladder[1:])):
+            if any(left >= right for left, right in pairwise(ladder)):
                 raise ValueError(
                     f"parallel_tempering_betas must be strictly increasing from hot to cold, got {ladder!r}"
                 )
