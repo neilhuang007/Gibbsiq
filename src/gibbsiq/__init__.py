@@ -6,13 +6,9 @@ from gibbsiq.benchmark_bridge import (
     optimal_spin_witnesses,
     verify_optimum_claim,
 )
-
 from gibbsiq.blocks import BlockPartition, color_blocks, graph_density, validate_partition
-
 from gibbsiq.categorical import CategoricalModel
-
 from gibbsiq.cluster_moves import IsoenergeticClusterMove, isoenergetic_cluster_move
-
 from gibbsiq.communication_profile import (
     ChainCommunicationProfile,
     ChainOrderSearchResult,
@@ -21,11 +17,8 @@ from gibbsiq.communication_profile import (
     profile_chain_communication,
     search_optimal_chain_order,
 )
-
 from gibbsiq.constraints import KnapsackEncoding, TspEncoding, compile_knapsack, compile_tsp
-
 from gibbsiq.conversions import compile_bqm, compile_ising, compile_qubo
-
 from gibbsiq.diagnostics import (
     chain_flags,
     chain_section,
@@ -44,9 +37,7 @@ from gibbsiq.diagnostics import (
     split_rhat,
     state_counts,
 )
-
 from gibbsiq.domain_wall import DomainWallEncoding, compile_domain_wall
-
 from gibbsiq.exact_distribution import (
     DistributionComparison,
     ExactDistribution,
@@ -54,9 +45,7 @@ from gibbsiq.exact_distribution import (
     compare_boltzmann_distributions,
     exact_boltzmann_distribution,
 )
-
 from gibbsiq.factor_lowering import CubicMonomialLowering, reduce_cubic_monomial
-
 from gibbsiq.hardware import (
     CommunicationSpec,
     FixedPointSpec,
@@ -66,9 +55,7 @@ from gibbsiq.hardware import (
     ProgrammingSpec,
     TSUSpec,
 )
-
 from gibbsiq.hardware_assessment import HardwareAssessment, assess_target_admissibility
-
 from gibbsiq.importers import (
     FACTOR_GRAPH_FORMAT,
     FACTOR_GRAPH_SCHEMA_VERSION,
@@ -76,26 +63,19 @@ from gibbsiq.importers import (
     program_from_factor_json,
     program_from_networkx,
 )
-
+from gibbsiq.inspector import Inspector
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
-
 from gibbsiq.program import PROGRAM_SCHEMA_VERSION, ThermodynamicProgram
-
 from gibbsiq.quantization import QuantizationAnalysis, analyze_quantization
-
 from gibbsiq.reference_sampler import (
     ReferenceGibbsSampler,
     ReferenceSampleResult,
     ReferenceSamplerConfig,
     ReferenceTransitionEvent,
 )
-
 from gibbsiq.result import ResultVartype, SampleResult
-
 from gibbsiq.thrml_runtime import SamplerConfig, THRMLSampler
-
 from gibbsiq.topology import ExplicitTopology, GridTopology
-
 from gibbsiq.verification import (
     EmpiricalInterval,
     EmpiricalVerificationReport,
@@ -107,6 +87,7 @@ from gibbsiq.verification import (
     verify_transition_matrix,
 )
 
+# package version; pyproject.toml reads it through [tool.setuptools.dynamic].
 __version__ = "0.2.0a1"
 
 __all__ = [
@@ -130,6 +111,7 @@ __all__ = [
     "GridTopology",
     "HardwareAssessment",
     "HostTransferSpec",
+    "Inspector",
     "IsingModel",
     "IsoenergeticClusterMove",
     "KnapsackEncoding",
