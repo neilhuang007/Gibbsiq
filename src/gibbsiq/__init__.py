@@ -13,6 +13,15 @@ from gibbsiq.categorical import CategoricalModel
 
 from gibbsiq.cluster_moves import IsoenergeticClusterMove, isoenergetic_cluster_move
 
+from gibbsiq.communication_profile import (
+    ChainCommunicationProfile,
+    ChainOrderSearchResult,
+    PottsObjectiveEvaluation,
+    evaluate_potts_assignment,
+    profile_chain_communication,
+    search_optimal_chain_order,
+)
+
 from gibbsiq.constraints import KnapsackEncoding, TspEncoding, compile_knapsack, compile_tsp
 
 from gibbsiq.conversions import compile_bqm, compile_ising, compile_qubo
@@ -95,6 +104,8 @@ __version__ = "0.2.0a1"
 __all__ = [
     "BlockPartition",
     "CategoricalModel",
+    "ChainCommunicationProfile",
+    "ChainOrderSearchResult",
     "CommunicationSpec",
     "CubicMonomialLowering",
     "DistributionComparison",
@@ -114,6 +125,7 @@ __all__ = [
     "KnapsackEncoding",
     "ParameterProvenance",
     "PhysicalQuantity",
+    "PottsObjectiveEvaluation",
     "PROGRAM_SCHEMA_VERSION",
     "ProgrammingSpec",
     "QuantizationAnalysis",
@@ -155,13 +167,16 @@ __all__ = [
     "energy_flags",
     "energy_section",
     "ess_mean",
+    "evaluate_potts_assignment",
     "exact_boltzmann_distribution",
     "graph_density",
     "isoenergetic_cluster_move",
     "magnetization_trace",
     "optimal_spin_witnesses",
+    "profile_chain_communication",
     "rank_normalized_split_rhat",
     "reduce_cubic_monomial",
+    "search_optimal_chain_order",
     "spin_to_binary",
     "split_chains",
     "split_rhat",
