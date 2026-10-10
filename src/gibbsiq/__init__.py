@@ -46,6 +46,16 @@ from gibbsiq.exact_distribution import (
 
 from gibbsiq.factor_lowering import CubicMonomialLowering, reduce_cubic_monomial
 
+from gibbsiq.hardware import (
+    CommunicationSpec,
+    FixedPointSpec,
+    HostTransferSpec,
+    ParameterProvenance,
+    PhysicalQuantity,
+    ProgrammingSpec,
+    TSUSpec,
+)
+
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
 
 from gibbsiq.program import PROGRAM_SCHEMA_VERSION, ThermodynamicProgram
@@ -60,6 +70,8 @@ from gibbsiq.reference_sampler import (
 from gibbsiq.result import ResultVartype, SampleResult
 
 from gibbsiq.thrml_runtime import SamplerConfig, THRMLSampler
+
+from gibbsiq.topology import ExplicitTopology, GridTopology
 
 from gibbsiq.verification import (
     EmpiricalInterval,
@@ -77,6 +89,7 @@ __version__ = "0.2.0a1"
 __all__ = [
     "BlockPartition",
     "CategoricalModel",
+    "CommunicationSpec",
     "CubicMonomialLowering",
     "DistributionComparison",
     "EmpiricalInterval",
@@ -84,10 +97,17 @@ __all__ = [
     "ExactDistribution",
     "ExactDistributionNumericalError",
     "ExactTransitionKernel",
+    "ExplicitTopology",
+    "FixedPointSpec",
+    "GridTopology",
+    "HostTransferSpec",
     "IsingModel",
     "IsoenergeticClusterMove",
     "KnapsackEncoding",
+    "ParameterProvenance",
+    "PhysicalQuantity",
     "PROGRAM_SCHEMA_VERSION",
+    "ProgrammingSpec",
     "ReferenceGibbsSampler",
     "ReferenceSampleResult",
     "ReferenceSamplerConfig",
@@ -96,6 +116,7 @@ __all__ = [
     "SampleResult",
     "SamplerConfig",
     "THRMLSampler",
+    "TSUSpec",
     "ThermodynamicProgram",
     "TransitionVerificationReport",
     "TspEncoding",
