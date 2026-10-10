@@ -65,6 +65,7 @@ gibbsiq = ["py.typed", "data/evaluation/*.json", "data/qualification/*.md", "qua
 
 [project.scripts]
 gibbsiq-evaluate = "gibbsiq.evaluation:main"
+gibbsiq = "gibbsiq.qualification.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/neilhuang007/Gibbsiq"
