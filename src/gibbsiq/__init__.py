@@ -15,6 +15,25 @@ from gibbsiq.constraints import KnapsackEncoding, TspEncoding, compile_knapsack,
 
 from gibbsiq.conversions import compile_bqm, compile_ising, compile_qubo
 
+from gibbsiq.diagnostics import (
+    chain_flags,
+    chain_section,
+    compute_diagnostics,
+    diagnostic_candidate_from_input,
+    distance_to_best_trace,
+    diversity_flags,
+    diversity_observations,
+    diversity_section,
+    energy_flags,
+    energy_section,
+    ess_mean,
+    magnetization_trace,
+    rank_normalized_split_rhat,
+    split_chains,
+    split_rhat,
+    state_counts,
+)
+
 from gibbsiq.factor_lowering import CubicMonomialLowering, reduce_cubic_monomial
 
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
@@ -39,6 +58,8 @@ __all__ = [
     "__version__",
     "binary_to_spin",
     "candidate_from_result",
+    "chain_flags",
+    "chain_section",
     "color_blocks",
     "compile_bqm",
     "compile_fixture",
@@ -46,10 +67,24 @@ __all__ = [
     "compile_knapsack",
     "compile_qubo",
     "compile_tsp",
+    "compute_diagnostics",
+    "diagnostic_candidate_from_input",
+    "distance_to_best_trace",
+    "diversity_flags",
+    "diversity_observations",
+    "diversity_section",
+    "energy_flags",
+    "energy_section",
+    "ess_mean",
     "graph_density",
+    "magnetization_trace",
     "optimal_spin_witnesses",
+    "rank_normalized_split_rhat",
     "reduce_cubic_monomial",
     "spin_to_binary",
+    "split_chains",
+    "split_rhat",
+    "state_counts",
     "validate_partition",
     "verify_optimum_claim",
 ]
