@@ -36,6 +36,14 @@ from gibbsiq.diagnostics import (
     state_counts,
 )
 
+from gibbsiq.exact_distribution import (
+    DistributionComparison,
+    ExactDistribution,
+    ExactDistributionNumericalError,
+    compare_boltzmann_distributions,
+    exact_boltzmann_distribution,
+)
+
 from gibbsiq.factor_lowering import CubicMonomialLowering, reduce_cubic_monomial
 
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
@@ -52,6 +60,9 @@ __all__ = [
     "BlockPartition",
     "CategoricalModel",
     "CubicMonomialLowering",
+    "DistributionComparison",
+    "ExactDistribution",
+    "ExactDistributionNumericalError",
     "IsingModel",
     "IsoenergeticClusterMove",
     "KnapsackEncoding",
@@ -68,6 +79,7 @@ __all__ = [
     "chain_flags",
     "chain_section",
     "color_blocks",
+    "compare_boltzmann_distributions",
     "compile_bqm",
     "compile_fixture",
     "compile_ising",
@@ -83,6 +95,7 @@ __all__ = [
     "energy_flags",
     "energy_section",
     "ess_mean",
+    "exact_boltzmann_distribution",
     "graph_density",
     "isoenergetic_cluster_move",
     "magnetization_trace",
