@@ -5,7 +5,7 @@ legacy integer ``SampleResult`` remains a separate contract.
 """
 
 from gibbsiq.qualification.artifacts import inspect_bundle
-
+from gibbsiq.qualification.comparison import compare_bundles
 from gibbsiq.qualification.contracts import (
     Acceptance,
     AcceptanceContract,
@@ -18,9 +18,7 @@ from gibbsiq.qualification.contracts import (
     RunPlan,
     WorkloadSpec,
 )
-
 from gibbsiq.qualification.workflow import qualify
-
 from gibbsiq.qualification.policy_search import (
     Candidate,
     SearchPlan,
@@ -29,7 +27,6 @@ from gibbsiq.qualification.policy_search import (
     resolve_policy,
     run_search,
 )
-
 from gibbsiq.qualification.statistics import (
     evaluate_metric,
     evaluate_metrics,
@@ -53,6 +50,7 @@ __all__ = [
     "WorkloadSpec",
     "evaluate_metric",
     "evaluate_metrics",
+    "compare_bundles",
     "inspect_bundle",
     "inspect_search",
     "paired_difference_bounds",
