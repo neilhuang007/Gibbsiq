@@ -11,6 +11,8 @@ from gibbsiq.blocks import BlockPartition, color_blocks, graph_density, validate
 
 from gibbsiq.categorical import CategoricalModel
 
+from gibbsiq.cluster_moves import IsoenergeticClusterMove, isoenergetic_cluster_move
+
 from gibbsiq.constraints import KnapsackEncoding, TspEncoding, compile_knapsack, compile_tsp
 
 from gibbsiq.conversions import compile_bqm, compile_ising, compile_qubo
@@ -51,6 +53,7 @@ __all__ = [
     "CategoricalModel",
     "CubicMonomialLowering",
     "IsingModel",
+    "IsoenergeticClusterMove",
     "KnapsackEncoding",
     "PROGRAM_SCHEMA_VERSION",
     "ResultVartype",
@@ -81,6 +84,7 @@ __all__ = [
     "energy_section",
     "ess_mean",
     "graph_density",
+    "isoenergetic_cluster_move",
     "magnetization_trace",
     "optimal_spin_witnesses",
     "rank_normalized_split_rhat",
