@@ -1,0 +1,7 @@
+# CPU-only evaluation of the pinned public checkpoint, isolated from the core.
+jax==0.10.2
+jaxlib==0.10.2
+equinox==0.13.8
+numpy==2.4.6
+tiktoken==0.14.0
+z1t @ git+https://github.com/extropic-ai/sparse-transformers.git@13051e90df9669be5b8f9f34fb097329fa82f674#subdirectory=research/z1t

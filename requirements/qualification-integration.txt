@@ -1,0 +1,13 @@
+# An explicit compatibility experiment, not a floating optional stack.
+jax==0.10.2
+jaxlib==0.10.2
+equinox==0.13.8
+numpy==2.4.6
+dimod==0.12.21
+arviz==1.2.0
+networkx==3.6.1
+ruff==0.15.20
+mypy==2.1.0
+thrml @ git+https://github.com/extropic-ai/thrml.git@9c4e6fbb800f5e5c627122e668ff1b158ef3782b
+extro-torx @ git+https://github.com/extropic-ai/torx.git@f8a46c12615019a96997f294ce07f6c2d50cfc82
+z1t @ git+https://github.com/extropic-ai/sparse-transformers.git@13051e90df9669be5b8f9f34fb097329fa82f674#subdirectory=research/z1t
