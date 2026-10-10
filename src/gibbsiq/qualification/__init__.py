@@ -19,6 +19,8 @@ from gibbsiq.qualification.contracts import (
     WorkloadSpec,
 )
 
+from gibbsiq.qualification.workflow import qualify
+
 from gibbsiq.qualification.statistics import (
     evaluate_metric,
     evaluate_metrics,
@@ -42,4 +44,5 @@ __all__ = [
     "inspect_bundle",
     "paired_difference_bounds",
     "required_units",
+    "qualify",
 ]
