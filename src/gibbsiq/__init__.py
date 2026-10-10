@@ -42,6 +42,8 @@ from gibbsiq.program import PROGRAM_SCHEMA_VERSION, ThermodynamicProgram
 
 from gibbsiq.result import ResultVartype, SampleResult
 
+from gibbsiq.thrml_runtime import SamplerConfig, THRMLSampler
+
 __version__ = "0.2.0a1"
 
 __all__ = [
@@ -53,6 +55,8 @@ __all__ = [
     "PROGRAM_SCHEMA_VERSION",
     "ResultVartype",
     "SampleResult",
+    "SamplerConfig",
+    "THRMLSampler",
     "ThermodynamicProgram",
     "TspEncoding",
     "__version__",
