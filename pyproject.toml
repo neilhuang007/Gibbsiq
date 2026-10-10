@@ -4,8 +4,9 @@ dynamic = ["version"]
 description = "Validate stochastic workloads with bounded execution, reproducible evidence and frozen policies"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
-license-files = ["LICENSE"]
+# Gibbsiq remains MIT; the pinned Z1T traversal includes Apache-2.0 expressions.
+license = "MIT AND Apache-2.0"
+license-files = ["LICENSE", "src/gibbsiq/qualification/adapters/Z1T_LICENSE.txt"]
 authors = [{ name = "Neil Huang", email = "neilhuang007@gmail.com" }]
 keywords = [
     "qubo",
