@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 from types import MappingProxyType
 from typing import Any
 
@@ -115,7 +116,7 @@ class DomainWallEncoding:
         return sum(
             bits[right] == 1 and bits[left] == 0
             for chain in self.wall_variables.values()
-            for left, right in zip(chain, chain[1:])
+            for left, right in pairwise(chain)
         )
 
     def encode(
@@ -326,7 +327,7 @@ def compile_domain_wall(
 
     constraint_edge_count = 0
     for chain in wall_variables.values():
-        for left_wall, right_wall in zip(chain, chain[1:]):
+        for left_wall, right_wall in pairwise(chain):
             constraint_edge_count += 1
             _append_term(linear_terms, right_wall, canonical_penalty)
             _append_term(

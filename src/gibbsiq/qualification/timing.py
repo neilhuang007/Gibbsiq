@@ -47,12 +47,10 @@ class TimingSeries:
         if not values:
             raise ValueError("timing series must have observations")
         ordered = tuple(sorted(values))
-        middle = len(ordered) // 2
-        median = ordered[middle] if len(ordered) % 2 else (ordered[middle - 1] + ordered[middle]) / 2
         return cls(
             values,
             len(values),
-            median,
+            statistics.median(ordered),
             ordered[0],
             ordered[-1],
             _quantile(ordered, 0.75) - _quantile(ordered, 0.25),
