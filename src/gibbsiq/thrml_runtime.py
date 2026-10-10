@@ -917,6 +917,33 @@ def _build_metadata(
     return metadata
 
 
+def _finalize_sample_result(
+    model: IsingModel,
+    samples: Sequence[Mapping[Variable, int]],
+    *,
+    interaction_energy_chains: Sequence[Sequence[float]],
+    traces: Mapping[str, Any],
+    metadata: dict[str, Any],
+    diagnostics_started: float,
+    magnetization_chains: Sequence[Sequence[float]] | None = None,
+) -> SampleResult:
+    """Attach diagnostics without resetting the caller's post-processing timer."""
+    diagnostics = compute_diagnostics(
+        energy_chains=interaction_energy_chains,
+        samples=samples,
+        variables=model.variables,
+        magnetization_chains=magnetization_chains,
+        timings={
+            name: metadata[name]
+            for name in ("lower_seconds", "sample_seconds", "device_platform", "device_kind")
+        },
+    )
+    diagnostics_seconds = time.perf_counter() - diagnostics_started
+    diagnostics["runtime"]["diagnostics_seconds"] = diagnostics_seconds
+    metadata["diagnostics_seconds"] = diagnostics_seconds
+    return SampleResult.from_model(model, samples, traces=traces, diagnostics=diagnostics, metadata=metadata)
+
+
 class THRMLSampler:
     """Sample Gibbsiq Ising models through THRML block-Gibbs programs."""
 
@@ -1070,26 +1097,13 @@ class THRMLSampler:
                 }
             )
 
-        diagnostics = compute_diagnostics(
-            energy_chains=interaction_energy_chains,
-            samples=samples,
-            variables=model.variables,
-            timings={
-                "lower_seconds": lower_seconds,
-                "sample_seconds": sample_seconds,
-                "device_platform": device.platform,
-                "device_kind": device.device_kind,
-            },
-        )
-        diagnostics_seconds = time.perf_counter() - diagnostics_started
-        diagnostics["runtime"]["diagnostics_seconds"] = diagnostics_seconds
-        metadata["diagnostics_seconds"] = diagnostics_seconds
-        return SampleResult.from_model(
+        return _finalize_sample_result(
             model,
             samples,
+            interaction_energy_chains=interaction_energy_chains,
             traces=traces,
-            diagnostics=diagnostics,
             metadata=metadata,
+            diagnostics_started=diagnostics_started,
         )
 
     def _sample_parallel_tempering(
@@ -1228,24 +1242,14 @@ class THRMLSampler:
             }
         )
 
-        diagnostics = compute_diagnostics(
-            energy_chains=interaction_energy_chains,
-            samples=decoded.samples,
-            variables=model.variables,
+        return _finalize_sample_result(
+            model,
+            decoded.samples,
+            interaction_energy_chains=interaction_energy_chains,
+            traces=traces,
+            metadata=metadata,
+            diagnostics_started=diagnostics_started,
             magnetization_chains=magnetization_chains,
-            timings={
-                "lower_seconds": lower_seconds,
-                "sample_seconds": sample_seconds,
-                "device_platform": device.platform,
-                "device_kind": device.device_kind,
-            },
-        )
-        diagnostics_seconds = time.perf_counter() - diagnostics_started
-        diagnostics["runtime"]["diagnostics_seconds"] = diagnostics_seconds
-        metadata["diagnostics_seconds"] = diagnostics_seconds
-
-        return SampleResult.from_model(
-            model, decoded.samples, traces=traces, diagnostics=diagnostics, metadata=metadata
         )
 
     def sample(
@@ -1408,22 +1412,12 @@ class THRMLSampler:
         )
         metadata["local_sweep_accounting"] = sweep_accounting
 
-        diagnostics = compute_diagnostics(
-            energy_chains=interaction_energy_chains,
-            samples=decoded.samples,
-            variables=model.variables,
+        return _finalize_sample_result(
+            model,
+            decoded.samples,
+            interaction_energy_chains=interaction_energy_chains,
+            traces=traces,
+            metadata=metadata,
+            diagnostics_started=diagnostics_started,
             magnetization_chains=magnetization_chains,
-            timings={
-                "lower_seconds": lower_seconds,
-                "sample_seconds": sample_seconds,
-                "device_platform": device.platform,
-                "device_kind": device.device_kind,
-            },
-        )
-        diagnostics_seconds = time.perf_counter() - diagnostics_started
-        diagnostics["runtime"]["diagnostics_seconds"] = diagnostics_seconds
-        metadata["diagnostics_seconds"] = diagnostics_seconds
-
-        return SampleResult.from_model(
-            model, decoded.samples, traces=traces, diagnostics=diagnostics, metadata=metadata
         )
