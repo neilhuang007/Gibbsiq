@@ -56,9 +56,13 @@ from gibbsiq.hardware import (
     TSUSpec,
 )
 
+from gibbsiq.hardware_assessment import HardwareAssessment, assess_target_admissibility
+
 from gibbsiq.model import IsingModel, binary_to_spin, spin_to_binary
 
 from gibbsiq.program import PROGRAM_SCHEMA_VERSION, ThermodynamicProgram
+
+from gibbsiq.quantization import QuantizationAnalysis, analyze_quantization
 
 from gibbsiq.reference_sampler import (
     ReferenceGibbsSampler,
@@ -100,6 +104,7 @@ __all__ = [
     "ExplicitTopology",
     "FixedPointSpec",
     "GridTopology",
+    "HardwareAssessment",
     "HostTransferSpec",
     "IsingModel",
     "IsoenergeticClusterMove",
@@ -108,6 +113,7 @@ __all__ = [
     "PhysicalQuantity",
     "PROGRAM_SCHEMA_VERSION",
     "ProgrammingSpec",
+    "QuantizationAnalysis",
     "ReferenceGibbsSampler",
     "ReferenceSampleResult",
     "ReferenceSamplerConfig",
@@ -121,6 +127,8 @@ __all__ = [
     "TransitionVerificationReport",
     "TspEncoding",
     "__version__",
+    "analyze_quantization",
+    "assess_target_admissibility",
     "binary_to_spin",
     "build_exact_transition_kernel",
     "candidate_from_result",
