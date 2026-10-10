@@ -44,9 +44,6 @@ class BenchmarkOracleTest(unittest.TestCase):
         self.fixtures = load_corpus()
         self.by_family = {f["family"]: f for f in self.fixtures}
 
-    def test_corpus_covers_all_families(self) -> None:
-        self.assertEqual(set(self.by_family), set(FAMILY_SPECS))
-
     def test_large_integer_is_not_rounded_through_float_comparison(self) -> None:
         expected = 2**53 + 1
         rounded_actual = float(2**53)

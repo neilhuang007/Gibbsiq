@@ -134,6 +134,7 @@ class PortedBinaryConventionTest(unittest.TestCase):
 
     def test_binary_single_diagonal_is_linear(self) -> None:
         # dimod test_bqm.py:364-368 -- [[1]] BINARY -> linear[0]==1.
+        # dimod test_bqm.py:2509 -- binary u*u is linear because x^2==x.
         model = compile_qubo({(0, 0): 1.0})
         self.assertAlmostEqual(model.energy({0: 1}, vartype="BINARY"), 1.0, places=12)
         self.assertAlmostEqual(model.energy({0: 0}, vartype="BINARY"), 0.0, places=12)
@@ -174,11 +175,6 @@ class PortedBinaryConventionTest(unittest.TestCase):
         model_offset = compile_qubo(qubo, offset=1.6, variables=[0, 1, 2])
         self.assertAlmostEqual(model_offset.metadata["input_offset"], 1.6, places=12)
         self.assertAlmostEqual(model_offset.energy({0: 0, 1: 0, 2: 0}, vartype="BINARY"), 1.6, places=12)
-
-    def test_binary_self_multiply_is_linear(self) -> None:
-        # dimod test_bqm.py:2509 -- binary u*u == BQM({'u':1},{},0,BINARY): x^2==x.
-        model = compile_qubo({(0, 0): 1.0})
-        self.assertAlmostEqual(model.energy({0: 1}, vartype="BINARY"), 1.0, places=12)
 
 
 class PortedBestSelectionTest(unittest.TestCase):

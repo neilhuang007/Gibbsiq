@@ -148,9 +148,6 @@ class VerifyOptimumClaimAntiCheatTests(unittest.TestCase):
             key: value for key, value in self.fixture["expected"].items() if key not in ENUMERATION_ONLY_KEYS
         }
 
-    def test_valid_candidate_passes(self) -> None:
-        self.assertEqual(verify_optimum_claim(self.fixture, self.honest, TOLERANCE), [])
-
     def test_full_oracle_requires_degeneracy(self) -> None:
         self.assertEqual(verify_optimum_claim(self.fixture, self.honest, TOLERANCE), [])
         full = verify_benchmark_fixture(self.fixture, self.honest, TOLERANCE)
@@ -440,17 +437,6 @@ class ThrmlFamousInstanceTests(unittest.TestCase):
         fixture, candidate = self._solve("gt_maxcut_petersen", config, num_reads=64)
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
 
-    def test_complete_bipartite_k33_maxcut(self) -> None:
-        config = SamplerConfig(
-            beta=2.5,
-            n_warmup=200,
-            steps_per_sample=2,
-            warmup_beta_ladder=(0.5, 1.0, 2.5),
-            seed=3,
-        )
-        fixture, candidate = self._solve("gt_maxcut_bipartite_k33", config, num_reads=32)
-        self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
-
     def test_odd_cycle_c7_maxcut(self) -> None:
         config = SamplerConfig(
             beta=2.5,
@@ -475,8 +461,8 @@ class ThrmlFamousInstanceTests(unittest.TestCase):
         self.assertEqual(verify_optimum_claim(fixture, candidate, TOLERANCE), [])
 
     def test_doctored_thrml_candidate_fails(self) -> None:
-        # A real-sampler candidate is still rejected once its witness is
-        # tampered with after the fact.
+        # THRML solves K_{3,3}; the oracle accepts its honest candidate and
+        # rejects the candidate once its witness is tampered with.
         config = SamplerConfig(
             beta=2.5,
             n_warmup=200,

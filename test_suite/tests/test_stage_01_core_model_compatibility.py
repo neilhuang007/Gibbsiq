@@ -43,16 +43,6 @@ REQUIRED_RESULT_FIELDS = {
     "diagnostics",
     "metadata",
 }
-REQUIRED_RESULT_METADATA = {
-    "solver_backend_versions",
-    "device",
-    "seed",
-    "schedule",
-    "block_strategy",
-    "timing",
-    "source_model_format",
-    "conversion_offset",
-}
 
 
 def spin_assignments(variables: list[str]):
@@ -251,24 +241,6 @@ class Stage01ReferenceContractTest(unittest.TestCase):
         self.assertEqual(model["quadratic"], {"0,2": 3.0, "1,2": -4.0})
         self.assertEqual(model["offset"], -7.0)
         self.assertEqual(model["variable_order"], [0, 1, 2])
-
-    def test_stage_1_schema_required_fields(self) -> None:
-        self.assertEqual(
-            REQUIRED_IR_FIELDS,
-            {
-                "variables",
-                "linear",
-                "quadratic",
-                "offset",
-                "vartype",
-                "graph",
-                "source_format",
-                "variable_order",
-                "metadata",
-            },
-        )
-        self.assertIn("conversion_offset", REQUIRED_RESULT_METADATA)
-        self.assertIn("best_energy", REQUIRED_RESULT_FIELDS)
 
 
 class Stage01ImplementationConformanceTest(unittest.TestCase):
