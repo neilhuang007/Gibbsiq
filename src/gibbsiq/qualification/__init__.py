@@ -21,6 +21,15 @@ from gibbsiq.qualification.contracts import (
 
 from gibbsiq.qualification.workflow import qualify
 
+from gibbsiq.qualification.policy_search import (
+    Candidate,
+    SearchPlan,
+    SearchSpace,
+    inspect_search,
+    resolve_policy,
+    run_search,
+)
+
 from gibbsiq.qualification.statistics import (
     evaluate_metric,
     evaluate_metrics,
@@ -32,17 +41,23 @@ __all__ = [
     "Acceptance",
     "AcceptanceContract",
     "Bounds",
+    "Candidate",
     "MetricBinding",
     "MetricResult",
     "MetricSpec",
     "Observation",
     "QualificationReport",
     "RunPlan",
+    "SearchPlan",
+    "SearchSpace",
     "WorkloadSpec",
     "evaluate_metric",
     "evaluate_metrics",
     "inspect_bundle",
+    "inspect_search",
     "paired_difference_bounds",
     "required_units",
+    "resolve_policy",
+    "run_search",
     "qualify",
 ]
