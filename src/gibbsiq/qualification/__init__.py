@@ -17,6 +17,13 @@ from gibbsiq.qualification.contracts import (
     WorkloadSpec,
 )
 
+from gibbsiq.qualification.statistics import (
+    evaluate_metric,
+    evaluate_metrics,
+    paired_difference_bounds,
+    required_units,
+)
+
 __all__ = [
     "Acceptance",
     "AcceptanceContract",
@@ -28,4 +35,8 @@ __all__ = [
     "QualificationReport",
     "RunPlan",
     "WorkloadSpec",
+    "evaluate_metric",
+    "evaluate_metrics",
+    "paired_difference_bounds",
+    "required_units",
 ]
