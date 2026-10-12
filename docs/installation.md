@@ -16,8 +16,9 @@ python -m pip install .
 gibbsiq doctor
 ```
 
-The core provides discrete models, exact references, diagnostics, qualification,
-and offline inspection using the standard library.
+The core provides QUBO and Ising models, exact references, block-Gibbs sampling,
+mixing diagnostics, qualification, and offline inspection using the standard
+library.
 
 ## Optional features
 
@@ -26,7 +27,7 @@ and offline inspection using the standard library.
 | `python -m pip install ".[qualification]"` | NumPy array artifacts |
 | `python -m pip install ".[dimod]"` | dimod conversion |
 | `python -m pip install ".[networkx]"` | NetworkX import |
-| `python -m pip install ".[thrml]"` | THRML sampling |
+| `python -m pip install ".[thrml]"` | Enables the THRML sampling backend |
 | `python -m pip install ".[arviz]"` | ArviZ diagnostic crosschecks |
 
 ## Numerical integration environment

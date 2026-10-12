@@ -41,6 +41,10 @@
 - Pin UTF-8 on both sides of the qualification CLI subprocess in
   `test_qualification_cli.py`, so the inspection test no longer depends on the
   locale codec of the parent shell.
+- Restate the project as QUBO and Ising optimization on THRML with exact
+  oracles and mixing diagnostics in the README, the user guide index, and the
+  package description. The qualification workflow is documented as a secondary
+  capability.
 
 ## 0.2.0a1 — 2026-10-04
 

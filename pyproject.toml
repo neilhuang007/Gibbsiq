@@ -1,7 +1,7 @@
 [project]
 name = "gibbsiq"
 dynamic = ["version"]
-description = "Validate stochastic workloads with bounded execution, reproducible evidence and frozen policies"
+description = "QUBO and Ising optimization on THRML with exact oracles and mixing diagnostics"
 readme = "README.md"
 requires-python = ">=3.10"
 # Gibbsiq remains MIT; the pinned Z1T traversal includes Apache-2.0 expressions.
