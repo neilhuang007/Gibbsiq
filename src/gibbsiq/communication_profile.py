@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 from typing import Any, Literal, TypeAlias
 
+from gibbsiq._validation import bounded_int, positive_float
 from gibbsiq.model import (
     IsingModel,
     Variable,
@@ -52,18 +53,18 @@ def _json_safe_label(value: Any) -> Any:
 
 
 def _positive_integer(value: Any, *, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise ValueError(f"{name} must be a positive integer, got {value!r}")
-    return value
+    return bounded_int(
+        value, name=name, minimum=1, message="{name} must be a positive integer, got {value!r}"
+    )
 
 
 def _positive_float(value: Any, *, name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be a finite positive number, got {value!r}")
-    canonical = finite_float(value, name=name)
-    if canonical <= 0.0:
-        raise ValueError(f"{name} must be positive, got {value!r}")
-    return canonical
+    return positive_float(
+        value,
+        name=name,
+        bool_message="{name} must be a finite positive number, got {value!r}",
+        sign_message="{name} must be positive, got {value!r}",
+    )
 
 
 def _canonical_labels(labels: Iterable[PartitionLabel]) -> tuple[PartitionLabel, ...]:

@@ -279,59 +279,64 @@ def finite_sum(values: Sequence[float], *, name: str) -> float:
     return finite_float(total, name=name)
 
 
+UNFILLED_SLOT: Any = object()
+
+
+def aligned_sample_values(
+    sample: Mapping[Variable, int],
+    variables: tuple[Variable, ...],
+    index: Mapping[Variable, int],
+) -> list[Any]:
+    """Place sample values at exact-label positions; extra keys are ignored."""
+    slots: list[Any] = [UNFILLED_SLOT] * len(variables)
+    for key, value in sample.items():
+        try:
+            position = index[key]
+        except (KeyError, TypeError):
+            continue
+        expected = variables[position]
+        if key is not expected and not exact_label_equal(key, expected):
+            continue
+        if slots[position] is not UNFILLED_SLOT:
+            raise ValueError(f"mapping contains duplicate exact key {key!r}")
+        slots[position] = value
+    return slots
+
+
+def sample_to_spin_values(
+    sample: Mapping[Variable, int],
+    variables: tuple[Variable, ...],
+    vartype: Vartype,
+    *,
+    index: Mapping[Variable, int] | None = None,
+) -> tuple[int, ...]:
+    """Validates sample; returns spins as tuple aligned to variables."""
+    normalized = normalize_vartype(vartype)
+    slots = aligned_sample_values(sample, variables, variable_index(variables) if index is None else index)
+    is_spin = normalized == "SPIN"
+    low = -1 if is_spin else 0
+    values: list[int] = []
+    for variable, value in zip(variables, slots):
+        if value is UNFILLED_SLOT:
+            raise ValueError(f"sample is missing variable {variable!r}")
+        if isinstance(value, bool):
+            raise ValueError(f"sample value for {variable!r} must not be boolean")
+        if value == 1:
+            values.append(1)
+        elif value == low:
+            values.append(-1)
+        elif is_spin:
+            raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
+        else:
+            raise ValueError(f"binary value for {variable!r} must be 0 or 1, got {value!r}")
+    return tuple(values)
+
+
 def sample_to_spin(
     sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
 ) -> dict[Variable, int]:
     """Validates sample; returns spins keyed by variable."""
-    normalized = normalize_vartype(vartype)
-    spins: dict[Variable, int] = {}
-    sample_key_index = exact_mapping_index(sample)
-    for variable in variables:
-        try:
-            sample_key = exact_mapping_key(sample, variable, sample_key_index)
-        except KeyError:
-            raise ValueError(f"sample is missing variable {variable!r}") from None
-        value = sample[sample_key]
-        if isinstance(value, bool):
-            raise ValueError(f"sample value for {variable!r} must not be boolean")
-        if normalized == "SPIN":
-            if value not in (-1, 1):
-                raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
-            spins[variable] = int(value)
-        elif normalized == "BINARY":
-            if value not in (0, 1):
-                raise ValueError(f"binary value for {variable!r} must be 0 or 1, got {value!r}")
-            spins[variable] = 2 * int(value) - 1
-        else:
-            raise ValueError(f"cannot convert {vartype!r} samples to spins; expected SPIN or BINARY")
-    return spins
-
-
-def sample_to_spin_values(
-    sample: Mapping[Variable, int], variables: tuple[Variable, ...], vartype: Vartype
-) -> tuple[int, ...]:
-    """Validates sample; returns spins as tuple aligned to variables."""
-    normalized = normalize_vartype(vartype)
-    values: list[int] = []
-    sample_key_index = exact_mapping_index(sample)
-    for variable in variables:
-        try:
-            value = sample[exact_mapping_key(sample, variable, sample_key_index)]
-        except KeyError as error:
-            raise ValueError(f"sample is missing variable {variable!r}") from error
-        if isinstance(value, bool):
-            raise ValueError(f"sample value for {variable!r} must not be boolean")
-        if normalized == "SPIN":
-            if value != -1 and value != 1:
-                raise ValueError(f"spin value for {variable!r} must be -1 or +1, got {value!r}")
-            values.append(1 if value == 1 else -1)
-        elif normalized == "BINARY":
-            if value != 0 and value != 1:
-                raise ValueError(f"binary value for {variable!r} must be 0 or 1, got {value!r}")
-            values.append(1 if value == 1 else -1)
-        else:
-            raise ValueError(f"cannot convert {vartype!r} samples to spins; expected SPIN or BINARY")
-    return tuple(values)
+    return dict(zip(variables, sample_to_spin_values(sample, variables, vartype)))
 
 
 def spin_to_binary(
@@ -505,16 +510,47 @@ class IsingModel:
 
     def energy(self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN") -> float:
         """E(s)=offset+interaction energy, for spin or binary input."""
-        spins = sample_to_spin_values(sample, self.variables, vartype)
-        return finite_sum(
-            [self.offset, self._interaction_energy_from_spins(spins)],
-            name="computed energy",
-        )
+        spins = sample_to_spin_values(sample, self.variables, vartype, index=self._variable_index)
+        return self._energy_from_interaction(self._interaction_energy_from_spins(spins))
 
     def interaction_energy(self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN") -> float:
         """Offset-free energy (sum h_i s_i+sum J_ij s_i s_j); for stable energy diffs."""
-        spins = sample_to_spin_values(sample, self.variables, vartype)
+        spins = sample_to_spin_values(sample, self.variables, vartype, index=self._variable_index)
         return self._interaction_energy_from_spins(spins)
+
+    def energy_and_interaction(
+        self, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
+    ) -> tuple[float, float]:
+        """Return ``(energy, interaction_energy)`` after one sample validation."""
+        spins = sample_to_spin_values(sample, self.variables, vartype, index=self._variable_index)
+        interaction = self._interaction_energy_from_spins(spins)
+        return self._energy_from_interaction(interaction), interaction
+
+    def interaction_energy_from_spins(self, spins: Sequence[int]) -> float:
+        """Offset-free energy of a spin tuple aligned to ``variables``."""
+        return self._interaction_energy_from_spins(self._checked_spins(spins))
+
+    def energy_from_spins(self, spins: Sequence[int]) -> float:
+        """E(s) of a spin tuple aligned to ``variables``."""
+        return self._energy_from_interaction(self._interaction_energy_from_spins(self._checked_spins(spins)))
+
+    def energy_and_interaction_from_spins(self, spins: Sequence[int]) -> tuple[float, float]:
+        """Return ``(energy, interaction_energy)`` of a spin tuple aligned to ``variables``."""
+        interaction = self._interaction_energy_from_spins(self._checked_spins(spins))
+        return self._energy_from_interaction(interaction), interaction
+
+    def _checked_spins(self, spins: Sequence[int]) -> tuple[int, ...]:
+        """Validate an aligned spin tuple: right length, non-bool ints equal to -1 or +1."""
+        checked = tuple(spins)
+        if len(checked) != len(self.variables):
+            raise ValueError(f"spins must have length {len(self.variables)}, got {len(checked)}")
+        for position, value in enumerate(checked):
+            if isinstance(value, bool) or not isinstance(value, int) or (value != 1 and value != -1):
+                raise ValueError(f"spin at position {position} must be -1 or +1, got {value!r}")
+        return checked
+
+    def _energy_from_interaction(self, interaction: float) -> float:
+        return finite_sum([self.offset, interaction], name="computed energy")
 
     def _interaction_energy_from_spins(self, spins: tuple[int, ...]) -> float:
         terms = [coefficient * spins[position] for position, coefficient in enumerate(self._linear_cache())]
@@ -524,6 +560,14 @@ class IsingModel:
         )
         return finite_sum(terms, name="computed interaction energy")
 
+    def _local_field_from_spins(self, position: int, spins: tuple[int, ...]) -> float:
+        terms = [self._linear_cache()[position]]
+        terms.extend(
+            coefficient * spins[neighbor_index]
+            for neighbor_index, coefficient in self._neighbor_cache()[position]
+        )
+        return finite_sum(terms, name=f"local field for {self.variables[position]!r}")
+
     def local_field(
         self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
     ) -> float:
@@ -532,13 +576,8 @@ class IsingModel:
             position = exact_variable_position(variable, self.variables, self._variable_index)
         except KeyError as error:
             raise ValueError(f"unknown variable {variable!r}") from error
-        spins = sample_to_spin_values(sample, self.variables, vartype)
-        terms = [self._linear_cache()[position]]
-        terms.extend(
-            coefficient * spins[neighbor_index]
-            for neighbor_index, coefficient in self._neighbor_cache()[position]
-        )
-        return finite_sum(terms, name=f"local field for {variable!r}")
+        spins = sample_to_spin_values(sample, self.variables, vartype, index=self._variable_index)
+        return self._local_field_from_spins(position, spins)
 
     def flip_energy_delta(
         self, variable: Variable, sample: Mapping[Variable, int], *, vartype: Vartype = "SPIN"
@@ -548,15 +587,8 @@ class IsingModel:
             position = exact_variable_position(variable, self.variables, self._variable_index)
         except KeyError as error:
             raise ValueError(f"unknown variable {variable!r}") from error
-        spins = sample_to_spin_values(sample, self.variables, vartype)
-        gamma = finite_sum(
-            [self._linear_cache()[position]]
-            + [
-                coefficient * spins[neighbor_index]
-                for neighbor_index, coefficient in self._neighbor_cache()[position]
-            ],
-            name=f"local field for {variable!r}",
-        )
+        spins = sample_to_spin_values(sample, self.variables, vartype, index=self._variable_index)
+        gamma = self._local_field_from_spins(position, spins)
         return finite_float(
             -2.0 * spins[position] * gamma,
             name=f"flip energy delta for {variable!r}",

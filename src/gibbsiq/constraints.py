@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Literal
 
+from gibbsiq._validation import bounded_int, finite_number, nonnegative_float, positive_float
 from gibbsiq._frozen import freeze
 from gibbsiq.conversions import compile_qubo
 from gibbsiq.model import (
@@ -53,27 +54,19 @@ class ConstraintPenaltyPolicy:
 
 
 def _positive_float(value: Any, *, name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be numeric, not boolean")
-    number = finite_float(value, name=name)
-    if number <= 0.0:
-        raise ValueError(f"{name} must be positive")
-    return number
+    return positive_float(value, name=name, sign_message="{name} must be positive")
 
 
 def _nonnegative_float(value: Any, *, name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be numeric, not boolean")
-    number = finite_float(value, name=name)
-    if number < 0.0:
-        raise ValueError(f"{name} must be nonnegative")
-    return number
+    return nonnegative_float(value, name=name, sign_message="{name} must be nonnegative")
 
 
-def _finite_number(value: Any, *, name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be numeric, not boolean")
-    return finite_float(value, name=name)
+def _finite_sum_lazy(values: Sequence[float], name_template: str, subject: Any) -> float:
+    """Return ``finite_sum`` while building the error name only when a sum fails."""
+    try:
+        return finite_sum(values, name="constraint QUBO coefficient")
+    except ValueError:
+        return finite_sum(values, name=name_template.format(subject))
 
 
 def _derived_strict_penalty(strict_boundary: float, *, name: str) -> float:
@@ -91,9 +84,7 @@ def _derived_strict_penalty(strict_boundary: float, *, name: str) -> float:
 
 
 def _positive_integer(value: Any, *, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise ValueError(f"{name} must be a positive integer")
-    return value
+    return bounded_int(value, name=name, minimum=1, message="{name} must be a positive integer")
 
 
 def _binary_values(
@@ -143,9 +134,10 @@ def _finalize_qubo(
     positions = {variable: index for index, variable in enumerate(variables)}
     linear = MappingProxyType(
         {
-            variable: finite_sum(
+            variable: _finite_sum_lazy(
                 linear_terms.get(variable, []),
-                name=f"constraint QUBO linear coefficient for {variable!r}",
+                "constraint QUBO linear coefficient for {!r}",
+                variable,
             )
             for variable in variables
         }
@@ -156,7 +148,7 @@ def _finalize_qubo(
         normalized_quadratic_terms.setdefault(pair, []).extend(values)
     quadratic: dict[tuple[Variable, Variable], float] = {}
     for pair, values in normalized_quadratic_terms.items():
-        coefficient = finite_sum(values, name=f"constraint QUBO quadratic coefficient for {pair!r}")
+        coefficient = _finite_sum_lazy(values, "constraint QUBO quadratic coefficient for {!r}", pair)
         if coefficient != 0.0:
             quadratic[pair] = coefficient
     ordered_quadratic = MappingProxyType(
@@ -288,7 +280,7 @@ def compile_knapsack(
     if not canonical_weights or len(canonical_weights) != len(canonical_values):
         raise ValueError("knapsack weights and values must be nonempty and have equal lengths")
     canonical_capacity = _positive_integer(capacity, name="knapsack capacity")
-    source_offset = _finite_number(offset, name="knapsack source offset")
+    source_offset = finite_number(offset, name="knapsack source offset")
     reward_scale = canonical_capacity + 1
     strict_boundary = finite_float(
         max(
@@ -551,7 +543,7 @@ def compile_tsp(
     """Compile a symmetric finite TSP matrix to a one-hot QUBO/Ising model."""
     matrix = _canonical_distance_matrix(distance_matrix)
     canonical_scale = _positive_float(objective_scale, name="TSP objective scale")
-    source_offset = _finite_number(offset, name="TSP source offset")
+    source_offset = finite_number(offset, name="TSP source offset")
     n = len(matrix)
     declared_tour_length = finite_sum(
         [matrix[city][(city + 1) % n] for city in range(n)],

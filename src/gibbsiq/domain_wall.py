@@ -13,10 +13,11 @@ from itertools import pairwise
 from types import MappingProxyType
 from typing import Any
 
+from gibbsiq._validation import positive_float
 from gibbsiq._frozen import freeze, thaw
 from gibbsiq.categorical import CategoricalModel, CategoricalSample
 from gibbsiq.conversions import compile_qubo
-from gibbsiq.model import IsingModel, Variable, Vartype, finite_float, finite_sum, normalize_vartype
+from gibbsiq.model import IsingModel, Variable, Vartype, finite_sum, normalize_vartype
 
 MIXING_WARNING = (
     "valid-state energy equality does not preserve mixing: category order changes one-bit "
@@ -44,12 +45,12 @@ class _DomainWallVariable:
 
 
 def _positive_penalty(value: Any) -> float:
-    if isinstance(value, bool):
-        raise ValueError("penalty must be a finite positive number, not boolean")
-    penalty = finite_float(value, name="domain-wall penalty")
-    if penalty <= 0.0:
-        raise ValueError(f"penalty must be positive, got {value!r}")
-    return penalty
+    return positive_float(
+        value,
+        name="domain-wall penalty",
+        bool_message="penalty must be a finite positive number, not boolean",
+        sign_message="penalty must be positive, got {value!r}",
+    )
 
 
 def _difference(values: Sequence[float], *, name: str) -> float:

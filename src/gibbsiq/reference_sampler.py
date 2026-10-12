@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from gibbsiq._frozen import freeze, thaw
+from gibbsiq._reads import reads_by_chain as _read_allocation
 from gibbsiq.blocks import BlockPartition, color_blocks, validate_partition
 from gibbsiq.model import IsingModel, Variable, finite_float, finite_sum
 
@@ -166,21 +167,45 @@ def _stable_probability_up(beta: float, gamma: float) -> float:
     return exponential / (1.0 + exponential)
 
 
+@dataclass(frozen=True, slots=True)
+class _OracleTables:
+    """Once-per-sample tables read directly from the canonical coefficients."""
+
+    positions: Mapping[Variable, int]
+    linear: tuple[float, ...]
+    adjacency: tuple[tuple[tuple[int, float], ...], ...]
+
+
+def _oracle_tables(model: IsingModel) -> _OracleTables:
+    """Build positions, linear terms, and scan-ordered adjacency from model coefficients."""
+    positions = {label: index for index, label in enumerate(model.variables)}
+    neighbors: list[list[tuple[int, float]]] = [[] for _ in model.variables]
+    for (left, right), coefficient in model.quadratic.items():
+        left_position = positions[left]
+        right_position = positions[right]
+        neighbors[left_position].append((right_position, coefficient))
+        neighbors[right_position].append((left_position, coefficient))
+    return _OracleTables(
+        positions=positions,
+        linear=tuple(model.linear[variable] for variable in model.variables),
+        adjacency=tuple(tuple(row) for row in neighbors),
+    )
+
+
 def _probability_up(
     model: IsingModel,
     variable_position: int,
     state: tuple[int, ...],
     beta: float,
+    tables: _OracleTables,
 ) -> float:
     """Direct conditional implementation; does not call model runtime helpers."""
     variable = model.variables[variable_position]
-    position = {label: index for index, label in enumerate(model.variables)}
-    terms = [model.linear[variable]]
-    for (left, right), coefficient in model.quadratic.items():
-        if left == variable:
-            terms.append(coefficient * state[position[right]])
-        elif right == variable:
-            terms.append(coefficient * state[position[left]])
+    terms = [tables.linear[variable_position]]
+    terms.extend(
+        coefficient * state[other_position]
+        for other_position, coefficient in tables.adjacency[variable_position]
+    )
     gamma = finite_sum(terms, name=f"reference local field for {variable!r}")
     return _stable_probability_up(beta, gamma)
 
@@ -188,11 +213,6 @@ def _probability_up(
 def _chain_seed(seed: int, chain_id: int) -> int:
     material = f"gibbsiq-reference-v1:{seed}:{chain_id}".encode("utf-8")
     return int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
-
-
-def _read_allocation(num_reads: int, num_chains: int) -> tuple[int, ...]:
-    base, remainder = divmod(num_reads, num_chains)
-    return tuple(base + (chain_id < remainder) for chain_id in range(num_chains))
 
 
 class ReferenceGibbsSampler:
@@ -208,6 +228,7 @@ class ReferenceGibbsSampler:
             raise TypeError(f"model must be IsingModel, got {type(model).__name__}")
         reads = _positive_integer(num_reads, name="num_reads")
         blocks, block_strategy = self._resolve_blocks(model)
+        tables = _oracle_tables(model)
         allocation = _read_allocation(reads, self.config.num_chains)
 
         samples: list[tuple[int, ...]] = []
@@ -235,6 +256,7 @@ class ReferenceGibbsSampler:
                     state,
                     rng,
                     blocks,
+                    tables,
                     chain_id=chain_id,
                     stage="warmup",
                     step_index=step_index,
@@ -250,6 +272,7 @@ class ReferenceGibbsSampler:
                         state,
                         rng,
                         blocks,
+                        tables,
                         chain_id=chain_id,
                         stage="sample",
                         step_index=step_index,
@@ -257,10 +280,10 @@ class ReferenceGibbsSampler:
                     )
                     transitions.extend(events)
                     trace.append(state)
-                sample = dict(zip(model.variables, state))
+                energy, interaction = model.energy_and_interaction_from_spins(state)
                 samples.append(state)
-                interaction_energies.append(model.interaction_energy(sample))
-                energies.append(model.energy(sample))
+                interaction_energies.append(interaction)
+                energies.append(energy)
                 chain_ids.append(chain_id)
             state_traces.append(tuple(trace))
 
@@ -325,6 +348,7 @@ class ReferenceGibbsSampler:
         state: tuple[int, ...],
         rng: random.Random,
         blocks: tuple[tuple[Variable, ...], ...],
+        tables: _OracleTables,
         *,
         chain_id: int,
         stage: Literal["warmup", "sample"],
@@ -339,9 +363,8 @@ class ReferenceGibbsSampler:
         elif self.config.update_schedule == "systematic":
             positions = tuple((index, (index,)) for index in range(len(model.variables)))
         else:
-            variable_positions = {variable: position for position, variable in enumerate(model.variables)}
             positions = tuple(
-                (phase_index, tuple(variable_positions[variable] for variable in block))
+                (phase_index, tuple(tables.positions[variable] for variable in block))
                 for phase_index, block in enumerate(blocks)
             )
 
@@ -356,6 +379,7 @@ class ReferenceGibbsSampler:
                     variable_position,
                     conditioned,
                     self.config.beta,
+                    tables,
                 )
                 uniform = rng.random()
                 updates.append(

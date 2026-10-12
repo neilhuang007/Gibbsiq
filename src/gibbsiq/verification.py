@@ -12,8 +12,11 @@ import itertools
 import math
 from collections import Counter, deque
 from dataclasses import dataclass
+from itertools import compress
+from operator import mul
 from typing import Any, Literal, Sequence
 
+from gibbsiq._validation import exact_limit, nonnegative_beta, positive_float
 from gibbsiq.blocks import BlockPartition, color_blocks, validate_partition
 from gibbsiq.exact_distribution import exact_boltzmann_distribution
 from gibbsiq.model import (
@@ -28,28 +31,17 @@ from gibbsiq.model import (
 UpdateSchedule = Literal["random_single_site", "systematic", "blocked"]
 
 
-def _nonnegative_beta(value: Any) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"beta must be a finite non-negative number, got {value!r}")
-    beta = finite_float(value, name="beta")
-    if beta < 0.0:
-        raise ValueError(f"beta must be non-negative, got {value!r}")
-    return beta
-
-
 def _limit(value: Any) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ValueError(f"max_variables must be an integer >= 0, got {value!r}")
-    return value
+    return exact_limit(value, name="max_variables")
 
 
 def _positive_tolerance(value: Any) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"tolerance must be finite and positive, got {value!r}")
-    tolerance = finite_float(value, name="tolerance")
-    if tolerance <= 0.0:
-        raise ValueError(f"tolerance must be positive, got {value!r}")
-    return tolerance
+    return positive_float(
+        value,
+        name="tolerance",
+        bool_message="{name} must be finite and positive, got {value!r}",
+        sign_message="{name} must be positive, got {value!r}",
+    )
 
 
 def _stable_probability_up(beta: float, gamma: float) -> float:
@@ -66,21 +58,43 @@ def _stable_probability_up(beta: float, gamma: float) -> float:
     return exponential / (1.0 + exponential)
 
 
+_SparseRows = tuple[dict[int, float], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _LocalFieldTable:
+    """Per-position linear terms and ordered neighbour terms from the public coefficient mappings."""
+
+    variables: tuple[Variable, ...]
+    linear: tuple[float, ...]
+    neighbours: tuple[tuple[tuple[int, float], ...], ...]
+
+
+def _local_field_table(model: IsingModel) -> _LocalFieldTable:
+    positions = {label: index for index, label in enumerate(model.variables)}
+    neighbours: list[list[tuple[int, float]]] = [[] for _ in model.variables]
+    for (left, right), coefficient in model.quadratic.items():
+        left_position = positions[left]
+        right_position = positions[right]
+        neighbours[left_position].append((right_position, coefficient))
+        if right_position != left_position:
+            neighbours[right_position].append((left_position, coefficient))
+    return _LocalFieldTable(
+        variables=model.variables,
+        linear=tuple(model.linear[variable] for variable in model.variables),
+        neighbours=tuple(tuple(entries) for entries in neighbours),
+    )
+
+
 def _direct_probability_up(
-    model: IsingModel,
+    table: _LocalFieldTable,
     position: int,
     state: tuple[int, ...],
     beta: float,
 ) -> float:
-    variable = model.variables[position]
-    positions = {label: index for index, label in enumerate(model.variables)}
-    terms = [model.linear[variable]]
-    for (left, right), coefficient in model.quadratic.items():
-        if left == variable:
-            terms.append(coefficient * state[positions[right]])
-        elif right == variable:
-            terms.append(coefficient * state[positions[left]])
-    gamma = finite_sum(terms, name=f"verification local field for {variable!r}")
+    terms = [table.linear[position]]
+    terms.extend(coefficient * state[other] for other, coefficient in table.neighbours[position])
+    gamma = finite_sum(terms, name=f"verification local field for {table.variables[position]!r}")
     return _stable_probability_up(beta, gamma)
 
 
@@ -90,50 +104,70 @@ def _identity(size: int) -> tuple[tuple[float, ...], ...]:
 
 def _compose(
     left: tuple[tuple[float, ...], ...],
-    right: tuple[tuple[float, ...], ...],
+    right: _SparseRows,
 ) -> tuple[tuple[float, ...], ...]:
+    """Multiply by a sparse non-negative factor; skipped terms are exact zeros, so fsum is unchanged."""
     size = len(left)
-    return tuple(
-        tuple(
-            math.fsum(left[row][middle] * right[middle][column] for middle in range(size))
-            for column in range(size)
-        )
-        for row in range(size)
-    )
+    rows: list[tuple[float, ...]] = []
+    for left_row in left:
+        buckets: dict[int, list[float]] = {}
+        for middle, weight in enumerate(left_row):
+            if weight == 0.0:
+                continue
+            for column, value in right[middle].items():
+                if value != 0.0:
+                    buckets.setdefault(column, []).append(weight * value)
+        row = [0.0] * size
+        for column, terms in buckets.items():
+            row[column] = math.fsum(terms)
+        rows.append(tuple(row))
+    return tuple(rows)
+
+
+def _densify(rows: _SparseRows) -> tuple[tuple[float, ...], ...]:
+    size = len(rows)
+    dense: list[tuple[float, ...]] = []
+    for sparse in rows:
+        row = [0.0] * size
+        for column, value in sparse.items():
+            row[column] = value
+        dense.append(tuple(row))
+    return tuple(dense)
 
 
 def _single_site_matrix(
-    model: IsingModel,
+    table: _LocalFieldTable,
     states: tuple[tuple[int, ...], ...],
     state_index: dict[tuple[int, ...], int],
     beta: float,
     variable_position: int,
-) -> tuple[tuple[float, ...], ...]:
-    matrix: list[tuple[float, ...]] = []
+) -> _SparseRows:
+    rows: list[dict[int, float]] = []
     for state in states:
-        probability_up = _direct_probability_up(model, variable_position, state, beta)
-        row = [0.0] * len(states)
+        probability_up = _direct_probability_up(table, variable_position, state, beta)
+        row: dict[int, float] = {}
         for spin, probability in ((-1, 1.0 - probability_up), (1, probability_up)):
             destination = list(state)
             destination[variable_position] = spin
-            row[state_index[tuple(destination)]] += probability
-        matrix.append(tuple(row))
-    return tuple(matrix)
+            column = state_index[tuple(destination)]
+            row[column] = row.get(column, 0.0) + probability
+        rows.append(row)
+    return tuple(rows)
 
 
 def _block_matrix(
-    model: IsingModel,
+    table: _LocalFieldTable,
     states: tuple[tuple[int, ...], ...],
     state_index: dict[tuple[int, ...], int],
     beta: float,
     positions: tuple[int, ...],
-) -> tuple[tuple[float, ...], ...]:
-    rows: list[tuple[float, ...]] = []
+) -> _SparseRows:
+    rows: list[dict[int, float]] = []
     for state in states:
         probabilities_up = tuple(
-            _direct_probability_up(model, position, state, beta) for position in positions
+            _direct_probability_up(table, position, state, beta) for position in positions
         )
-        row = [0.0] * len(states)
+        row: dict[int, float] = {}
         for assignment in itertools.product((-1, 1), repeat=len(positions)):
             probability = 1.0
             destination = list(state)
@@ -144,8 +178,9 @@ def _block_matrix(
             ):
                 destination[position] = spin
                 probability *= probability_up if spin == 1 else 1.0 - probability_up
-            row[state_index[tuple(destination)]] += probability
-        rows.append(tuple(row))
+            column = state_index[tuple(destination)]
+            row[column] = row.get(column, 0.0) + probability
+        rows.append(row)
     return tuple(rows)
 
 
@@ -184,7 +219,7 @@ def build_exact_transition_kernel(
     """Enumerate one scheduled Gibbs step for a small model."""
     if not isinstance(model, IsingModel):
         raise TypeError(f"model must be IsingModel, got {type(model).__name__}")
-    canonical_beta = _nonnegative_beta(beta)
+    canonical_beta = nonnegative_beta(beta)
     limit = _limit(max_variables)
     if len(model.variables) > limit:
         raise ValueError(
@@ -198,6 +233,7 @@ def build_exact_transition_kernel(
     states = tuple(itertools.product((-1, 1), repeat=len(model.variables)))
     state_index = {state: index for index, state in enumerate(states)}
     size = len(states)
+    table = _local_field_table(model)
     resolved_blocks: tuple[tuple[Variable, ...], ...] = ()
     matrix: tuple[tuple[float, ...], ...]
 
@@ -206,7 +242,7 @@ def build_exact_transition_kernel(
         detailed_balance_expected = True
     elif update_schedule == "random_single_site":
         site_matrices = tuple(
-            _single_site_matrix(model, states, state_index, canonical_beta, position)
+            _densify(_single_site_matrix(table, states, state_index, canonical_beta, position))
             for position in range(len(model.variables))
         )
         weight = 1.0 / len(site_matrices)
@@ -220,7 +256,7 @@ def build_exact_transition_kernel(
         for position in range(len(model.variables)):
             matrix = _compose(
                 matrix,
-                _single_site_matrix(model, states, state_index, canonical_beta, position),
+                _single_site_matrix(table, states, state_index, canonical_beta, position),
             )
         detailed_balance_expected = len(model.variables) <= 1
     else:
@@ -240,7 +276,7 @@ def build_exact_transition_kernel(
             matrix = _compose(
                 matrix,
                 _block_matrix(
-                    model,
+                    table,
                     states,
                     state_index,
                     canonical_beta,
@@ -377,7 +413,7 @@ def verify_transition_matrix(
     """Check a finite kernel without trusting its construction path."""
     if not isinstance(model, IsingModel):
         raise TypeError(f"model must be IsingModel, got {type(model).__name__}")
-    canonical_beta = _nonnegative_beta(beta)
+    canonical_beta = nonnegative_beta(beta)
     canonical_tolerance = _positive_tolerance(tolerance)
     limit = _limit(max_variables)
     target = exact_boltzmann_distribution(model, canonical_beta, max_variables=limit)
@@ -486,7 +522,7 @@ def verify_transition_kernel(
     """Verify kernel provenance, then delegate to the independent matrix checks."""
     if not isinstance(kernel, ExactTransitionKernel):
         raise TypeError("kernel must be ExactTransitionKernel")
-    canonical_beta = _nonnegative_beta(beta)
+    canonical_beta = nonnegative_beta(beta)
     if not exact_variable_order(kernel.variables, model.variables):
         raise ValueError("kernel variable order does not match model variable order")
     if canonical_beta != kernel.beta:
@@ -608,7 +644,7 @@ def verify_empirical_distribution(
     """
     if not isinstance(model, IsingModel):
         raise TypeError(f"model must be IsingModel, got {type(model).__name__}")
-    canonical_beta = _nonnegative_beta(beta)
+    canonical_beta = nonnegative_beta(beta)
     if isinstance(familywise_confidence, bool):
         raise ValueError("familywise_confidence must be finite and strictly between 0 and 1")
     confidence = finite_float(familywise_confidence, name="familywise_confidence")
@@ -627,12 +663,15 @@ def verify_empirical_distribution(
     sample_count = len(spin_samples)
 
     observables: list[tuple[str, float, float, float, float]] = []
+    probabilities = exact.probabilities
+    exact_columns = [
+        tuple(state[position] for state in exact.states) for position in range(len(model.variables))
+    ]
+    sample_columns = [
+        tuple(state[position] for state in spin_samples) for position in range(len(model.variables))
+    ]
     for position in range(len(model.variables)):
-        target_value = math.fsum(
-            probability
-            for state, probability in zip(exact.states, exact.probabilities)
-            if state[position] == 1
-        )
+        target_value = math.fsum(compress(probabilities, (spin == 1 for spin in exact_columns[position])))
         estimate = math.fsum(state[position] == 1 for state in spin_samples) / sample_count
         observables.append((f"probability_up:{position}", target_value, estimate, 0.0, 1.0))
 
@@ -641,11 +680,14 @@ def verify_empirical_distribution(
         2,
     ):
         target_value = math.fsum(
-            probability * state[left_position] * state[right_position]
-            for state, probability in zip(exact.states, exact.probabilities)
+            map(
+                mul,
+                map(mul, probabilities, exact_columns[left_position]),
+                exact_columns[right_position],
+            )
         )
         estimate = (
-            math.fsum(state[left_position] * state[right_position] for state in spin_samples) / sample_count
+            math.fsum(map(mul, sample_columns[left_position], sample_columns[right_position])) / sample_count
         )
         observables.append(
             (
@@ -659,13 +701,13 @@ def verify_empirical_distribution(
 
     exact_energies = tuple(model.energy(dict(zip(model.variables, state))) for state in exact.states)
     sample_energies = tuple(model.energy(dict(zip(model.variables, state))) for state in spin_samples)
+    energy_probabilities: dict[float, list[float]] = {}
+    for state_energy, probability in zip(exact_energies, probabilities):
+        energy_probabilities.setdefault(state_energy, []).append(probability)
+    sample_energy_counts = Counter(sample_energies)
     for energy in sorted(set(exact_energies)):
-        target_value = math.fsum(
-            probability
-            for state_energy, probability in zip(exact_energies, exact.probabilities)
-            if state_energy == energy
-        )
-        estimate = math.fsum(sample_energy == energy for sample_energy in sample_energies) / sample_count
+        target_value = math.fsum(energy_probabilities[energy])
+        estimate = sample_energy_counts[energy] / sample_count
         observables.append((f"energy_probability:{energy!r}", target_value, estimate, 0.0, 1.0))
 
     # Low-order moments and the energy histogram do not identify a general

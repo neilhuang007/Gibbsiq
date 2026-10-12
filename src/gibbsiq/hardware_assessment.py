@@ -13,9 +13,10 @@ from dataclasses import dataclass
 from itertools import chain
 from typing import Any, Literal, TypeAlias
 
+from gibbsiq._validation import exact_limit, nonnegative_beta
 from gibbsiq.blocks import color_blocks, graph_density
 from gibbsiq.hardware import FixedPointSpec, ParameterProvenance, TSUSpec
-from gibbsiq.model import IsingModel, finite_float, variable_index
+from gibbsiq.model import IsingModel, variable_index
 from gibbsiq.quantization import QuantizationAnalysis, analyze_quantization
 
 AssessmentStatus: TypeAlias = Literal["admissible", "inadmissible", "conditional"]
@@ -213,18 +214,11 @@ class HardwareAssessment:
 
 
 def _validate_exact_limit(value: Any) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ValueError(f"max_exact_variables must be an integer >= 0, got {value!r}")
-    return value
+    return exact_limit(value, name="max_exact_variables")
 
 
 def _nonnegative_beta(value: Any) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"beta must be a finite non-negative number, got {value!r}")
-    beta = finite_float(value, name="beta")
-    if beta < 0.0:
-        raise ValueError(f"beta must be non-negative, got {value!r}")
-    return 0.0 if beta == 0.0 else beta
+    return nonnegative_beta(value, normalize_negative_zero=True)
 
 
 def _fixed_beta_graph_model(

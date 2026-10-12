@@ -1,4 +1,4 @@
-"""Public-package smoke test for the reviewed ThermoMap analysis tranche."""
+"""Public-package smoke test: ThermoMap names are exported once, in order, and resolvable."""
 
 from __future__ import annotations
 

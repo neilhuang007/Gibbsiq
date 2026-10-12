@@ -184,6 +184,67 @@ def independent_tsp_length(matrix: tuple[tuple[int, ...], ...], tour: tuple[int,
     return sum(matrix[tour[position]][tour[(position + 1) % len(tour)]] for position in range(len(tour)))
 
 
+FOUR_CITY_MATRIX = (
+    (0, 2, 9, 10),
+    (2, 0, 6, 4),
+    (9, 6, 0, 3),
+    (10, 4, 3, 0),
+)
+
+
+def four_city_word(tour: tuple[int, ...]) -> int:
+    """Pack a tour into a 16-bit word with bit city * 4 + position set per stop."""
+    return sum(1 << (city * 4 + position) for position, city in enumerate(tour))
+
+
+def four_city_word_bits(encoding, word: int) -> dict[object, int]:
+    return {variable: (word >> index) & 1 for index, variable in enumerate(encoding.variables)}
+
+
+def four_city_energies(
+    matrix: tuple[tuple[int, ...], ...], *, penalty: float, objective_scale: float, offset: float
+) -> list[float]:
+    """Definitional energy of every 16-bit word via nibble tables, without QUBO coefficients."""
+    size = 4
+    violation = [(1 - bin(nibble).count("1")) ** 2 for nibble in range(16)]
+    pair_length = [
+        [
+            sum(matrix[c][d] for c in range(size) if (a >> c) & 1 for d in range(size) if (b >> d) & 1)
+            for b in range(16)
+        ]
+        for a in range(16)
+    ]
+
+    def transpose(word: int) -> int:
+        return sum(
+            1 << (position * 4 + city)
+            for city in range(size)
+            for position in range(size)
+            if (word >> (city * 4 + position)) & 1
+        )
+
+    transpose_low = [transpose(byte) for byte in range(256)]
+    transpose_high = [transpose(byte << 8) for byte in range(256)]
+    energies = []
+    for word in range(1 << 16):
+        by_position = transpose_low[word & 255] | transpose_high[word >> 8]
+        p0, p1, p2, p3 = by_position & 15, (by_position >> 4) & 15, (by_position >> 8) & 15, by_position >> 12
+        c0, c1, c2, c3 = word & 15, (word >> 4) & 15, (word >> 8) & 15, word >> 12
+        one_hot = (
+            violation[p0]
+            + violation[p1]
+            + violation[p2]
+            + violation[p3]
+            + violation[c0]
+            + violation[c1]
+            + violation[c2]
+            + violation[c3]
+        )
+        length = pair_length[p0][p1] + pair_length[p1][p2] + pair_length[p2][p3] + pair_length[p3][p0]
+        energies.append(offset + penalty * one_hot + objective_scale * length)
+    return energies
+
+
 class TspLoweringTests(unittest.TestCase):
     """Full tiny-bit enumeration pins one-hot and native-tour relations."""
 
@@ -279,6 +340,228 @@ class TspLoweringTests(unittest.TestCase):
                 direct_qubo_energy(original, original_bits),
                 direct_qubo_energy(permuted, permuted_bits),
             )
+
+    def test_four_city_ground_state_is_the_shortest_tour(self) -> None:
+        matrix = FOUR_CITY_MATRIX
+        offset = 1.5
+        cycle_lengths = {
+            tour: independent_tsp_length(matrix, tour) for tour in itertools.permutations(range(4))
+        }
+        self.assertEqual(set(cycle_lengths.values()), {18, 21, 29})
+        self.assertEqual(cycle_lengths[(0, 1, 3, 2)], 18)
+        self.assertEqual(cycle_lengths[(0, 1, 2, 3)], 21)
+        self.assertEqual(cycle_lengths[(0, 2, 1, 3)], 29)
+
+        encoding = compile_tsp(matrix, penalty=None, offset=offset)
+        policy = encoding.penalty_policy
+        self.assertEqual(policy.selection, "derived_strict")
+        self.assertEqual(policy.status, "proved_adequate")
+        self.assertEqual(policy.strict_boundary, 10.5)
+        self.assertEqual(policy.penalty, 11.0)
+
+        energies = four_city_energies(matrix, penalty=11.0, objective_scale=1.0, offset=offset)
+        minimum = min(energies)
+        self.assertEqual(minimum, offset + 18)
+        argmin = {word for word, energy in enumerate(energies) if energy == minimum}
+        rotations = {(0, 1, 3, 2)[shift:] + (0, 1, 3, 2)[:shift] for shift in range(4)}
+        expected_tours = rotations | {tour[::-1] for tour in rotations}
+        self.assertEqual(len(expected_tours), 8)
+        self.assertEqual(argmin, {four_city_word(tour) for tour in expected_tours})
+        for word in argmin:
+            self.assertIn(encoding.decode(four_city_word_bits(encoding, word)), expected_tours)
+
+        valid_words = {four_city_word(tour): tour for tour in cycle_lengths}
+        self.assertEqual(len(valid_words), 24)
+        for word, tour in valid_words.items():
+            bits = four_city_word_bits(encoding, word)
+            self.assertEqual(encoding.decode(bits), tour)
+            self.assertEqual(energies[word], offset + cycle_lengths[tour])
+            self.assertEqual(direct_qubo_energy(encoding, bits), energies[word])
+            self.assertEqual(encoding.ising_model.energy(bits, vartype="BINARY"), energies[word])
+        for word, energy in enumerate(energies):
+            if word not in valid_words:
+                self.assertGreater(energy, offset + 18)
+
+        low_weight_words = [
+            sum(1 << index for index in chosen)
+            for count in range(4)
+            for chosen in itertools.combinations(range(16), count)
+        ]
+        self.assertEqual(len(low_weight_words), 697)
+        for word in low_weight_words:
+            bits = four_city_word_bits(encoding, word)
+            self.assertEqual(direct_qubo_energy(encoding, bits), energies[word])
+            violation = independent_one_hot_violation(tuple(bits.values()), 4)
+            self.assertEqual(violation == 0, word in valid_words)
+
+    def test_four_city_under_penalty_yields_an_invalid_ground_state(self) -> None:
+        encoding = compile_tsp(FOUR_CITY_MATRIX, penalty=5.0)
+        self.assertEqual(encoding.penalty_policy.status, "not_proved_adequate")
+
+        energies = four_city_energies(FOUR_CITY_MATRIX, penalty=5.0, objective_scale=1.0, offset=0.0)
+        minimum = min(energies)
+        argmin = [word for word, energy in enumerate(energies) if energy == minimum]
+        self.assertGreaterEqual(len(argmin), 1)
+        for word in argmin:
+            bits = four_city_word_bits(encoding, word)
+            self.assertGreater(independent_one_hot_violation(tuple(bits.values()), 4), 0)
+            with self.assertRaises(ValueError):
+                encoding.decode(bits)
+        shortest_valid = min(energies[four_city_word(tour)] for tour in itertools.permutations(range(4)))
+        self.assertLess(minimum, shortest_valid)
+
+    def test_tsp_rejects_asymmetric_negative_and_nonzero_diagonal_matrices(self) -> None:
+        with self.assertRaises(ValueError):
+            compile_tsp(((0, 1, 2), (3, 0, 1), (2, 1, 0)), penalty=2.0)
+        with self.assertRaises(ValueError):
+            compile_tsp(((0, -1, 2), (-1, 0, 1), (2, 1, 0)), penalty=2.0)
+        with self.assertRaises(ValueError):
+            compile_tsp(((1, 1, 2), (1, 0, 1), (2, 1, 0)), penalty=2.0)
+        symmetric = ((0, 1, 2), (1, 0, 1), (2, 1, 0))
+        for scale in (0.0, -1.0):
+            with self.assertRaises(ValueError):
+                compile_tsp(symmetric, penalty=2.0, objective_scale=scale)
+
+
+def enumerate_knapsack_words(encoding, weights, values):
+    """Yield (sample, selection, value, weight, slack, lowered_energy) for every word."""
+    count = len(weights)
+    for word in range(1 << len(encoding.variables)):
+        bits = tuple((word >> position) & 1 for position in range(len(encoding.variables)))
+        selection = tuple(index for index in range(count) if bits[index])
+        slack = sum(w * b for w, b in zip(encoding.slack_weights, bits[count:]))
+        sample = dict(zip(encoding.variables, bits))
+        yield (
+            sample,
+            selection,
+            sum(values[index] for index in selection),
+            sum(weights[index] for index in selection),
+            slack,
+            direct_qubo_energy(encoding, sample),
+        )
+
+
+def brute_force_feasible(weights, values, capacity):
+    """Map each capacity-feasible selection to (value, weight)."""
+    feasible = {}
+    for mask in range(1 << len(weights)):
+        selection = tuple(i for i in range(len(weights)) if (mask >> i) & 1)
+        weight = sum(weights[i] for i in selection)
+        if weight <= capacity:
+            feasible[selection] = (sum(values[i] for i in selection), weight)
+    return feasible
+
+
+class KnapsackExhaustiveTests(unittest.TestCase):
+    """Brute-force oracles computed from problem data under the derived penalty."""
+
+    WEIGHTS = (3, 4, 2, 5)
+    VALUES = (5, 6, 3, 9)
+    CAPACITY = 7
+
+    def test_derived_penalty_ground_state(self) -> None:
+        encoding = compile_knapsack(self.WEIGHTS, self.VALUES, self.CAPACITY)
+        self.assertEqual(encoding.penalty_policy.selection, "derived_strict")
+        self.assertEqual(encoding.penalty_policy.status, "proved_adequate")
+        feasible = brute_force_feasible(self.WEIGHTS, self.VALUES, self.CAPACITY)
+        top = max(value for value, _ in feasible.values())
+        optima = [selection for selection, (value, _) in feasible.items() if value == top]
+        self.assertEqual((top, optima), (12, [(2, 3)]))
+        reward = self.CAPACITY + 1
+        feasible_minimum = min(-reward * value + weight for value, weight in feasible.values())
+        rows = list(enumerate_knapsack_words(encoding, self.WEIGHTS, self.VALUES))
+        self.assertEqual(len(rows), 1 << 7)
+        self.assertEqual(min(row[5] for row in rows), feasible_minimum)
+        argmin = [row for row in rows if row[5] == feasible_minimum]
+        self.assertEqual(len(argmin), 1)
+        self.assertEqual(argmin[0][1], (2, 3))
+        self.assertEqual(encoding.decode(argmin[0][0]), (2, 3))
+        for sample, _, value, weight, slack, lowered in rows:
+            if weight + slack == self.CAPACITY:
+                self.assertEqual(lowered, -reward * value + weight)
+                continue
+            self.assertGreater(lowered, feasible_minimum)
+            self.assertFalse(encoding.is_valid(sample))
+
+    def test_tied_optima_decode_to_both_selections(self) -> None:
+        weights, values, capacity = (3, 3, 5), (4, 4, 3), 5
+        encoding = compile_knapsack(weights, values, capacity)
+        self.assertEqual(encoding.slack_weights, (1, 2, 2))
+        feasible = brute_force_feasible(weights, values, capacity)
+        top = max(value for value, _ in feasible.values())
+        optima = {selection for selection, (value, _) in feasible.items() if value == top}
+        self.assertEqual(optima, {(0,), (1,)})
+        rows = list(enumerate_knapsack_words(encoding, weights, values))
+        minimum = min(row[5] for row in rows)
+        argmin = [row for row in rows if row[5] == minimum]
+        self.assertEqual({row[1] for row in argmin}, optima)
+        # Each tied selection needs slack 2, encoded as (0, 1, 0) or (0, 0, 1).
+        self.assertEqual(len(argmin), 2 * 2)
+        self.assertEqual({encoding.decode(row[0]) for row in argmin}, optima)
+        argmin_ids = {id(row) for row in argmin}
+        for row in rows:
+            if id(row) not in argmin_ids:
+                self.assertGreater(row[5], minimum)
+
+    def test_item_data_validation(self) -> None:
+        invalid_cases = (
+            ((1, 2), (1,), 3),
+            ((1,), (1, 2), 3),
+            ((), (), 3),
+            ((1,), (1,), 0),
+            ((1,), (1,), -2),
+            ((1,), (1,), True),
+            ((1,), (1,), 2.0),
+            ((True,), (1,), 2),
+            ((1,), (True,), 2),
+            ((-1,), (1,), 2),
+            ((1,), (-1,), 2),
+            ((0,), (1,), 2),
+            ((1,), (0,), 2),
+            ((1.0,), (1,), 2),
+        )
+        for weights, values, capacity in invalid_cases:
+            with self.subTest(weights=weights, values=values, capacity=capacity):
+                with self.assertRaises(ValueError):
+                    compile_knapsack(weights, values, capacity)
+
+    def test_penalty_and_offset_validation(self) -> None:
+        for penalty in (-1.0, math.inf, math.nan, True):
+            with self.subTest(penalty=penalty):
+                with self.assertRaises(ValueError):
+                    compile_knapsack((1,), (1,), 1, penalty=penalty)
+        for offset in (True, math.inf, math.nan):
+            with self.subTest(offset=offset):
+                with self.assertRaises(ValueError):
+                    compile_knapsack((1,), (1,), 1, offset=offset)
+
+    def test_decoder_rejects_malformed_words(self) -> None:
+        encoding = compile_knapsack((2, 3), (3, 4), 4)
+        valid = dict.fromkeys(encoding.variables, 0)
+        valid[encoding.item_variables[0]] = 1
+        valid[encoding.slack_variables[1]] = 1
+        self.assertEqual(encoding.decode(valid), (0,))
+        short = dict(valid)
+        del short[encoding.slack_variables[-1]]
+        out_of_range = {**valid, encoding.item_variables[1]: 2}
+        boolean = {**valid, encoding.item_variables[1]: True}
+        overweight = dict.fromkeys(encoding.variables, 0)
+        overweight[encoding.item_variables[0]] = 1
+        overweight[encoding.item_variables[1]] = 1
+        for word in (short, out_of_range, boolean, overweight):
+            with self.assertRaises(ValueError):
+                encoding.decode(word)
+        with self.assertRaises(TypeError):
+            encoding.decode([0] * len(encoding.variables))  # type: ignore[arg-type]
+
+    def test_native_evaluation_rejects_bad_selections(self) -> None:
+        encoding = compile_knapsack((2, 3), (3, 4), 4)
+        self.assertEqual(encoding.native_evaluation((0, 1)), (7, 5))
+        self.assertEqual(encoding.native_evaluation(()), (0, 0))
+        for selection in ((0, 0), (2,), (-1,), (True,), (0.0,)):
+            with self.subTest(selection=selection):
+                with self.assertRaises(ValueError):
+                    encoding.native_evaluation(selection)
 
 
 if __name__ == "__main__":  # pragma: no cover

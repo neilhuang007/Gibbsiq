@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from itertools import pairwise
 from typing import Any
 
+from gibbsiq._reads import reads_by_chain as _reads_by_chain
 from gibbsiq.blocks import BlockPartition, color_blocks, graph_density, validate_partition
 from gibbsiq.conversions import compile_ising, compile_qubo
 from gibbsiq.diagnostics import compute_diagnostics, distance_to_best_trace, magnetization_trace
@@ -393,6 +394,7 @@ class _DecodedChains:
     energy_trace: list[list[float]]
     best_trace: list[list[float]]
     sample_chains: list[list[dict[Variable, int]]]
+    interaction_trace: list[list[float]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -402,6 +404,7 @@ class _TemperingChain:
     samples: list[dict[Variable, int]]
     energy_trace: list[float]
     best_trace: list[float]
+    interaction_trace: list[float]
     per_beta_energy: list[list[float]]
     swap_trace: list[dict[str, Any]]
     swap_attempts: int
@@ -419,18 +422,13 @@ class _DecodedTempering:
     energy_trace: list[list[float]]
     best_trace: list[list[float]]
     sample_chains: list[list[dict[Variable, int]]]
+    interaction_trace: list[list[float]]
     per_beta_energy: list[list[list[float]]]
     swap_trace: list[dict[str, Any]]
     swap_attempts: int
     swap_accepts: int
     swap_attempts_by_pair: dict[str, int]
     swap_accepts_by_pair: dict[str, int]
-
-
-def _reads_by_chain(num_reads: int, num_chains: int) -> tuple[int, ...]:
-    """Distribute reads with chain lengths differing by at most one."""
-    base, remainder = divmod(num_reads, num_chains)
-    return tuple(base + (chain_index < remainder) for chain_index in range(num_chains))
 
 
 def _local_sweep_accounting(
@@ -517,24 +515,28 @@ def _decode_sample_chains(
     energy_trace: list[list[float]] = []
     best_trace: list[list[float]] = []
     sample_chains: list[list[dict[Variable, int]]] = []
+    interaction_trace: list[list[float]] = []
     for chain_index, chain_reads in enumerate(reads_by_chain):
         chain_energies: list[float] = []
         chain_best: list[float] = []
         chain_samples: list[dict[Variable, int]] = []
+        chain_interactions: list[float] = []
         if chain_reads <= 0:
             energy_trace.append(chain_energies)
             best_trace.append(chain_best)
             sample_chains.append(chain_samples)
+            interaction_trace.append(chain_interactions)
             continue
         best_interaction: float | None = None
         best_total: float | None = None
         for row in spins[chain_index][:chain_reads]:
-            sample = {variable: int(value) for variable, value in zip(model.variables, row)}
-            energy = model.energy(sample)
-            interaction = model.interaction_energy(sample)
+            row_spins = tuple(int(value) for value in row)
+            sample = dict(zip(model.variables, row_spins))
+            energy, interaction = model.energy_and_interaction_from_spins(row_spins)
             samples.append(sample)
             chain_ids.append(chain_index)
             chain_energies.append(energy)
+            chain_interactions.append(interaction)
             if best_interaction is None or interaction < best_interaction:
                 best_interaction = interaction
                 best_total = energy
@@ -544,7 +546,8 @@ def _decode_sample_chains(
         energy_trace.append(chain_energies)
         best_trace.append(chain_best)
         sample_chains.append(chain_samples)
-    return _DecodedChains(samples, chain_ids, energy_trace, best_trace, sample_chains)
+        interaction_trace.append(chain_interactions)
+    return _DecodedChains(samples, chain_ids, energy_trace, best_trace, sample_chains, interaction_trace)
 
 
 def _advance_block_state(
@@ -568,26 +571,6 @@ def _advance_block_state(
 
 def _pair_key(left_index: int, right_index: int) -> str:
     return f"{left_index}-{right_index}"
-
-
-def _replica_exchange_log_ratio(
-    beta_left: float,
-    beta_right: float,
-    energy_left: float,
-    energy_right: float,
-) -> float:
-    """Return ``log(target_after / target_before)`` for a replica swap.
-
-    Exact float64 reference form of EVAL-EQ-014. The tempering loop does not call
-    this; it recomputes the ratio from lowered float32 log-densities so the recorded
-    decision matches what the lowering evaluates. Tests that bind here check the
-    equation, not the sampler; ``ProductionReplicaExchangeRatioTests`` covers the
-    executed path.
-    """
-    return finite_float(
-        (beta_left - beta_right) * (energy_left - energy_right),
-        name="replica-exchange log ratio",
-    )
 
 
 def _replica_exchange_accepts(log_acceptance: float, uniform: float) -> bool:
@@ -636,8 +619,9 @@ def _run_tempering_chain(
             )
 
     state_samples = [lowering.sample_from_state(state, model.variables) for state in states]
-    energies = [model.energy(sample) for sample in state_samples]
-    interaction_energies = [model.interaction_energy(sample) for sample in state_samples]
+    energy_pairs = [model.energy_and_interaction(sample) for sample in state_samples]
+    energies = [energy for energy, _ in energy_pairs]
+    interaction_energies = [interaction for _, interaction in energy_pairs]
     swap_rng = random.Random(f"{config.seed}:pt:{chain_index}")
     swap_attempts = 0
     swap_accepts = 0
@@ -648,6 +632,7 @@ def _run_tempering_chain(
     samples: list[dict[Variable, int]] = []
     energy_trace: list[float] = []
     best_trace: list[float] = []
+    interaction_trace: list[float] = []
     best_interaction: float | None = None
     best_total: float | None = None
     swap_round = 0
@@ -665,8 +650,9 @@ def _run_tempering_chain(
             )
             state_sample = lowering.sample_from_state(states[beta_index], model.variables)
             state_samples[beta_index] = state_sample
-            energies[beta_index] = model.energy(state_sample)
-            interaction_energies[beta_index] = model.interaction_energy(state_sample)
+            energies[beta_index], interaction_energies[beta_index] = model.energy_and_interaction(
+                state_sample
+            )
 
         if (read_index + 1) % config.parallel_tempering_swap_interval == 0:
             exchange_pairs = _replica_exchange_pairs(len(programs), swap_round)
@@ -740,11 +726,12 @@ def _run_tempering_chain(
 
         for beta_index, energy in enumerate(energies):
             per_beta_energy[beta_index].append(energy)
-        cold_sample = lowering.sample_from_state(states[-1], model.variables)
+        cold_sample = dict(state_samples[-1])
         cold_energy = energies[-1]
         cold_interaction = interaction_energies[-1]
         samples.append(cold_sample)
         energy_trace.append(cold_energy)
+        interaction_trace.append(cold_interaction)
         if best_interaction is None or cold_interaction < best_interaction:
             best_interaction = cold_interaction
             best_total = cold_energy
@@ -755,6 +742,7 @@ def _run_tempering_chain(
         samples=samples,
         energy_trace=energy_trace,
         best_trace=best_trace,
+        interaction_trace=interaction_trace,
         per_beta_energy=per_beta_energy,
         swap_trace=swap_trace,
         swap_attempts=swap_attempts,
@@ -776,6 +764,7 @@ def _merge_tempering_chains(
     energy_trace: list[list[float]] = []
     best_trace: list[list[float]] = []
     sample_chains: list[list[dict[Variable, int]]] = []
+    interaction_trace: list[list[float]] = []
     per_beta_energy: list[list[list[float]]] = []
     swap_trace: list[dict[str, Any]] = []
     swap_attempts = 0
@@ -788,6 +777,7 @@ def _merge_tempering_chains(
             energy_trace.append([])
             best_trace.append([])
             sample_chains.append([])
+            interaction_trace.append([])
             per_beta_energy.append([[] for _ in range(beta_count)])
             continue
         chain = chains[chain_index]
@@ -798,6 +788,7 @@ def _merge_tempering_chains(
         energy_trace.append(chain.energy_trace[:take])
         best_trace.append(chain.best_trace[:take])
         sample_chains.append(chain.samples[:take])
+        interaction_trace.append(chain.interaction_trace[:take])
         per_beta_energy.append([row[:take] for row in chain.per_beta_energy])
         swap_trace.extend(event for event in chain.swap_trace if event["read_index"] < take)
         swap_attempts += sum(1 for event in chain.swap_trace if event["read_index"] < take)
@@ -817,6 +808,7 @@ def _merge_tempering_chains(
         energy_trace=energy_trace,
         best_trace=best_trace,
         sample_chains=sample_chains,
+        interaction_trace=interaction_trace,
         per_beta_energy=per_beta_energy,
         swap_trace=swap_trace,
         swap_attempts=swap_attempts,
@@ -1164,9 +1156,7 @@ class THRMLSampler:
         sample_seconds = time.perf_counter() - sample_started
 
         diagnostics_started = time.perf_counter()
-        interaction_energy_chains = [
-            [model.interaction_energy(sample) for sample in chain] for chain in decoded.sample_chains
-        ]
+        interaction_energy_chains = decoded.interaction_trace
         flat_interaction_energies = [energy for chain in interaction_energy_chains for energy in chain]
         best_sample = decoded.samples[best_index(flat_interaction_energies)]
         beta_schedule = [
@@ -1363,9 +1353,7 @@ class THRMLSampler:
         # Trace post-processing and diagnostics share one timing bucket
         # (EVAL-EQ-010 resource split): everything after decode is telemetry.
         diagnostics_started = time.perf_counter()
-        interaction_energy_chains = [
-            [model.interaction_energy(sample) for sample in chain] for chain in decoded.sample_chains
-        ]
+        interaction_energy_chains = decoded.interaction_trace
         flat_interaction_energies = [energy for chain in interaction_energy_chains for energy in chain]
         best_sample = decoded.samples[best_index(flat_interaction_energies)]
 

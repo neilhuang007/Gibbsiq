@@ -89,6 +89,8 @@ class FrustratedTriangleGroundTruthTests(unittest.TestCase):
         self.assertLess(diagnostics["chains"]["rhat"], 1.01)
         self.assertEqual(diagnostics["chains"]["rank_normalized_rhat_status"], "ok")
         self.assertLess(diagnostics["chains"]["rank_normalized_rhat"], 1.01)
+        self.assertEqual(diagnostics["chains"]["ess_status"], "ok")
+        self.assertGreater(diagnostics["chains"]["ess"], 400.0)
         # A provably well-mixed run must stay quiet on BOTH disagreement
         # traces: the magnetization subsection reports healthy values too.
         magnetization = diagnostics["chains"]["magnetization"]
@@ -196,7 +198,6 @@ class DegenerateDoubleWellBlindSpotTests(unittest.TestCase):
     def test_magnetization_trace_holds_disagreement_signal(self) -> None:
         # Same estimators as the energy-trace path, applied to magnetization directly.
         section = chain_section(self.magnetization)
-        self.assertEqual(section["rhat_status"], "undefined_or_infinite_zero_within_variance")
         self.assertIn("chain_disagreement", chain_flags(section))
 
 

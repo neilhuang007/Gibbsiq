@@ -212,7 +212,7 @@ class QualificationCliTests(unittest.TestCase):
             )
             writer.append_attempt(AttemptRecord("run-1", "attempt-1", "complete", STREAM, observations))
             writer.finish(execution="complete", report=report)
-            environment = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+            environment = {**os.environ, "PYTHONPATH": str(ROOT / "src"), "PYTHONIOENCODING": "utf-8"}
             command = [
                 sys.executable,
                 "-S",
@@ -224,7 +224,13 @@ class QualificationCliTests(unittest.TestCase):
                 "--json",
             ]
             inspected = subprocess.run(
-                command, cwd=ROOT, env=environment, capture_output=True, text=True, timeout=15, check=False
+                command,
+                cwd=ROOT,
+                env=environment,
+                capture_output=True,
+                encoding="utf-8",
+                timeout=15,
+                check=False,
             )
             self.assertEqual(inspected.returncode, 4, inspected.stderr)
             payload = json.loads(inspected.stdout)
@@ -233,7 +239,13 @@ class QualificationCliTests(unittest.TestCase):
             self.assertEqual(payload["report"]["qualification"], "pass")
             command.pop()
             human = subprocess.run(
-                command, cwd=ROOT, env=environment, capture_output=True, text=True, timeout=15, check=False
+                command,
+                cwd=ROOT,
+                env=environment,
+                capture_output=True,
+                encoding="utf-8",
+                timeout=15,
+                check=False,
             )
             self.assertEqual(human.returncode, 4, human.stderr)
             self.assertIn("Qualification: pass", human.stdout)

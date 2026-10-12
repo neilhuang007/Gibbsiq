@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, TypeAlias
 
+from gibbsiq._validation import finite_number
 from gibbsiq._frozen import freeze, freeze_json_evidence, thaw
 from gibbsiq.model import (
     Variable,
@@ -48,9 +49,7 @@ def _require_hashable(value: Any, *, name: str) -> None:
 
 
 def _finite_table_value(value: Any, *, name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be a finite number, not boolean")
-    return finite_float(value, name=name)
+    return finite_number(value, name=name, bool_message="{name} must be a finite number, not boolean")
 
 
 def _format_items(values: set[Any]) -> list[Any]:

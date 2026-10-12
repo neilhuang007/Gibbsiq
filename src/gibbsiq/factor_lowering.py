@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Literal
 
+from gibbsiq._validation import finite_number, nonnegative_float
 from gibbsiq._frozen import freeze
 from gibbsiq.conversions import compile_qubo
 from gibbsiq.model import (
@@ -19,7 +20,6 @@ from gibbsiq.model import (
     Variable,
     Vartype,
     exact_label_equal,
-    finite_float,
     finite_sum,
     sample_to_spin_values,
     variable_index,
@@ -120,18 +120,11 @@ class CubicMonomialLowering:
 
 
 def _nonnegative_penalty(value: Any) -> float:
-    if isinstance(value, bool):
-        raise ValueError("factor-lowering penalty must be numeric, not boolean")
-    penalty = finite_float(value, name="factor-lowering penalty")
-    if penalty < 0.0:
-        raise ValueError("factor-lowering penalty must be nonnegative")
-    return penalty
-
-
-def _finite_number(value: Any, *, name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be numeric, not boolean")
-    return finite_float(value, name=name)
+    return nonnegative_float(
+        value,
+        name="factor-lowering penalty",
+        sign_message="{name} must be nonnegative",
+    )
 
 
 def _cubic_ancilla_label(source_variables: tuple[Variable, Variable, Variable]) -> Variable:
@@ -169,11 +162,11 @@ def reduce_cubic_monomial(
         source_variables[1],
         source_variables[2],
     )
-    source_coefficient = _finite_number(coefficient, name="cubic coefficient")
+    source_coefficient = finite_number(coefficient, name="cubic coefficient")
     if source_coefficient == 0.0:
         raise ValueError("cubic coefficient must be nonzero for the bounded reduction")
     canonical_penalty = _nonnegative_penalty(penalty)
-    qubo_offset = _finite_number(offset, name="cubic source offset")
+    qubo_offset = finite_number(offset, name="cubic source offset")
     strict_boundary = abs(source_coefficient)
     ancilla = _cubic_ancilla_label(source_variables)
     encoded_variables = source_variables + (ancilla,)

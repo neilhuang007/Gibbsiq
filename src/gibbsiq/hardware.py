@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Literal, TypeAlias
 
+from gibbsiq._validation import bounded_int
 from gibbsiq._frozen import freeze, thaw
 from gibbsiq.topology import ExplicitTopology, GridTopology, TopologySpec
 
@@ -39,9 +40,9 @@ MAX_EXACT_FLOAT_CODE_BITS = 53
 
 
 def _plain_int(value: Any, *, name: str, minimum: int) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
-        raise ValueError(f"{name} must be an integer >= {minimum}, got {value!r}")
-    return value
+    return bounded_int(
+        value, name=name, minimum=minimum, message="{name} must be an integer >= {minimum}, got {value!r}"
+    )
 
 
 def _optional_positive_float(value: Any, *, name: str) -> float | None:

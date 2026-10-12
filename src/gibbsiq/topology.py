@@ -13,17 +13,20 @@ from dataclasses import dataclass
 from itertools import product
 from math import prod
 from typing import Any, TypeAlias
+from gibbsiq._validation import bounded_int
 
 GridCoordinate: TypeAlias = tuple[int, ...]
 ExplicitEdge: TypeAlias = tuple[int, int]
 
 
 def _plain_int(value: Any, *, name: str, minimum: int | None = None) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"{name} must be an integer, got {value!r}")
-    if minimum is not None and value < minimum:
-        raise ValueError(f"{name} must be an integer >= {minimum}, got {value!r}")
-    return value
+    return bounded_int(
+        value,
+        name=name,
+        minimum=minimum,
+        message="{name} must be an integer >= {minimum}, got {value!r}",
+        type_message="{name} must be an integer, got {value!r}",
+    )
 
 
 def _integer_tuple(

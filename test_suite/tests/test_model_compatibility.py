@@ -1,4 +1,4 @@
-"""Stage-1 checks for model normalization and result schema."""
+"""Checks for model normalization, QUBO/Ising/BQM compilation, and the result schema."""
 
 from __future__ import annotations
 
@@ -166,6 +166,33 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertEqual(model.to_dict()["quadratic"], {"a,z": 3.0})
         self.assertEqual(model.offset, 4.0)
         self.assertEqual(model.energy({"a": 1, "z": -1}), -2.0)
+
+    def test_compile_qubo_tuple_terms_preserve_energy_for_reversed_pair_order(self) -> None:
+        terms = {("z", "z"): 1.0, ("a", "z"): -3.0, ("a", "a"): 2.0}
+        model = compile_qubo(terms, offset=-0.25)
+
+        self.assertEqual(model.variables, ("a", "z"))
+        self.assertEqual(model.source_format, "qubo")
+        self.assertEqual(model.vartype, "SPIN")
+        for spins in spin_assignments(list(model.variables)):
+            bits = binary_from_spin(spins)
+            binary_energy = (
+                -0.25
+                + terms[("z", "z")] * bits["z"]
+                + terms[("a", "a")] * bits["a"]
+                + terms[("a", "z")] * bits["a"] * bits["z"]
+            )
+            self.assertAlmostEqual(model.energy(spins), binary_energy, places=12)
+
+    def test_compile_ising_orders_integer_labels_numerically(self) -> None:
+        model = compile_ising({1: 2.0}, {(1, 0): -0.5}, offset=4.0)
+
+        self.assertEqual(model.variables, (0, 1))
+        self.assertEqual(model.linear, {0: 0.0, 1: 2.0})
+        self.assertEqual(model.quadratic, {(0, 1): -0.5})
+        self.assertEqual(model.offset, 4.0)
+        self.assertEqual(model.source_format, "ising")
+        self.assertEqual(model.vartype, "SPIN")
 
     def test_compile_ising_diagonal_fold_is_order_independent_under_cancellation(self) -> None:
         forward = compile_ising(
@@ -358,6 +385,19 @@ class ModelCompatibilityTest(unittest.TestCase):
         self.assertEqual(payload["best_energy"], 0.0)
         self.assertEqual(payload["metadata"]["seed"], 123)
         self.assertEqual(payload["metadata"]["source_model_format"], "qubo")
+        self.assertGreaterEqual(
+            set(payload),
+            {
+                "samples",
+                "variables",
+                "energies",
+                "best_sample",
+                "best_energy",
+                "traces",
+                "diagnostics",
+                "metadata",
+            },
+        )
 
 
 if __name__ == "__main__":

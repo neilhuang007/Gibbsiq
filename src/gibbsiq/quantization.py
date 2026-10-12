@@ -11,6 +11,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Literal, TypeAlias
 
+from gibbsiq._validation import exact_limit as validate_exact_limit
+from gibbsiq._validation import nonnegative_beta
 from gibbsiq.exact_distribution import (
     DistributionComparison,
     ExactDistributionNumericalError,
@@ -124,21 +126,6 @@ class QuantizationAnalysis:
         }
 
 
-def _nonnegative_beta(value: Any) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"beta must be a finite non-negative number, got {value!r}")
-    beta = finite_float(value, name="beta")
-    if beta < 0.0:
-        raise ValueError(f"beta must be non-negative, got {value!r}")
-    return beta
-
-
-def _validate_exact_limit(value: Any) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ValueError(f"max_exact_variables must be an integer >= 0, got {value!r}")
-    return value
-
-
 def _quantize_value(value: float, fixed_point: FixedPointSpec) -> tuple[float, bool]:
     canonical = finite_float(value, name="effective coefficient")
     outside = canonical < fixed_point.minimum or canonical > fixed_point.maximum
@@ -190,8 +177,8 @@ def analyze_quantization(
         raise TypeError(f"fixed_point must be FixedPointSpec, got {type(fixed_point).__name__}")
     if not fixed_point.signed:
         raise ValueError("Ising coefficient quantization requires a signed fixed-point format")
-    canonical_beta = _nonnegative_beta(beta)
-    exact_limit = _validate_exact_limit(max_exact_variables)
+    canonical_beta = nonnegative_beta(beta)
+    exact_limit = validate_exact_limit(max_exact_variables, name="max_exact_variables")
 
     rows: list[QuantizedCoefficient] = []
     target_linear: dict[Variable, float] = {}

@@ -96,5 +96,5 @@ warn_unused_configs = true
 
 # Optional backend imports are validated by integration tests.
 [[tool.mypy.overrides]]
-module = ["thrml", "thrml.*", "dimod", "dimod.*", "jax", "jax.*"]
+module = ["thrml", "thrml.*", "dimod", "jax", "jax.*"]
 follow_imports = "skip"

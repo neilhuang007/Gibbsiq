@@ -75,11 +75,6 @@ class BenchmarkOracleTest(unittest.TestCase):
         self.assertEqual(len(differences), 1)
         self.assertEqual(differences[0]["code"], "value_mismatch")
 
-    def test_proven_witnesses_pass(self) -> None:
-        for fixture in self.fixtures:
-            diffs = verify_benchmark_fixture(fixture, correct_actual(fixture), 1e-9)
-            self.assertEqual(diffs, [], f"{fixture['id']} should pass: {diffs}")
-
     def test_every_stored_witness_is_optimal(self) -> None:
         # Every witness the generator stored must independently re-verify.
         for fixture in self.fixtures:

@@ -8,13 +8,13 @@ EVAL-EQ-023 and returns the same logical model type.
 from __future__ import annotations
 
 import base64
-import json
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, TypeAlias
 
+from gibbsiq._validation import canonical_json, variable_position
 from gibbsiq._frozen import freeze
 from gibbsiq.categorical import CategoricalModel
 from gibbsiq.model import (
@@ -228,10 +228,6 @@ def _normalize_factor_sources(
     return MappingProxyType(normalized)
 
 
-def _canonical_json(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
-
-
 def _unsupported_value(value: Any, *, label: bool) -> TypeError:
     cls = type(value)
     role = "label" if label else "metadata value"
@@ -261,7 +257,7 @@ def _encode_value(value: Any, *, label: bool = False) -> dict[str, Any]:
         }
     if value_type is frozenset:
         # _decode_label re-encodes through encode_variable_label, so members
-        # must already be in its canonical order; _canonical_json escapes
+        # must already be in its canonical order; canonical_json escapes
         # non-ASCII and can order the same members differently.
         members = sorted(value, key=canonical_variable_sort_key)
         return {"kind": "frozenset", "items": [_encode_value(member, label=True) for member in members]}
@@ -273,7 +269,7 @@ def _encode_value(value: Any, *, label: bool = False) -> dict[str, Any]:
             }
             for key, child in value.items()
         ]
-        items.sort(key=lambda item: _canonical_json(item["key"]))
+        items.sort(key=lambda item: canonical_json(item["key"]))
         return {"kind": "mapping", "items": items}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return {"kind": "list", "items": [_encode_value(item) for item in value]}
@@ -322,12 +318,6 @@ def _decode_value(payload: Any) -> Any:
             decoded_mapping[key] = _decode_value(item_row.get("value"))
         return decoded_mapping
     raise ValueError("encoded value has an unsupported kind")
-
-
-def _position(value: Any, *, size: int, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value < size:
-        raise ValueError(f"{name} must be a valid variable position")
-    return value
 
 
 def _payload_float(value: Any, *, name: str) -> float:
@@ -768,8 +758,8 @@ class ThermodynamicProgram:
             quadratic: dict[tuple[Any, Any], Any] = {}
             for entry in _require_list(model_row.get("quadratic"), name="Ising quadratic rows"):
                 row = _require_mapping(entry, name="Ising quadratic row")
-                left = _position(row.get("left"), size=len(variables), name="quadratic left")
-                right = _position(row.get("right"), size=len(variables), name="quadratic right")
+                left = variable_position(row.get("left"), size=len(variables), name="quadratic left")
+                right = variable_position(row.get("right"), size=len(variables), name="quadratic right")
                 if left >= right:
                     raise ValueError("serialized quadratic factors must use canonical variable order")
                 pair = (variables[left], variables[right])
@@ -828,8 +818,10 @@ class ThermodynamicProgram:
             canonical_pairs: set[tuple[int, int]] = set()
             for pair_position, entry in enumerate(pairwise_rows):
                 row = _require_mapping(entry, name="categorical pairwise row")
-                left_position = _position(row.get("left"), size=len(variables), name="pairwise left")
-                right_position = _position(row.get("right"), size=len(variables), name="pairwise right")
+                left_position = variable_position(row.get("left"), size=len(variables), name="pairwise left")
+                right_position = variable_position(
+                    row.get("right"), size=len(variables), name="pairwise right"
+                )
                 if left_position >= right_position:
                     raise ValueError("serialized pairwise factors must use canonical variable order")
                 position_pair = (left_position, right_position)
@@ -873,13 +865,13 @@ class ThermodynamicProgram:
         clamp_records: list[tuple[Any, Any]] = []
         for entry in _require_list(root.get("clamps"), name="clamps"):
             row = _require_mapping(entry, name="clamp row")
-            position = _position(row.get("variable"), size=len(variables), name="clamp variable")
+            position = variable_position(row.get("variable"), size=len(variables), name="clamp variable")
             clamp_records.append((variables[position], _decode_label(row.get("value"))))
 
         coordinates: dict[Any, Any] = {}
         for entry in _require_list(root.get("coordinates"), name="coordinates"):
             row = _require_mapping(entry, name="coordinate row")
-            position = _position(row.get("variable"), size=len(variables), name="coordinate variable")
+            position = variable_position(row.get("variable"), size=len(variables), name="coordinate variable")
             variable = variables[position]
             if variable in coordinates:
                 raise ValueError("serialized program contains a duplicate coordinate record")
@@ -888,7 +880,9 @@ class ThermodynamicProgram:
         observations: dict[Any, Any] = {}
         for entry in _require_list(root.get("observations"), name="observations"):
             row = _require_mapping(entry, name="observation row")
-            position = _position(row.get("variable"), size=len(variables), name="observation variable")
+            position = variable_position(
+                row.get("variable"), size=len(variables), name="observation variable"
+            )
             variable = variables[position]
             if variable in observations:
                 raise ValueError("serialized program contains a duplicate observation record")

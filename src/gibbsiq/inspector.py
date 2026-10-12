@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence, Set
 from dataclasses import dataclass
 from typing import Any, cast
 
+from gibbsiq._validation import canonical_json
 from gibbsiq._frozen import freeze, thaw
 from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE
 from gibbsiq.model import IsingModel, Variable, Vartype, exact_variable_order
@@ -103,13 +104,9 @@ def _label_token(label: Variable) -> dict[str, Any]:
         return {"kind": "tuple", "items": [_label_token(item) for item in label]}
     if isinstance(label, frozenset):
         items = [_label_token(item) for item in label]
-        items.sort(key=_canonical_json)
+        items.sort(key=canonical_json)
         return {"kind": "frozenset", "items": items}
     return {"kind": "opaque", "python_type": _python_type_name(label)}
-
-
-def _canonical_json(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
 def _json_evidence(value: Any) -> Any:
@@ -133,13 +130,13 @@ def _json_evidence(value: Any) -> Any:
         if all(isinstance(key, str) for key in value):
             return {str(key): _json_evidence(child) for key, child in value.items()}
         entries = [{"key": _label_token(key), "value": _json_evidence(child)} for key, child in value.items()]
-        entries.sort(key=_canonical_json)
+        entries.sort(key=canonical_json)
         return {"encoding": "mapping_entries_v1", "entries": entries}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_json_evidence(child) for child in value]
     if isinstance(value, Set):
         children = [_json_evidence(child) for child in value]
-        children.sort(key=_canonical_json)
+        children.sort(key=canonical_json)
         return {"encoding": "set_items_v1", "items": children}
     return {"encoding": "opaque_python_value", "python_type": _python_type_name(value)}
 

@@ -24,7 +24,15 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Literal
 
-from gibbsiq.model import IsingModel, SpinSample, Variable, exact_label_equal, sample_to_spin
+from gibbsiq.model import (
+    IsingModel,
+    SpinSample,
+    Variable,
+    exact_label_equal,
+    exact_mapping_index,
+    exact_mapping_key,
+    sample_to_spin,
+)
 
 SelectionMethod = Literal["component_index", "rng", "seed", "none"]
 MoveReason = Literal["applied", "replicas_identical"]
@@ -94,6 +102,19 @@ class IsoenergeticClusterMove:
         }
 
 
+def _matches_model_variables(model: IsingModel, sample: Mapping[Variable, int]) -> bool:
+    """Linear-time exact key check; False defers to the diagnostic slow path."""
+    if len(sample) != len(model.variables):
+        return False
+    try:
+        key_index = exact_mapping_index(sample)
+        for variable in model.variables:
+            exact_mapping_key(sample, variable, key_index)
+    except (KeyError, TypeError, ValueError):
+        return False
+    return True
+
+
 def _validated_spins(
     model: IsingModel,
     sample: SpinSample,
@@ -102,6 +123,9 @@ def _validated_spins(
 ) -> dict[Variable, int]:
     if not isinstance(sample, Mapping):
         raise TypeError(f"{name} must be a mapping from model variables to spins")
+
+    if _matches_model_variables(model, sample):
+        return sample_to_spin(sample, model.variables, "SPIN")
 
     sample_variables = tuple(sample)
     missing = tuple(
@@ -224,6 +248,8 @@ def isoenergetic_cluster_move(
     spins_b = _validated_spins(model, replica_b, name="replica_b")
     disagreement, components = _disagreement_components(model, spins_a, spins_b)
 
+    # The four full energy evaluations below are kept: incremental energy deltas would
+    # change floating-point summation order and so the recorded residual bits.
     energy_before = (model.energy(spins_a), model.energy(spins_b))
     combined_before = math.fsum(energy_before)
 

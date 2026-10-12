@@ -9,6 +9,10 @@ from types import MappingProxyType
 from typing import Any
 
 
+_IMMUTABLE_SCALAR_TYPES = frozenset({type(None), bool, int, float, str, bytes})
+_JSON_SCALAR_TYPES = frozenset({type(None), bool, int, float, str})
+
+
 class FrozenSequence(tuple[Any, ...]):
     """Tuple-backed sequence that retains value equality with JSON lists."""
 
@@ -59,6 +63,8 @@ def _freeze_hashable(value: Any) -> Any:
 
 def freeze(value: Any) -> Any:
     """Return a recursively immutable defensive copy of JSON-shaped data."""
+    if type(value) in _IMMUTABLE_SCALAR_TYPES:
+        return value  # deepcopy returns these unchanged
     if isinstance(value, Mapping):
         return MappingProxyType({key: freeze(child) for key, child in value.items()})
     if isinstance(value, (list, tuple)):
@@ -78,12 +84,13 @@ def freeze_json_evidence(value: Any, *, name: str) -> Any:
                     f"{name} mapping keys must be exact strings, got "
                     f"{type(key).__module__}.{type(key).__qualname__}"
                 )
+            if _is_plain_json_scalar(child):
+                frozen[key] = child
+                continue
             frozen[key] = freeze_json_evidence(child, name=f"{name}.{key}")
         return MappingProxyType(frozen)
     if isinstance(value, (list, tuple)):
-        return FrozenSequence(
-            freeze_json_evidence(child, name=f"{name}[{position}]") for position, child in enumerate(value)
-        )
+        return FrozenSequence(_freeze_json_children(value, name))
     if isinstance(value, (set, frozenset)):
         children = [_freeze_json_set_member(child, name=f"{name} set member") for child in value]
         try:
@@ -101,6 +108,25 @@ def freeze_json_evidence(value: Any, *, name: str) -> Any:
     raise TypeError(
         f"unsupported {evidence_kind} value at {name}: {value_type.__module__}.{value_type.__qualname__}"
     )
+
+
+def _is_plain_json_scalar(value: Any) -> bool:
+    """True for an exact JSON scalar that cannot hit a validation error."""
+    value_type = type(value)
+    if value_type not in _JSON_SCALAR_TYPES:
+        return False
+    return value_type is not float or math.isfinite(value)
+
+
+def _freeze_json_children(values: Sequence[Any], name: str) -> list[Any]:
+    """Freeze list/tuple children, formatting element names only when recursing."""
+    frozen: list[Any] = []
+    for position, child in enumerate(values):
+        if _is_plain_json_scalar(child):
+            frozen.append(child)
+            continue
+        frozen.append(freeze_json_evidence(child, name=f"{name}[{position}]"))
+    return frozen
 
 
 def _freeze_json_set_member(value: Any, *, name: str) -> Any:
@@ -121,6 +147,8 @@ def _freeze_json_set_member(value: Any, *, name: str) -> Any:
 
 def thaw(value: Any) -> Any:
     """Return a detached mutable JSON-shaped copy of recursively frozen data."""
+    if type(value) in _IMMUTABLE_SCALAR_TYPES:
+        return value  # deepcopy returns these unchanged
     if isinstance(value, Mapping):
         return {key: thaw(child) for key, child in value.items()}
     if isinstance(value, (tuple, list)):

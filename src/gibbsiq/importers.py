@@ -10,6 +10,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from ._validation import variable_position
 from .conversions import compile_ising, compile_qubo
 from .model import (
     IsingModel,
@@ -44,12 +45,6 @@ def _finite_number(value: Any, *, name: str) -> float:
     if not isinstance(value, (int, float)) or not math.isfinite(value):
         raise ValueError(f"{name} must be a finite number")
     return float(value)
-
-
-def _position(value: Any, *, size: int, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value < size:
-        raise ValueError(f"{name} must be a valid variable position")
-    return value
 
 
 def _require_record(
@@ -168,7 +163,9 @@ def program_from_factor_json(document: Any) -> ThermodynamicProgram:
         scope = record["scope"]
         if not isinstance(scope, Sequence) or isinstance(scope, (str, bytes)) or len(scope) not in (1, 2):
             raise ValueError("factor scope must contain one or two variable positions")
-        positions = tuple(_position(entry, size=size, name="factor scope position") for entry in scope)
+        positions = tuple(
+            variable_position(entry, size=size, name="factor scope position") for entry in scope
+        )
         if len(positions) == 2 and positions[0] >= positions[1]:
             raise ValueError("factor scope positions must be strictly increasing")
         if positions in seen_scopes:
@@ -208,7 +205,7 @@ def program_from_factor_json(document: Any) -> ThermodynamicProgram:
         record = _require_record(
             row, allowed=frozenset(("position", "value")), required=("position", "value"), name="clamp"
         )
-        position = _position(record["position"], size=size, name="clamp position")
+        position = variable_position(record["position"], size=size, name="clamp position")
         value = record["value"]
         if vartype == "BINARY":
             value = _binary_clamp_to_spin(value, context="documents")
@@ -223,7 +220,7 @@ def program_from_factor_json(document: Any) -> ThermodynamicProgram:
             required=("position", "coordinate"),
             name="coordinate",
         )
-        position = _position(record["position"], size=size, name="coordinate position")
+        position = variable_position(record["position"], size=size, name="coordinate position")
         if position in seen_coordinate_positions:
             raise ValueError("duplicate coordinate position")
         seen_coordinate_positions.add(position)
@@ -235,7 +232,7 @@ def program_from_factor_json(document: Any) -> ThermodynamicProgram:
         record = _require_record(
             row, allowed=frozenset(("position", "metadata")), required=("position",), name="observation"
         )
-        position = _position(record["position"], size=size, name="observation position")
+        position = variable_position(record["position"], size=size, name="observation position")
         if position in seen_observation_positions:
             raise ValueError("duplicate observation position")
         seen_observation_positions.add(position)

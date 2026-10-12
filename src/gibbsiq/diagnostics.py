@@ -12,11 +12,15 @@ from __future__ import annotations
 import math
 from collections import Counter
 from collections.abc import Mapping, Sequence
+from itertools import islice
 from operator import mul
 from statistics import NormalDist, median
 from typing import Any
 
 from gibbsiq.model import (
+    UNFILLED_SLOT,
+    aligned_sample_values,
+    variable_index,
     Variable,
     exact_mapping_index,
     exact_mapping_key,
@@ -100,6 +104,21 @@ def _variance(values: Sequence[float], ddof: int = 0) -> float:
     return variance
 
 
+def _finite_row(chain: Sequence[float], chain_index: int) -> list[float]:
+    """Return ``chain`` as floats; the first conversion or finiteness failure raises.
+
+    The common all-finite case is one C-level pass.  Any failure is replayed value by
+    value so the exception type, message and precedence match a sequential scan.
+    """
+    try:
+        row = list(map(float, chain))
+    except Exception:
+        row = None
+    if row is not None and all(map(math.isfinite, row)):
+        return row
+    return [finite_float(value, name=f"chain {chain_index} energy value") for value in chain]
+
+
 def _rectangularize(chains: Sequence[Sequence[float]]) -> list[list[float]]:
     """Drop empty chains and truncate active chains to their shared minimum length.
 
@@ -110,7 +129,7 @@ def _rectangularize(chains: Sequence[Sequence[float]]) -> list[list[float]]:
     for chain_index, chain in enumerate(chains):
         # Non-finite input raises here (EVAL-EQ-007): would otherwise leak into output or
         # silently give a meaningless ESS from the Geyer scan.
-        row = [finite_float(value, name=f"chain {chain_index} energy value") for value in chain]
+        row = _finite_row(chain, chain_index)
         if row:
             rows.append(row)
     if not rows:
@@ -155,7 +174,7 @@ def _geyer_ess(split_rows: list[list[float]]) -> tuple[float, float]:
     def mean_autocovariance(lag: int) -> float:
         total = 0.0
         for deviations in demeaned:
-            total += sum(map(mul, deviations, deviations[lag:] if lag else deviations))
+            total += sum(map(mul, deviations, islice(deviations, lag, None)))
         return total / (num_draws * num_chains)
 
     mean_var = mean_autocovariance(0) * num_draws / (num_draws - 1.0)
@@ -258,7 +277,11 @@ def _rhat_core(
 def _split_rows_for_rhat(chains: Sequence[Sequence[float]]) -> list[list[float]] | None:
     """Rectangularize and half-split chains for R-hat, or None below the EVAL-EQ-007
     minimums; shared prep of both R-hat variants."""
-    rows = _rectangularize(chains)
+    return _split_rows_for_rhat_rows(_rectangularize(chains))
+
+
+def _split_rows_for_rhat_rows(rows: list[list[float]]) -> list[list[float]] | None:
+    """Half-split already rectangular rows, or None below the EVAL-EQ-007 minimums."""
     if len(rows) < MIN_CHAINS_FOR_RHAT or len(rows[0]) < MIN_DRAWS_FOR_RHAT:
         return None
     return _split_rows(rows)
@@ -272,7 +295,10 @@ def _zero_within_status(between: float | None) -> str:
 
 def split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     """Plain split R-hat per EVAL-EQ-007 (not rank-normalized, not folded)."""
-    split_rows = _split_rows_for_rhat(chains)
+    return _split_rhat_from_split_rows(_split_rows_for_rhat(chains))
+
+
+def _split_rhat_from_split_rows(split_rows: list[list[float]] | None) -> dict[str, Any]:
     if split_rows is None:
         return {"rhat_status": STATUS_INSUFFICIENT_DATA, "rhat": None, "split_within_chain_variance": None}
     within, between, rhat = _rhat_core(split_rows)
@@ -312,10 +338,15 @@ def _rank_normalize(split_rows: list[list[float]]) -> list[list[float]]:
     chains (EVAL-EQ-013)."""
     flat = [value for row in split_rows for value in row]
     size = len(flat)
-    z_values = [
-        _STANDARD_NORMAL.inv_cdf((rank - _RANK_OFFSET) / (size - 2.0 * _RANK_OFFSET + 1.0))
-        for rank in _average_tie_ranks(flat)
-    ]
+    inverse_cdf = _STANDARD_NORMAL.inv_cdf
+    quantiles: dict[float, float] = {}
+    z_values = []
+    for rank in _average_tie_ranks(flat):
+        z_value = quantiles.get(rank)
+        if z_value is None:
+            z_value = inverse_cdf((rank - _RANK_OFFSET) / (size - 2.0 * _RANK_OFFSET + 1.0))
+            quantiles[rank] = z_value
+        z_values.append(z_value)
     num_draws = len(split_rows[0])
     return [
         z_values[row_index * num_draws : (row_index + 1) * num_draws] for row_index in range(len(split_rows))
@@ -328,6 +359,10 @@ def rank_normalized_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, A
     Folded collapse to a constant returns ``folded=None`` with the bulk value alone
     (arviz max-with-NaN).
     """
+    return _rank_normalized_from_split_rows(_split_rows_for_rhat(chains))
+
+
+def _rank_normalized_from_split_rows(split_rows: list[list[float]] | None) -> dict[str, Any]:
     keys = (
         "rank_normalized_rhat_status",
         "rank_normalized_rhat",
@@ -343,7 +378,6 @@ def rank_normalized_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, A
     ) -> dict[str, Any]:
         return dict(zip(keys, (status, combined, bulk, folded)))
 
-    split_rows = _split_rows_for_rhat(chains)
     if split_rows is None:
         return result(STATUS_INSUFFICIENT_DATA)
     _, bulk_between, bulk = _rhat_core(_rank_normalize(split_rows))
@@ -362,11 +396,26 @@ def rank_normalized_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, A
 def _combined_split_rhat(chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     """Plain (EVAL-EQ-007) and rank-normalized/folded (EVAL-EQ-013) split R-hat, always
     emitted together (``_disagreement_signals`` reads keys from both)."""
-    return {**split_rhat(chains), **rank_normalized_split_rhat(chains)}
+    return _combined_split_rhat_rows(_rectangularize(chains))
+
+
+def _combined_split_rhat_rows(rows: list[list[float]]) -> dict[str, Any]:
+    split_rows = _split_rows_for_rhat_rows(rows)
+    return {
+        **_split_rhat_from_split_rows(split_rows),
+        **_rank_normalized_from_split_rows(split_rows),
+    }
 
 
 def energy_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     """Pooled energy statistics, improvement telemetry, and ESS keys."""
+    return _energy_section_rows(energy_chains)[0]
+
+
+def _energy_section_rows(
+    energy_chains: Sequence[Sequence[float]],
+) -> tuple[dict[str, Any], list[list[float]]]:
+    """``energy_section`` plus the validated rectangular rows it computed from."""
     chains = [[float(value) for value in chain] for chain in energy_chains]
     pooled = [value for chain in chains for value in chain]
     section: dict[str, Any] = {"count": len(pooled)}
@@ -401,7 +450,7 @@ def energy_section(energy_chains: Sequence[Sequence[float]]) -> dict[str, Any]:
     rows = _rectangularize(chains)
     section["draws_per_chain"] = len(rows[0]) if rows else 0
     section.update(_ess_mean_rows(rows))
-    return section
+    return section, rows
 
 
 def chain_section(
@@ -411,7 +460,15 @@ def chain_section(
 ) -> dict[str, Any]:
     """Per-chain statistics, unsplit between-chain variance (EVAL-EQ-007), and split R-hat.
     ``ess`` accepts a precomputed ``ess_mean`` summary to avoid a duplicate Geyer scan."""
-    rows = _rectangularize(energy_chains)
+    return _chain_section_rows(energy_chains, _rectangularize(energy_chains), ess)
+
+
+def _chain_section_rows(
+    energy_chains: Sequence[Sequence[float]],
+    rows: list[list[float]],
+    ess: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """``chain_section`` on rows already validated by ``_rectangularize``."""
     original_draws_by_chain = [len(chain) for chain in energy_chains]
     shared_draws = len(rows[0]) if rows else 0
     diagnostic_draws_used_by_chain = [
@@ -443,10 +500,10 @@ def chain_section(
         section["between_chain_variance"] = len(rows[0]) * _variance(section["chain_means"], ddof=1)
     else:
         section["between_chain_variance"] = None
-    section.update(_combined_split_rhat(energy_chains))
+    section.update(_combined_split_rhat_rows(rows))
     # Only these three ESS keys; autocorrelation_status stays energy-section-scoped
     # (frozen fixture schema).
-    ess_keys = ess if ess is not None else ess_mean(energy_chains)
+    ess_keys = ess if ess is not None else _ess_mean_rows(rows)
     section["ess_status"] = ess_keys["ess_status"]
     section["ess"] = ess_keys["ess"]
     section["tau_hat"] = ess_keys["tau_hat"]
@@ -469,6 +526,12 @@ def _sample_values(
     sample_keys = tuple(sample)
     if len(sample_keys) == len(variable_order) and exact_variable_order(sample_keys, variable_order):
         return tuple(sample[key] for key in sample_keys)
+    positions = variable_index(variable_order)
+    if len(positions) == len(variable_order):
+        slots = aligned_sample_values(sample, variable_order, positions)
+        if any(slot is UNFILLED_SLOT for slot in slots):
+            raise ValueError("sample variable labels do not contain every requested variable exactly")
+        return tuple(slots)
     sample_key_index = exact_mapping_index(sample)
     values: list[int] = []
     for variable in variable_order:
@@ -797,8 +860,8 @@ def compute_diagnostics(
     families. ``magnetization_chains`` (EVAL-EQ-012) adds the ``chains.magnetization``
     subsection, needed for equal-energy degenerate optima. ``constraints`` stays
     ``not_available`` until the penalty/encoding layer exists."""
-    energy = energy_section(energy_chains)
-    chains = chain_section(energy_chains, ess=energy)
+    energy, energy_rows = _energy_section_rows(energy_chains)
+    chains = _chain_section_rows(energy_chains, energy_rows, energy)
     if magnetization_chains is not None:
         chains["magnetization"] = _combined_split_rhat(magnetization_chains)
     if samples is not None and variables is not None:

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+import math
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
 from gibbsiq.model import (
@@ -21,6 +22,21 @@ from gibbsiq.model import (
     variable_index,
     variable_sort_key,
 )
+
+
+def _lazy_finite_sum(values: Sequence[float], label: str, subject: Any) -> float:
+    """``finite_sum`` that formats its error name only when the sum fails.
+
+    Any failure re-runs ``finite_sum`` with the real name so the raised error
+    type and message are unchanged.
+    """
+    try:
+        total = math.fsum(values)
+    except (OverflowError, ValueError):
+        return finite_sum(values, name=f"{label} {subject!r}")
+    if not math.isfinite(total):
+        return finite_sum(values, name=f"{label} {subject!r}")
+    return total
 
 
 def compile_qubo(
@@ -53,7 +69,7 @@ def compile_qubo(
         offset_terms.append(coupling)
 
     linear_spin = {
-        variable: finite_sum(terms, name=f"converted linear bias for {variable!r}")
+        variable: _lazy_finite_sum(terms, "converted linear bias for", variable)
         for variable, terms in linear_spin_terms.items()
     }
     ising_offset = finite_sum(offset_terms, name="converted Ising offset")
@@ -283,7 +299,7 @@ def _parse_qubo(
             quadratic_items.append(((left, right), coefficient))
 
     linear = {
-        variable: finite_sum(terms, name=f"QUBO linear coefficient for {variable!r}")
+        variable: _lazy_finite_sum(terms, "QUBO linear coefficient for", variable)
         for variable, terms in linear_terms.items()
     }
     return _finish_items(raw_variables, linear, quadratic_items, float(raw_offset))
@@ -556,7 +572,7 @@ def _normalize_pair_items(
         pair = (left, right) if exact_label_equal(left, right) else _ordered_pair(left, right, index)
         contributions.setdefault(pair, []).append(float(value))
     normalized = {
-        pair: finite_sum(values, name=f"quadratic coefficient for {pair!r}")
+        pair: _lazy_finite_sum(values, "quadratic coefficient for", pair)
         for pair, values in contributions.items()
     }
     if index is None:

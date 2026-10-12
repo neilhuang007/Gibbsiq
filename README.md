@@ -61,6 +61,10 @@ model = compile_ising({"a": 0.25, "b": -0.5}, {("a", "b"): 1.0})
 distribution = exact_boltzmann_distribution(model, beta=1.0)
 ```
 
+For a QUBO example, see the [TSP ground-state script](https://github.com/neilhuang007/Gibbsiq/blob/master/examples/tsp_qubo_ground_state.py),
+which compiles a traveling salesman problem, checks its penalty certificate,
+finds the exact optimum by enumeration, samples the model, and reports diagnostics.
+
 The qualification API exposes `qualify`, `inspect_bundle`, `compare_bundles`,
 and `run_search`. See the [Python workflow](https://github.com/neilhuang007/Gibbsiq/blob/master/docs/qualification/workflow-contract.md)
 for an executable example.

@@ -43,7 +43,13 @@ if str(SRC_DIR) not in sys.path:
 from gibbsiq.benchmark_oracle import verify_benchmark_fixture  # noqa: E402
 from gibbsiq.blocks import color_blocks  # noqa: E402
 from gibbsiq.conversions import compile_ising, compile_qubo  # noqa: E402
+from gibbsiq._frozen import freeze, thaw  # noqa: E402
+from gibbsiq.cluster_moves import isoenergetic_cluster_move  # noqa: E402
+from gibbsiq.constraints import compile_tsp  # noqa: E402
 from gibbsiq.diagnostics import compute_diagnostics  # noqa: E402
+from gibbsiq.exact_distribution import exact_boltzmann_distribution  # noqa: E402
+from gibbsiq.result import SampleResult  # noqa: E402
+from gibbsiq.verification import build_exact_transition_kernel, verify_empirical_distribution  # noqa: E402
 
 
 def timed(call: Callable[[], Any], repeat: int) -> dict[str, Any]:
@@ -345,6 +351,98 @@ def benchmark_ground_truth_generation(repeat: int) -> dict[str, Any]:
     return timed(run, repeat)
 
 
+def benchmark_sample_result_from_model(repeat: int) -> dict[str, Any]:
+    variables = tuple(str(index) for index in range(256))
+    h, quadratic = random_sparse_terms(variables=variables, edge_probability=0.02, seed=601)
+    model = compile_ising(h, quadratic, variables=variables)
+    samples = random_samples(variables, 2000, seed=602)
+
+    def run() -> dict[str, Any]:
+        result = SampleResult.from_model(model, samples)
+        return {"samples": len(result.samples), "best_energy": round(float(result.best_energy), 6)}
+
+    return {"variables": len(variables), "samples": len(samples), **timed(run, repeat)}
+
+
+def benchmark_freeze_thaw_json_evidence(repeat: int) -> dict[str, Any]:
+    from gibbsiq._frozen import freeze_json_evidence  # noqa: PLC0415
+
+    rng = random.Random(701)
+    evidence = {"values": [rng.uniform(-1.0, 1.0) for _ in range(100_000)]}
+
+    def run() -> dict[str, Any]:
+        frozen = freeze_json_evidence(evidence, name="evidence")
+        thawed = thaw(freeze(frozen))
+        return {"values": len(thawed["values"]), "checksum": round(math.fsum(thawed["values"]), 6)}
+
+    return {"floats": 100_000, **timed(run, repeat)}
+
+
+def benchmark_compile_tsp(repeat: int) -> dict[str, Any]:
+    city_count = 10
+    rng = random.Random(801)
+    matrix = [[0.0] * city_count for _ in range(city_count)]
+    for left in range(city_count):
+        for right in range(left + 1, city_count):
+            matrix[left][right] = matrix[right][left] = float(rng.randint(1, 20))
+
+    def run() -> dict[str, Any]:
+        encoding = compile_tsp(matrix)
+        return {"variables": len(encoding.variables), "edges": len(encoding.ising_model.quadratic)}
+
+    return {"cities": city_count, **timed(run, repeat)}
+
+
+def benchmark_exact_transition_kernel(repeat: int) -> dict[str, Any]:
+    variables = tuple(str(index) for index in range(6))
+    h, quadratic = random_sparse_terms(variables=variables, edge_probability=0.6, seed=901)
+    model = compile_ising(h, quadratic, variables=variables)
+
+    def run() -> dict[str, Any]:
+        kernel = build_exact_transition_kernel(model, 0.7, update_schedule="systematic")
+        return {"states": len(kernel.states), "schedule": kernel.update_schedule}
+
+    return {"variables": len(variables), **timed(run, repeat)}
+
+
+def benchmark_verify_empirical_distribution(repeat: int) -> dict[str, Any]:
+    variables = tuple(str(index) for index in range(8))
+    h, quadratic = random_sparse_terms(variables=variables, edge_probability=0.5, seed=1001)
+    model = compile_ising(h, quadratic, variables=variables)
+    samples = random_samples(variables, 5000, seed=1002)
+
+    def run() -> dict[str, Any]:
+        report = verify_empirical_distribution(model, samples, 0.5)
+        return {"samples": len(samples), "passed": bool(report.passed)}
+
+    return {"variables": len(variables), "samples": len(samples), **timed(run, repeat)}
+
+
+def benchmark_cluster_move(repeat: int) -> dict[str, Any]:
+    variables = tuple(str(index) for index in range(1000))
+    h, quadratic = random_sparse_terms(variables=variables, edge_probability=0.003, seed=1101)
+    model = compile_ising(h, quadratic, variables=variables)
+    replica_a, replica_b = random_samples(variables, 2, seed=1102)
+
+    def run() -> dict[str, Any]:
+        move = isoenergetic_cluster_move(model, replica_a, replica_b, seed=1103)
+        return {"components": len(move.components), "selected_size": move.selected_component_size}
+
+    return {"variables": len(variables), **timed(run, repeat)}
+
+
+def benchmark_exact_boltzmann_distribution(repeat: int) -> dict[str, Any]:
+    variables = tuple(str(index) for index in range(12))
+    h, quadratic = random_sparse_terms(variables=variables, edge_probability=0.4, seed=1201)
+    model = compile_ising(h, quadratic, variables=variables)
+
+    def run() -> dict[str, Any]:
+        distribution = exact_boltzmann_distribution(model, 0.6)
+        return {"states": len(distribution.states)}
+
+    return {"variables": len(variables), **timed(run, repeat)}
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repeat", type=int, default=5, help="Repeats per benchmark case.")
@@ -390,6 +488,13 @@ def main(argv: Iterable[str] | None = None) -> int:
         "diagnostics": benchmark_diagnostics(repeat),
         "benchmark_oracle": benchmark_oracle(repeat),
         "ground_truth_generation": benchmark_ground_truth_generation(max(1, min(repeat, 3))),
+        "sample_result_from_model": benchmark_sample_result_from_model(repeat),
+        "freeze_thaw_json_evidence": benchmark_freeze_thaw_json_evidence(repeat),
+        "compile_tsp": benchmark_compile_tsp(repeat),
+        "exact_transition_kernel": benchmark_exact_transition_kernel(repeat),
+        "verify_empirical_distribution": benchmark_verify_empirical_distribution(repeat),
+        "cluster_move": benchmark_cluster_move(repeat),
+        "exact_boltzmann_distribution": benchmark_exact_boltzmann_distribution(repeat),
     }
     payload = {
         "schema_version": "2026-07-04",

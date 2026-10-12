@@ -19,7 +19,9 @@ native objective.
 
 from __future__ import annotations
 
-from typing import Any
+import json
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from gibbsiq.benchmark_oracle import DEFAULT_TOLERANCE, score_candidate
 from gibbsiq.constraints import KnapsackEncoding, TspEncoding, compile_knapsack, compile_tsp
@@ -31,6 +33,30 @@ from gibbsiq.result import SampleResult
 ENUMERATION_ONLY_KEYS = frozenset({"ground_state_degeneracy", "num_optimal_selections", "num_optimal_tours"})
 MAX_WITNESSES = 8
 SUPPORTED_FAMILIES = ("knapsack", "maxcut", "number_partition", "sk_spin_glass", "tsp")
+
+_EncodingT = TypeVar("_EncodingT", KnapsackEncoding, TspEncoding)
+_ENCODING_MEMO_LIMIT = 8
+_encoding_memo: dict[tuple[str, str], Any] = {}
+
+
+def _memoized_encoding(kind: str, model_input: dict[str, Any], build: Callable[[], _EncodingT]) -> _EncodingT:
+    """Reuse the encoding that ``compile_fixture`` built for identical input.
+
+    Encodings are frozen and deterministic in ``model_input``.  Failed builds are
+    never cached, and inputs that are not JSON-serializable bypass the memo.
+    """
+    try:
+        key = (kind, json.dumps(model_input, sort_keys=True))
+    except (TypeError, ValueError):
+        return build()
+    cached = _encoding_memo.get(key)
+    if cached is not None:
+        return cached  # type: ignore[no-any-return]
+    encoding = build()
+    if len(_encoding_memo) >= _ENCODING_MEMO_LIMIT:
+        _encoding_memo.pop(next(iter(_encoding_memo)))
+    _encoding_memo[key] = encoding
+    return encoding
 
 
 def compile_fixture(fixture: dict[str, Any]) -> IsingModel:
@@ -173,7 +199,11 @@ def _partition_witness(numbers: list[int], witness: dict[str, int]) -> dict[str,
 
 def _compile_knapsack_input(model_input: dict[str, Any]) -> KnapsackEncoding:
     """Compile fixture input with a deterministic strict policy from input only."""
-    return compile_knapsack(model_input["weights"], model_input["values"], model_input["capacity"])
+    return _memoized_encoding(
+        "knapsack",
+        model_input,
+        lambda: compile_knapsack(model_input["weights"], model_input["values"], model_input["capacity"]),
+    )
 
 
 def _with_fixture_metadata(model: IsingModel, fixture_metadata: dict[str, Any]) -> IsingModel:
@@ -192,6 +222,10 @@ def _with_fixture_metadata(model: IsingModel, fixture_metadata: dict[str, Any]) 
 
 def _compile_tsp_input(model_input: dict[str, Any]) -> TspEncoding:
     """Compile fixture input with a deterministic strict policy from input only."""
+    return _memoized_encoding("tsp", model_input, lambda: _build_tsp_encoding(model_input))
+
+
+def _build_tsp_encoding(model_input: dict[str, Any]) -> TspEncoding:
     city_count = model_input.get("num_cities")
     matrix = model_input["distance_matrix"]
     if isinstance(city_count, bool) or not isinstance(city_count, int):

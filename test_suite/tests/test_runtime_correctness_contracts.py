@@ -19,7 +19,6 @@ from gibbsiq.thrml_runtime import (  # noqa: E402
     _local_sweep_accounting,
     _reads_by_chain,
     _replica_exchange_accepts,
-    _replica_exchange_log_ratio,
     _replica_exchange_pairs,
 )
 
@@ -67,38 +66,6 @@ class _FakeThrml:
 class RuntimeMathContractTests(unittest.TestCase):
     def test_zero_uniform_accepts_any_finite_log_ratio(self) -> None:
         self.assertTrue(_replica_exchange_accepts(-1e300, 0.0))
-
-    def test_replica_exchange_log_ratio_sign(self) -> None:
-        beta_hot, beta_cold = 0.5, 2.0
-        low_energy, high_energy = -3.0, 1.0
-
-        favorable = _replica_exchange_log_ratio(
-            beta_hot,
-            beta_cold,
-            low_energy,
-            high_energy,
-        )
-        unfavorable = _replica_exchange_log_ratio(
-            beta_hot,
-            beta_cold,
-            high_energy,
-            low_energy,
-        )
-
-        # Derived independently from log(pi_after / pi_before):
-        # -beta_h*E_high - beta_c*E_low + beta_h*E_low + beta_c*E_high.
-        expected = (
-            -beta_hot * high_energy - beta_cold * low_energy + beta_hot * low_energy + beta_cold * high_energy
-        )
-        self.assertEqual(favorable, expected)
-        self.assertGreater(favorable, 0.0)
-        self.assertEqual(unfavorable, -expected)
-
-    def test_replica_exchange_ratio_is_offset_invariant(self) -> None:
-        baseline = _replica_exchange_log_ratio(0.25, 1.75, -2.5, 4.0)
-        shift = 1024.0
-        shifted = _replica_exchange_log_ratio(0.25, 1.75, -2.5 + shift, 4.0 + shift)
-        self.assertEqual(shifted, baseline)
 
     def test_replica_exchange_pair_schedule_by_replica_count(self) -> None:
         expected_by_replica_count = {
@@ -195,12 +162,12 @@ class RuntimeMathContractTests(unittest.TestCase):
 
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
-class ProductionReplicaExchangeRatioTests(unittest.TestCase):
-    """EVAL-EQ-014 asserted against the swap ratio the sampler actually executes.
+class RecordedReplicaExchangeRatioConsistencyTests(unittest.TestCase):
+    """Consistency checks between the recorded swap ratio and the energies recorded beside it.
 
-    ``_replica_exchange_log_ratio`` has no production caller; the tempering loop
-    recomputes the ratio from lowered log-densities. These checks read the recorded
-    ``swap_trace`` so a sign or offset regression in that expression fails here.
+    Both sides come from the sampler's own ``swap_trace``, so these detect a sign or
+    offset regression in the ratio expression, not an error shared with the recorded
+    energies. The lowered-coefficient reconstruction test below is the stronger check.
     """
 
     def _swap_trace(self) -> list[dict[str, Any]]:
@@ -224,7 +191,7 @@ class ProductionReplicaExchangeRatioTests(unittest.TestCase):
         self.assertGreater(len(trace), 0, "no swap attempts recorded")
         return trace
 
-    def test_recorded_log_acceptance_matches_canonical_ratio(self) -> None:
+    def test_recorded_log_acceptance_consistent_with_recorded_energies(self) -> None:
         # (beta_i - beta_j) * (E_i - E_j); float32 lowering sets the tolerance.
         for event in self._swap_trace():
             expected = (event["left_beta"] - event["right_beta"]) * (
@@ -237,7 +204,7 @@ class ProductionReplicaExchangeRatioTests(unittest.TestCase):
                 msg=f"pair {event['left_beta_index']}-{event['right_beta_index']}",
             )
 
-    def test_recorded_log_acceptance_is_offset_invariant(self) -> None:
+    def test_recorded_log_acceptance_consistent_with_recorded_interaction_energies(self) -> None:
         # The offset cancels in the difference, so the interaction energies agree.
         for event in self._swap_trace():
             expected = (event["left_beta"] - event["right_beta"]) * (

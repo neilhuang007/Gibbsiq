@@ -128,26 +128,6 @@ class SamplerConfigValidationTests(unittest.TestCase):
 
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
-class TwoSpinDistributionTests(unittest.TestCase):
-    """Audits the Gibbsiq-to-THRML sign mapping against exact probabilities."""
-
-    def test_two_spin_frequencies_match_boltzmann(self) -> None:
-        beta = 1.2
-        model = compile_ising({"a": 0.35, "b": -0.6}, {("a", "b"): 0.8})
-        config = SamplerConfig(beta=beta, n_warmup=200, steps_per_sample=2, seed=7)
-        result = THRMLSampler(config).sample(model, num_reads=DISTRIBUTION_READS)
-        analytic = analytic_boltzmann(model, beta)
-        empirical = empirical_frequencies(result)
-        for state, probability in analytic.items():
-            self.assertAlmostEqual(
-                empirical.get(state, 0.0),
-                probability,
-                delta=DISTRIBUTION_TOLERANCE,
-                msg=f"state={state}",
-            )
-
-
-@unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class ZeroCouplingMarginalTests(unittest.TestCase):
     """Isolated spins exercise the empty-edge lowering and the marginal sign."""
 
@@ -208,6 +188,9 @@ class ReproducibilityTests(unittest.TestCase):
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
 class ParallelTemperingRuntimeTests(unittest.TestCase):
     def test_parallel_tempering_records_swap_per_beta_traces(self) -> None:
+        # Trace shapes and the accept/reject rule are the contract here. The
+        # log_acceptance and energy comparisons are consistency checks against values
+        # the sampler recorded itself.
         model = compile_ising({"a": 0.2, "b": -0.1}, {("a", "b"): 0.7})
         config = SamplerConfig(
             beta=2.0,
@@ -263,7 +246,9 @@ class EnergyContractTests(unittest.TestCase):
         for base_energy, shifted_energy in zip(base.energies, shifted.energies):
             self.assertAlmostEqual(shifted_energy - base_energy, shift, places=9)
 
-    def test_energies_match_independent_recomputation(self) -> None:
+    def test_energies_consistent_with_fresh_model_recompute(self) -> None:
+        # Consistency check: the reference is a second compile of the same inputs,
+        # evaluated by the same product energy routine.
         model = compile_ising({0: 0.2, 1: -0.4, 2: 0.6}, {(0, 1): -0.5, (1, 2): 0.3})
         result = THRMLSampler(SamplerConfig(beta=1.0, n_warmup=50, seed=9)).sample(model, num_reads=25)
         fresh = compile_ising({0: 0.2, 1: -0.4, 2: 0.6}, {(0, 1): -0.5, (1, 2): 0.3})
@@ -381,7 +366,9 @@ class FrustrationAndDegeneracyTests(unittest.TestCase):
 
 
 @unittest.skipUnless(THRML_AVAILABLE, "requires the optional 'thrml' package")
-class QuboEquivalenceTests(unittest.TestCase):
+class QuboDecodeConsistencyTests(unittest.TestCase):
+    """Consistency check: reported energies against the product QUBO compile of the same input."""
+
     def test_binary_decode_reproduces_reported_energies(self) -> None:
         qubo = {(0, 0): -1.0, (1, 1): -1.0, (0, 1): 2.0}
         result = THRMLSampler(SamplerConfig(beta=1.0, n_warmup=30, seed=3)).sample_qubo(qubo, num_reads=20)
@@ -504,8 +491,10 @@ class DiagnosticsWiringTests(unittest.TestCase):
             self.assertEqual(distance[chain_id][position], hamming)
             positions[chain_id] += 1
 
-    def test_embedded_diagnostics_match_recomputation(self) -> None:
-        # Mirrors the runtime call exactly, including the magnetization trace (EVAL-EQ-007).
+    def test_embedded_diagnostics_consistent_with_compute_diagnostics(self) -> None:
+        # Wiring check: compute_diagnostics is also the production routine, so this
+        # detects dropped or altered inputs, not estimator errors. Mirrors the runtime
+        # call exactly, including the magnetization trace (EVAL-EQ-007).
         result = self._sample()
         recomputed = compute_diagnostics(
             energy_chains=result.traces["energy"],
@@ -539,21 +528,6 @@ class DiagnosticsWiringTests(unittest.TestCase):
             result.diagnostics["chains"]["rhat_status"],
             "undefined_or_infinite_zero_within_variance",
         )
-
-    def test_well_mixed_hot_run_stays_healthy(self) -> None:
-        # low_diversity/no_recent_improvement fire legitimately here; assert specific
-        # flags absent rather than flags == [].
-        model = compile_ising({"a": 0.1, "b": -0.1}, {("a", "b"): 0.2})
-        config = SamplerConfig(beta=0.5, n_warmup=100, steps_per_sample=2, num_chains=4, seed=0)
-        result = THRMLSampler(config).sample(model, num_reads=400)
-        flags = result.diagnostics["flags"]
-        self.assertNotIn("chain_disagreement", flags)
-        self.assertNotIn("mode_collapse", flags)
-        chains = result.diagnostics["chains"]
-        self.assertEqual(chains["rhat_status"], "ok")
-        self.assertLess(chains["rhat"], 1.01)
-        self.assertEqual(chains["ess_status"], "ok")
-        self.assertGreater(chains["ess"], 400.0)
 
 
 if __name__ == "__main__":

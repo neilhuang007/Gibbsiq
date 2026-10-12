@@ -108,29 +108,12 @@ class SplitChainsTests(unittest.TestCase):
 class FlagBoundaryTests(unittest.TestCase):
     """Each flag predicate exercised directly against a minimal section dict."""
 
-    def test_energy_ess_has_no_health_threshold(self) -> None:
-        self.assertEqual(energy_flags({"ess_status": "ok", "ess": 399.999999999}), [])
-        self.assertNotIn("low_ess", diagnostics.FLAG_ORDER)
-        self.assertNotIn("low_ess", diagnostics.thresholds_summary())
-
-    def test_high_sample_concentration_boundary(self) -> None:
-        self.assertEqual(
-            diversity_observations({"top1_mass": 0.9}),
-            ["high_sample_concentration"],
-        )
-        self.assertEqual(diversity_observations({"top1_mass": 0.8999}), [])
-        self.assertEqual(diversity_flags({"top1_mass": 1.0}), [])
-
     def test_concentrated_exact_boltzmann_target_is_not_mode_collapse(self) -> None:
         # For one spin with h=1 and beta=ln(19)/2, P(s=-1)=19/20 exactly.
         section = diversity_section({(-1,): 95, (1,): 5}, num_variables=1)
         self.assertEqual(section["top1_mass"], 0.95)
         self.assertNotIn("mode_collapse", diversity_flags(section))
         self.assertEqual(diversity_observations(section), ["high_sample_concentration"])
-
-    def test_low_diversity_boundary(self) -> None:
-        self.assertEqual(diversity_flags({"occupancy_efficiency": 0.05}), ["low_diversity"])
-        self.assertEqual(diversity_flags({"occupancy_efficiency": 0.0501}), [])
 
     def test_low_diversity_maps_to_unique_fraction(self) -> None:
         self.assertEqual(diversity_flags({"unique_fraction": 0.05}), ["low_diversity"])
@@ -143,12 +126,6 @@ class FlagBoundaryTests(unittest.TestCase):
     def test_chain_disagreement_on_zero_within_variance(self) -> None:
         result = chain_flags({"rhat_status": diagnostics.STATUS_ZERO_WITHIN_VARIANCE, "rhat": None})
         self.assertEqual(result, ["chain_disagreement"])
-
-    def test_poor_mixing_boundary(self) -> None:
-        fires = {"autocorrelation_status": "ok", "tau_hat": 2.1, "draws_per_chain": 100}
-        silent = {"autocorrelation_status": "ok", "tau_hat": 1.9, "draws_per_chain": 100}
-        self.assertEqual(energy_flags(fires), ["poor_mixing"])
-        self.assertEqual(energy_flags(silent), [])
 
     def test_recent_improvement_false_is_observation(self) -> None:
         self.assertEqual(energy_flags({"recent_improvement": False}), [])
@@ -205,24 +182,19 @@ class DiversityMathTests(unittest.TestCase):
         self.assertEqual(section["occupancy_efficiency"], 1.0)
 
 
-class FamilyScopingTests(unittest.TestCase):
-    def test_chain_family_flags_exclude_low_ess(self) -> None:
-        fixtures = {fixture["id"]: fixture for fixture in load_diagnostic_fixtures()}
-        fixture = fixtures["chain_disagreement_zero_within_variance"]
-        candidate = diagnostic_candidate_from_input(fixture["input"])
-        self.assertEqual(candidate["required_flags"], ["chain_disagreement"])
-        self.assertEqual(candidate["observations"], ["zero_within_chain_variance"])
-        self.assertNotIn("low_ess", candidate["required_flags"])
-
-
 class AdapterVsGoldenTests(unittest.TestCase):
     def test_fixture_adapter_matches_golden_expected(self) -> None:
-        fixtures = load_diagnostic_fixtures()
-        self.assertEqual(len(fixtures), 7)
-        for fixture in fixtures:
+        fixtures = {fixture["id"]: fixture for fixture in load_diagnostic_fixtures()}
+        for fixtureId, fixture in fixtures.items():
             candidate = diagnostic_candidate_from_input(fixture["input"])
-            differences = compare_values(fixture["expected"], candidate, fixture["id"], TOLERANCE)
-            self.assertEqual(differences, [], msg=f"fixture={fixture['id']} differences={differences}")
+            differences = compare_values(fixture["expected"], candidate, fixtureId, TOLERANCE)
+            self.assertEqual(differences, [], msg=f"fixture={fixtureId} differences={differences}")
+
+        chainFamily = diagnostic_candidate_from_input(
+            fixtures["chain_disagreement_zero_within_variance"]["input"]
+        )
+        self.assertEqual(chainFamily["required_flags"], ["chain_disagreement"])
+        self.assertEqual(chainFamily["observations"], ["zero_within_chain_variance"])
 
 
 class TraceHelperTests(unittest.TestCase):

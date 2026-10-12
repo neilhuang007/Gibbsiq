@@ -14,12 +14,14 @@ from typing import Any, Literal, TypeAlias
 from gibbsiq._frozen import freeze, freeze_json_evidence, thaw
 from gibbsiq.model import (
     IsingModel,
+    UNFILLED_SLOT,
     Variable,
     Vartype,
     encode_variable_label,
+    exact_label_equal,
+    exact_label_key,
     exact_mapping_index,
     exact_mapping_key,
-    exact_variable_position,
     exact_variable_order,
     finite_float,
     legacy_wire_safe,
@@ -61,16 +63,32 @@ def _missing_exact_key(
     return False
 
 
-def _missing_exact_position(
-    variable: Variable,
+def _align_sample(
+    sample: Mapping[Any, Any],
     variables: tuple[Variable, ...],
     positions: Mapping[Variable, int],
-) -> bool:
-    try:
-        exact_variable_position(variable, variables, positions)
-    except KeyError:
-        return True
-    return False
+) -> tuple[list[Any], list[Any]]:
+    """One pass over a sample: values aligned to ``variables`` plus unexpected keys."""
+    slots: list[Any] = [UNFILLED_SLOT] * len(variables)
+    extra: list[Any] = []
+    for key, value in sample.items():
+        try:
+            position = positions[key]
+        except KeyError:
+            extra.append(key)
+            continue
+        except TypeError:
+            exact_label_key(key)
+            extra.append(key)
+            continue
+        expected = variables[position]
+        if key is not expected and not exact_label_equal(key, expected):
+            extra.append(key)
+            continue
+        if slots[position] is not UNFILLED_SLOT:
+            raise ValueError(f"mapping contains duplicate exact key {key!r}")
+        slots[position] = value
+    return slots, extra
 
 
 def _resolve_num_states(
@@ -165,20 +183,14 @@ class SampleResult:
         for index, sample in enumerate(samples):
             if not isinstance(sample, Mapping):
                 raise TypeError(f"sample {index} must be a mapping")
-            sample_key_index = exact_mapping_index(sample)
-            missing = [
-                variable for variable in variables if _missing_exact_key(sample, variable, sample_key_index)
-            ]
+            slots, extra = _align_sample(sample, variables, positions)
+            missing = [variable for variable, slot in zip(variables, slots) if slot is UNFILLED_SLOT]
             if missing:
                 raise ValueError(f"sample {index} is missing variables {missing!r}")
-            extra = [
-                candidate for candidate in sample if _missing_exact_position(candidate, variables, positions)
-            ]
             if extra:
                 raise ValueError(f"sample {index} has unexpected variables {extra!r}")
             canonical_sample: dict[Variable, int] = {}
-            for variable in variables:
-                value = sample[exact_mapping_key(sample, variable, sample_key_index)]
+            for variable, value in zip(variables, slots):
                 if isinstance(value, bool) or value not in domains[variable]:
                     raise ValueError(f"sample {index} has invalid {kind} value {value!r} for {variable!r}")
                 canonical_sample[variable] = value
@@ -229,10 +241,11 @@ class SampleResult:
         normalized_vartype = normalize_vartype(vartype)
         # defensive copy happens in __post_init__; just materialize the sequence here
         sample_rows = tuple(samples)
-        energies = tuple(model.energy(sample, vartype=normalized_vartype) for sample in sample_rows)
-        interaction_energies = tuple(
-            model.interaction_energy(sample, vartype=normalized_vartype) for sample in sample_rows
-        )
+        energy_pairs = [
+            model.energy_and_interaction(sample, vartype=normalized_vartype) for sample in sample_rows
+        ]
+        energies = tuple(energy for energy, _ in energy_pairs)
+        interaction_energies = tuple(interaction for _, interaction in energy_pairs)
         interactions_by_total: dict[float, set[float]] = {}
         for total_energy, interaction_energy in zip(energies, interaction_energies):
             interactions_by_total.setdefault(total_energy, set()).add(interaction_energy)

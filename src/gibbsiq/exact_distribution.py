@@ -9,29 +9,16 @@ from __future__ import annotations
 
 import itertools
 import math
+import operator
 from dataclasses import dataclass
 from typing import Any
 
+from gibbsiq._validation import exact_limit, nonnegative_beta
 from gibbsiq.model import IsingModel, Variable, exact_variable_order, finite_float, finite_sum
 
 
 class ExactDistributionNumericalError(ValueError):
     """Exact probabilities require a log range outside binary64."""
-
-
-def _nonnegative_beta(value: Any, *, name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be a finite non-negative number, got {value!r}")
-    beta = finite_float(value, name=name)
-    if beta < 0.0:
-        raise ValueError(f"{name} must be non-negative, got {value!r}")
-    return beta
-
-
-def _exact_limit(value: Any) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ValueError(f"max_variables must be an integer >= 0, got {value!r}")
-    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -165,8 +152,8 @@ def exact_boltzmann_distribution(
     """
     if not isinstance(model, IsingModel):
         raise TypeError(f"model must be IsingModel, got {type(model).__name__}")
-    canonical_beta = _nonnegative_beta(beta, name="beta")
-    limit = _exact_limit(max_variables)
+    canonical_beta = nonnegative_beta(beta)
+    limit = exact_limit(max_variables, name="max_variables")
     variable_count = len(model.variables)
     if variable_count > limit:
         raise ValueError(
@@ -189,9 +176,8 @@ def exact_boltzmann_distribution(
         )
     log_weights: list[float] = []
     for state in states:
-        sample = dict(zip(model.variables, state))
         try:
-            interaction = model.interaction_energy(sample)
+            interaction = model.interaction_energy_from_spins(state)
             log_weight = finite_float(
                 -canonical_beta * interaction,
                 name="exact Boltzmann log weight",
@@ -262,6 +248,20 @@ def _directed_kl(
     return _nonnegative_metric(finite_sum(terms, name=name), name=name)
 
 
+def _up_probability(probabilities: tuple[float, ...], column: tuple[int, ...]) -> float:
+    """Return the correctly rounded total probability of states with spin +1 in ``column``."""
+    return math.fsum(itertools.compress(probabilities, map((1).__eq__, column)))
+
+
+def _pair_correlation(
+    probabilities: tuple[float, ...],
+    left_column: tuple[int, ...],
+    right_column: tuple[int, ...],
+) -> float:
+    """Return ``sum p * s_left * s_right``; the +-1 spin product is exact."""
+    return math.fsum(map(operator.mul, probabilities, map(operator.mul, left_column, right_column)))
+
+
 def compare_boltzmann_distributions(
     target_model: IsingModel,
     implemented_model: IsingModel,
@@ -313,18 +313,12 @@ def compare_boltzmann_distributions(
         name="KL(implemented || target)",
     )
 
+    target_columns = tuple(zip(*target.states))
+    implemented_columns = tuple(zip(*implemented.states))
     marginal_errors: list[SpinMarginalError] = []
     for position, variable in enumerate(target.variables):
-        target_up = math.fsum(
-            probability
-            for state, probability in zip(target.states, target.probabilities)
-            if state[position] == 1
-        )
-        implemented_up = math.fsum(
-            probability
-            for state, probability in zip(implemented.states, implemented.probabilities)
-            if state[position] == 1
-        )
+        target_up = _up_probability(target.probabilities, target_columns[position])
+        implemented_up = _up_probability(implemented.probabilities, implemented_columns[position])
         marginal_errors.append(
             SpinMarginalError(
                 variable=variable,
@@ -336,13 +330,13 @@ def compare_boltzmann_distributions(
 
     pair_errors: list[PairCorrelationError] = []
     for left_position, right_position in itertools.combinations(range(len(target.variables)), 2):
-        target_correlation = math.fsum(
-            probability * state[left_position] * state[right_position]
-            for state, probability in zip(target.states, target.probabilities)
+        target_correlation = _pair_correlation(
+            target.probabilities, target_columns[left_position], target_columns[right_position]
         )
-        implemented_correlation = math.fsum(
-            probability * state[left_position] * state[right_position]
-            for state, probability in zip(implemented.states, implemented.probabilities)
+        implemented_correlation = _pair_correlation(
+            implemented.probabilities,
+            implemented_columns[left_position],
+            implemented_columns[right_position],
         )
         pair_errors.append(
             PairCorrelationError(
